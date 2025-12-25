@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:playprobie_db;MODE=MySQL # 메모리 DB 사용
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true # H2 콘솔 접속 허용 (/h2-console)
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # 시작할 때 만들고, 끌 때 다 삭제 (초기 개발에 적합)
+    properties:
+      hibernate:
+        format_sql: true # 로그에 SQL 예쁘게 출력
+    show-sql: true # 실행되는 SQL을 로그에 표시
+
+logging:
+  level:
+    com.playprobie: DEBUG # 우리 코드는 상세하게
+    org.springframework.web: DEBUG
