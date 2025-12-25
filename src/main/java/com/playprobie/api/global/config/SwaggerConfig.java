@@ -1,4 +1,4 @@
-package com.playprobie.api.config;
+package com.playprobie.api.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
