@@ -19,8 +19,7 @@ public class SwaggerConfig {
 
 	private Info apiInfo() {
 		return new Info()
-			.title("API document")
-			.description("Spring server API document")
+			.title("PlayProbie")
 			.version("1.0.0");
 	}
 }
