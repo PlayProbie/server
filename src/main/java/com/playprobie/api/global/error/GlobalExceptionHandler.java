@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	protected ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-		log.error("handleMethodArgumentNotValidException", e);
+		log.warn("handleMethodArgumentNotValidException", e);
 		final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, e.getBindingResult());
 		return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 	}
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
 	 */
 	@ExceptionHandler(BindException.class)
 	protected ResponseEntity<ErrorResponse> handleBindException(BindException e) {
-		log.error("handleBindException", e);
+		log.warn("handleBindException", e);
 		final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, e.getBindingResult());
 		return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 	}
@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	protected ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
 			MethodArgumentTypeMismatchException e) {
-		log.error("handleMethodArgumentTypeMismatchException", e);
+		log.warn("handleMethodArgumentTypeMismatchException", e);
 		final ErrorResponse response = ErrorResponse.of(e);
 		return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 	}
@@ -57,14 +57,14 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
 	protected ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
 			HttpRequestMethodNotSupportedException e) {
-		log.error("handleHttpRequestMethodNotSupportedException", e);
+		log.warn("handleHttpRequestMethodNotSupportedException", e);
 		final ErrorResponse response = ErrorResponse.of(ErrorCode.METHOD_NOT_ALLOWED);
 		return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
 	}
 
 	@ExceptionHandler(BusinessException.class)
 	protected ResponseEntity<ErrorResponse> handleBusinessException(final BusinessException e) {
-		log.error("handleBusinessException", e);
+		log.warn("handleBusinessException", e);
 		final ErrorCode errorCode = e.getErrorCode();
 		final ErrorResponse response = ErrorResponse.of(errorCode);
 		return new ResponseEntity<>(response, HttpStatus.valueOf(errorCode.getStatus()));
