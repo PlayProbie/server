@@ -8,7 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.playprobie.api.domain.survey.domain.DraftQuestion;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.DraftQuestionResponse;
+import com.playprobie.api.domain.survey.dto.UpdateDraftQuestionRequest;
 import com.playprobie.api.domain.survey.repository.DraftQuestionRepository;
+import com.playprobie.api.global.error.exception.EntityNotFoundException;
 import com.playprobie.api.infra.ai.AiClient;
 
 import lombok.RequiredArgsConstructor;
@@ -61,5 +63,18 @@ public class DraftQuestionService {
                 .stream()
                 .map(DraftQuestionResponse::from)
                 .toList();
+    }
+
+    /**
+     * 임시 질문 수정
+     */
+    @Transactional
+    public DraftQuestionResponse updateDraftQuestion(Long draftQuestionId, UpdateDraftQuestionRequest request) {
+        DraftQuestion draftQuestion = draftQuestionRepository.findById(draftQuestionId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        draftQuestion.updateContent(request.qContent());
+
+        return DraftQuestionResponse.from(draftQuestion);
     }
 }

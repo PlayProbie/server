@@ -7,12 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.playprobie.api.domain.survey.dto.DraftQuestionResponse;
+import com.playprobie.api.domain.survey.dto.UpdateDraftQuestionRequest;
 import com.playprobie.api.domain.survey.service.DraftQuestionService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -38,5 +42,16 @@ public class DraftQuestionController {
     public ResponseEntity<List<DraftQuestionResponse>> getDraftQuestions(@PathVariable Long surveyId) {
         List<DraftQuestionResponse> questions = draftQuestionService.getDraftQuestions(surveyId);
         return ResponseEntity.ok(questions);
+    }
+
+    /**
+     * 임시 질문 수정
+     */
+    @PutMapping("/draft-questions/{draftQuestionId}")
+    public ResponseEntity<DraftQuestionResponse> updateDraftQuestion(
+            @PathVariable Long draftQuestionId,
+            @Valid @RequestBody UpdateDraftQuestionRequest request) {
+        DraftQuestionResponse response = draftQuestionService.updateDraftQuestion(draftQuestionId, request);
+        return ResponseEntity.ok(response);
     }
 }
