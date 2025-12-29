@@ -17,7 +17,7 @@ import com.playprobie.api.global.domain.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/surveys/results")
+@RequestMapping("/surveys/results")
 @RequiredArgsConstructor
 public class SurveyResultApi {
 
