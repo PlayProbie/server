@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.playprobie.api.domain.survey.domain.DraftQuestion;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.DraftQuestionResponse;
+import com.playprobie.api.domain.survey.dto.QuestionReviewResponse;
 import com.playprobie.api.domain.survey.dto.UpdateDraftQuestionRequest;
 import com.playprobie.api.domain.survey.repository.DraftQuestionRepository;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
@@ -24,9 +25,6 @@ public class DraftQuestionService {
     private final SurveyService surveyService;
     private final AiClient aiClient;
 
-    /**
-     * AI를 통해 질문 10개 자동 생성
-     */
     @Transactional
     public List<DraftQuestionResponse> generateQuestions(Long surveyId) {
         Survey survey = surveyService.getSurveyEntity(surveyId);
@@ -55,9 +53,6 @@ public class DraftQuestionService {
                 .toList();
     }
 
-    /**
-     * 설문의 임시 질문 목록 조회
-     */
     public List<DraftQuestionResponse> getDraftQuestions(Long surveyId) {
         return draftQuestionRepository.findBySurveyIdOrderByOrderAsc(surveyId)
                 .stream()
@@ -65,9 +60,6 @@ public class DraftQuestionService {
                 .toList();
     }
 
-    /**
-     * 임시 질문 수정
-     */
     @Transactional
     public DraftQuestionResponse updateDraftQuestion(Long draftQuestionId, UpdateDraftQuestionRequest request) {
         DraftQuestion draftQuestion = draftQuestionRepository.findById(draftQuestionId)
@@ -76,5 +68,21 @@ public class DraftQuestionService {
         draftQuestion.updateContent(request.qContent());
 
         return DraftQuestionResponse.from(draftQuestion);
+    }
+
+    /**
+     * 질문 리뷰 - 피드백 + 대안 3개 제공
+     */
+    public QuestionReviewResponse reviewQuestion(Long draftQuestionId) {
+        DraftQuestion draftQuestion = draftQuestionRepository.findById(draftQuestionId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        AiClient.QuestionReview review = aiClient.reviewQuestion(draftQuestion.getContent());
+
+        return new QuestionReviewResponse(
+                draftQuestion.getId(),
+                draftQuestion.getContent(),
+                review.feedback(),
+                review.alternatives());
     }
 }
