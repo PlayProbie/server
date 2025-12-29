@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Mock AI 클라이언트
- * - 실제 AI 대신 랜덤 질문/피드백 생성
  */
 @Component
 public class MockAiClient implements AiClient {
@@ -42,7 +41,8 @@ public class MockAiClient implements AiClient {
     };
 
     @Override
-    public List<String> generateQuestions(String gameName, String gameContext, String testPurpose, int count) {
+    public List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose,
+            int count) {
         List<String> questions = new ArrayList<>();
         List<Integer> usedIndices = new ArrayList<>();
 

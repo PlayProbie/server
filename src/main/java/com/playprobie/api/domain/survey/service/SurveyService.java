@@ -73,10 +73,14 @@ public class SurveyService {
         Survey survey = getSurveyEntity(surveyId);
 
         String gameName = survey.getGame().getName();
+        String gameGenre = survey.getGame().getGenres().stream()
+                .map(g -> g.getDisplayName())
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
         String gameContext = survey.getGame().getContext();
         String testPurpose = survey.getTestPurpose() != null ? survey.getTestPurpose().getCode() : "";
 
-        List<String> generatedQuestions = aiClient.generateQuestions(gameName, gameContext, testPurpose, 10);
+        List<String> generatedQuestions = aiClient.generateQuestions(gameName, gameGenre, gameContext, testPurpose, 10);
 
         List<FixedQuestion> questions = generatedQuestions.stream()
                 .map((content) -> {
