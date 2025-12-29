@@ -19,6 +19,7 @@ import com.playprobie.api.domain.survey.dto.UpdateQuestionRequest;
 import com.playprobie.api.domain.survey.repository.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.repository.SurveyRepository;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
+import com.playprobie.api.global.util.HashIdEncoder;
 import com.playprobie.api.infra.ai.AiClient;
 
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,11 @@ public class SurveyService {
                 .build();
 
         Survey savedSurvey = surveyRepository.save(survey);
+
+        // URL 생성 (Base62 인코딩)
+        String surveyUrl = "https://playprobie.shop/" + HashIdEncoder.encode(savedSurvey.getId());
+        savedSurvey.setSurveyUrl(surveyUrl);
+
         return SurveyResponse.from(savedSurvey);
     }
 

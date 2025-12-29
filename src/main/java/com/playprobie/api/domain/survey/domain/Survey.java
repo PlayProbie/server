@@ -40,6 +40,9 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "survey_name")
 	private String name;
 
+	@Column(name = "survey_url", unique = true)
+	private String surveyUrl;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "test_purpose")
 	private TestPurpose testPurpose;
@@ -57,6 +60,10 @@ public class Survey extends BaseTimeEntity {
 		this.testPurpose = testPurpose;
 		this.startAt = startAt;
 		this.endAt = endAt;
+	}
+
+	public void setSurveyUrl(String surveyUrl) {
+		this.surveyUrl = surveyUrl;
 	}
 
 	public boolean isOpen() {
