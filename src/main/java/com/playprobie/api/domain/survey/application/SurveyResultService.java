@@ -91,9 +91,7 @@ public class SurveyResultService {
                 SurveySession session = sessionRepository.findById(sessionId)
                                 .orElseThrow(EntityNotFoundException::new);
 
-                if (!session.getSurvey().getId().equals(surveyId)) {
-                        throw new EntityNotFoundException();
-                }
+                session.validateSurveyId(surveyId);
 
                 SurveyResultDetailResponse.SessionInfo sessionInfo = buildSessionInfo(session);
                 List<SurveyResultDetailResponse.FixedQuestionGroup> byFixedQuestion = buildQuestionGroups(sessionId);
