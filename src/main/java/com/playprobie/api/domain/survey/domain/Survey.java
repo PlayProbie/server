@@ -37,6 +37,9 @@ public class Survey extends BaseTimeEntity {
 	@JoinColumn(name = "game_id", nullable = false)
 	private Game game;
 
+	@Column(name = "survey_name")
+	private String name;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "test_purpose")
 	private TestPurpose testPurpose;
@@ -48,8 +51,9 @@ public class Survey extends BaseTimeEntity {
 	private LocalDateTime endAt;
 
 	@Builder
-	public Survey(Game game, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt) {
+	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt) {
 		this.game = Objects.requireNonNull(game, "Survey 생성 시 Game은 필수입니다");
+		this.name = name;
 		this.testPurpose = testPurpose;
 		this.startAt = startAt;
 		this.endAt = endAt;

@@ -1,9 +1,12 @@
 package com.playprobie.api.domain.game.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.game.domain.Game;
+import com.playprobie.api.domain.game.domain.GameGenre;
 import com.playprobie.api.domain.game.dto.CreateGameRequest;
 import com.playprobie.api.domain.game.dto.GameResponse;
 import com.playprobie.api.domain.game.repository.GameRepository;
@@ -20,10 +23,14 @@ public class GameService {
 
     @Transactional
     public GameResponse createGame(CreateGameRequest request) {
+        List<GameGenre> genres = request.gameGenre().stream()
+                .map(this::parseGenre)
+                .toList();
+
         Game game = Game.builder()
-                .name(request.name())
-                .genre(request.genre())
-                .context(request.context())
+                .name(request.gameName())
+                .genres(genres)
+                .context(request.gameContext())
                 .build();
 
         Game savedGame = gameRepository.save(game);
@@ -39,5 +46,14 @@ public class GameService {
     public Game getGameEntity(Long gameId) {
         return gameRepository.findById(gameId)
                 .orElseThrow(EntityNotFoundException::new);
+    }
+
+    private GameGenre parseGenre(String code) {
+        for (GameGenre g : GameGenre.values()) {
+            if (g.getCode().equals(code)) {
+                return g;
+            }
+        }
+        throw new IllegalArgumentException("유효하지 않은 장르 코드: " + code);
     }
 }
