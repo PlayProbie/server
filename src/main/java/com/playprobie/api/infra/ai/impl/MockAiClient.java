@@ -1,14 +1,9 @@
 package com.playprobie.api.infra.ai.impl;
 
-import java.io.IOException;
-
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.playprobie.api.global.error.exception.EntityNotFoundException;
-import com.playprobie.api.global.sse.SseEmitterRepository;
-import com.playprobie.api.global.sse.SseEmitterService;
+import com.playprobie.api.infra.sse.SseEmitterService;
 import com.playprobie.api.infra.ai.AiClient;
 
 import lombok.RequiredArgsConstructor;
