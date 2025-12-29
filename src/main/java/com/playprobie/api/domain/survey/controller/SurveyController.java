@@ -47,4 +47,13 @@ public class SurveyController {
         List<FixedQuestionResponse> questions = surveyService.getQuestions(surveyId);
         return ResponseEntity.ok(questions);
     }
+
+    /**
+     * 설문 확정 - DraftQuestion → FixedQuestion 복사 후 Draft 삭제
+     */
+    @PostMapping("/{surveyId}/confirm")
+    public ResponseEntity<List<FixedQuestionResponse>> confirmSurvey(@PathVariable Long surveyId) {
+        List<FixedQuestionResponse> questions = surveyService.confirmSurvey(surveyId);
+        return ResponseEntity.ok(questions);
+    }
 }
