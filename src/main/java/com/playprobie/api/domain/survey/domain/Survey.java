@@ -47,9 +47,13 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "end_at")
 	private LocalDateTime endAt;
 
+	@Column(name = "survey_name")
+	private String name;
+
 	@Builder
-	public Survey(Game game, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt) {
+	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt) {
 		this.game = Objects.requireNonNull(game, "Survey 생성 시 Game은 필수입니다");
+		this.name = Objects.requireNonNull(name, "Survey 생성 시 name은 필수입니다");
 		this.testPurpose = testPurpose;
 		this.startAt = startAt;
 		this.endAt = endAt;
