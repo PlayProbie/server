@@ -7,17 +7,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.game.service.GameService;
-import com.playprobie.api.domain.survey.domain.DraftQuestion;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
+import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.TestPurpose;
 import com.playprobie.api.domain.survey.dto.CreateSurveyRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
+import com.playprobie.api.domain.survey.dto.QuestionReviewResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResponse;
-import com.playprobie.api.domain.survey.repository.DraftQuestionRepository;
+import com.playprobie.api.domain.survey.dto.UpdateQuestionRequest;
 import com.playprobie.api.domain.survey.repository.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.repository.SurveyRepository;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
+import com.playprobie.api.infra.ai.AiClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,8 +30,10 @@ public class SurveyService {
 
     private final SurveyRepository surveyRepository;
     private final FixedQuestionRepository fixedQuestionRepository;
-    private final DraftQuestionRepository draftQuestionRepository;
     private final GameService gameService;
+    private final AiClient aiClient;
+
+    // ========== Survey CRUD ==========
 
     @Transactional
     public SurveyResponse createSurvey(CreateSurveyRequest request) {
@@ -54,53 +58,127 @@ public class SurveyService {
         return SurveyResponse.from(survey);
     }
 
-    public List<FixedQuestionResponse> getQuestions(Long surveyId) {
-        if (!surveyRepository.existsById(surveyId)) {
-            throw new EntityNotFoundException();
-        }
-        return fixedQuestionRepository.findBySurveyIdOrderByOrderAsc(surveyId)
+    public Survey getSurveyEntity(Long surveyId) {
+        return surveyRepository.findById(surveyId)
+                .orElseThrow(EntityNotFoundException::new);
+    }
+
+    // ========== Question 생성/수정/리뷰 ==========
+
+    /*
+     * AI를 통해 질문 10개 자동 생성 (DRAFT 상태로 저장)
+     */
+    @Transactional
+    public List<FixedQuestionResponse> generateQuestions(Long surveyId) {
+        Survey survey = getSurveyEntity(surveyId);
+
+        String gameName = survey.getGame().getName();
+        String gameContext = survey.getGame().getContext();
+        String testPurpose = survey.getTestPurpose() != null ? survey.getTestPurpose().getCode() : "";
+
+        List<String> generatedQuestions = aiClient.generateQuestions(gameName, gameContext, testPurpose, 10);
+
+        List<FixedQuestion> questions = generatedQuestions.stream()
+                .map((content) -> {
+                    int order = generatedQuestions.indexOf(content) + 1;
+                    return FixedQuestion.builder()
+                            .surveyId(surveyId)
+                            .content(content)
+                            .order(order)
+                            .status(QuestionStatus.DRAFT)
+                            .build();
+                })
+                .toList();
+
+        List<FixedQuestion> savedQuestions = fixedQuestionRepository.saveAll(questions);
+
+        return savedQuestions.stream()
+                .map(FixedQuestionResponse::from)
+                .toList();
+    }
+
+    /*
+     * 임시(DRAFT) 질문 목록 조회
+     */
+    public List<FixedQuestionResponse> getDraftQuestions(Long surveyId) {
+        return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(surveyId, QuestionStatus.DRAFT)
                 .stream()
                 .map(FixedQuestionResponse::from)
                 .toList();
     }
 
     /*
-     * 설문 확정 - DraftQuestion → FixedQuestion 복사 후 Draft 삭제
+     * 확정(CONFIRMED) 질문 목록 조회
      */
-    @Transactional
-    public List<FixedQuestionResponse> confirmSurvey(Long surveyId) {
-        /* 해당 설문지 존재 확인 */
+    public List<FixedQuestionResponse> getConfirmedQuestions(Long surveyId) {
         if (!surveyRepository.existsById(surveyId)) {
             throw new EntityNotFoundException();
         }
-        /* 임시 질문 조회 */
-        List<DraftQuestion> draftQuestions = draftQuestionRepository.findBySurveyIdOrderByOrderAsc(surveyId);
-        /* 임시 질문이 없으면 에러 */
-        if (draftQuestions.isEmpty()) {
-            throw new IllegalStateException("확정할 질문이 없습니다.");
-        }
-        /* 임시 질문 → 고정 질문 복사 */
-        List<FixedQuestion> fixedQuestions = draftQuestions.stream()
-                .map(draft -> FixedQuestion.builder()
-                        .surveyId(draft.getSurveyId())
-                        .content(draft.getContent())
-                        .order(draft.getOrder())
-                        .build())
-                .toList();
-
-        List<FixedQuestion> savedQuestions = fixedQuestionRepository.saveAll(fixedQuestions);
-        /* 임시 질문 삭제 */
-        draftQuestionRepository.deleteBySurveyId(surveyId);
-        /* 고정 질문 반환 */
-        return savedQuestions.stream()
+        return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(surveyId, QuestionStatus.CONFIRMED)
+                .stream()
                 .map(FixedQuestionResponse::from)
                 .toList();
     }
 
-    public Survey getSurveyEntity(Long surveyId) {
-        return surveyRepository.findById(surveyId)
+    /*
+     * 질문 수정 (DRAFT 상태인 경우만)
+     */
+    @Transactional
+    public FixedQuestionResponse updateQuestion(Long questionId, UpdateQuestionRequest request) {
+        FixedQuestion question = fixedQuestionRepository.findById(questionId)
                 .orElseThrow(EntityNotFoundException::new);
+
+        if (!question.isDraft()) {
+            throw new IllegalStateException("확정된 질문은 수정할 수 없습니다.");
+        }
+
+        question.updateContent(request.qContent());
+
+        return FixedQuestionResponse.from(question);
     }
+
+    /*
+     * 질문 리뷰 - 피드백 + 대안 3개 제공
+     */
+    public QuestionReviewResponse reviewQuestion(Long questionId) {
+        FixedQuestion question = fixedQuestionRepository.findById(questionId)
+                .orElseThrow(EntityNotFoundException::new);
+
+        AiClient.QuestionReview review = aiClient.reviewQuestion(question.getContent());
+
+        return new QuestionReviewResponse(
+                question.getId(),
+                question.getContent(),
+                review.feedback(),
+                review.alternatives());
+    }
+
+    // ========== 설문 확정 ==========
+
+    /*
+     * 설문 확정 - DRAFT 질문들을 CONFIRMED로 변경
+     */
+    @Transactional
+    public List<FixedQuestionResponse> confirmSurvey(Long surveyId) {
+        if (!surveyRepository.existsById(surveyId)) {
+            throw new EntityNotFoundException();
+        }
+
+        List<FixedQuestion> draftQuestions = fixedQuestionRepository
+                .findBySurveyIdAndStatusOrderByOrderAsc(surveyId, QuestionStatus.DRAFT);
+
+        if (draftQuestions.isEmpty()) {
+            throw new IllegalStateException("확정할 질문이 없습니다.");
+        }
+
+        draftQuestions.forEach(FixedQuestion::confirm);
+
+        return draftQuestions.stream()
+                .map(FixedQuestionResponse::from)
+                .toList();
+    }
+
+    // ========== Private ==========
 
     private TestPurpose parseTestPurpose(String code) {
         for (TestPurpose tp : TestPurpose.values()) {

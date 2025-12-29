@@ -11,7 +11,7 @@ public interface AiClient {
 
     /**
      * 게임 정보와 테스트 목적 기반으로 질문 생성
-     * 
+     *
      * @param gameName    게임 이름
      * @param gameContext 게임 설명
      * @param testPurpose 테스트 목적
@@ -22,7 +22,7 @@ public interface AiClient {
 
     /**
      * 질문에 대한 피드백과 대안 제공
-     * 
+     *
      * @param questionContent 질문 내용
      * @return 리뷰 결과 (피드백 + 대안 3개)
      */
