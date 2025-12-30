@@ -1,26 +1,26 @@
 package com.playprobie.api.infra.ai.impl;
 
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
 
-import com.playprobie.api.infra.sse.SseEmitterService;
 import com.playprobie.api.infra.ai.AiClient;
+import com.playprobie.api.infra.sse.SseEmitterService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Service
+// @Service
 @RequiredArgsConstructor
 public class MockAiClient implements AiClient {
 
 	private final SseEmitterService sseEmitterService;
 
 	@Async
-	public void streamNextQuestion(String sessionId, String userMessage) {
+	@Override
+	public void streamNextQuestion(String sessionId, String userMessage, String currentQuestion) {
 		try {
 			// 시나리오: 3개의 토큰을 1초 간격으로 전송
-			String[] tokens = {"AI가 ", "생각한", "다음_질문입니다"};
+			String[] tokens = { "AI가 ", "생각한", "다음_질문입니다" };
 
 			for (String token : tokens) {
 				// AI 생성 지연 시간 시뮬레이션
