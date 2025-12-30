@@ -3,9 +3,6 @@ spring:
     name: PlayProbie
   profiles:
     active: local # 기본적으로 local 프로필을 활성화
-    group:
-      local: local, common
-      dev: dev, common
 
 # Actuator 설정 (Health Check용)
 management:
