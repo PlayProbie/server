@@ -9,4 +9,6 @@ import com.playprobie.api.domain.survey.domain.Survey;
 public interface SurveyRepository extends JpaRepository<Survey, Long> {
 
     List<Survey> findByGameId(Long gameId);
+
+    long countByGameId(Long gameId);
 }

@@ -35,7 +35,7 @@ You MUST strictly adhere to the following documentation located in
 ## 3. API Design & Architecture
 
 - Reference: `.agent/instructions/api_design.md`
-- Use standard REST API patterns (`/api/v1/...`).
+- Use standard REST API patterns causing `/surveys/...` etc.
 - STRICTLY follow the `ErrorResponse` and `GlobalExceptionHandler` patterns.
 - Adhere to the `BusinessException` hierarchy.
 
