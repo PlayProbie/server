@@ -27,3 +27,6 @@ logging:
 ai:
   server:
     url: http://localhost:8000
+
+cors:
+  allowed-origins: http://localhost:5173

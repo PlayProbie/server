@@ -103,4 +103,9 @@ public class FastApiAiClient implements AiClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return new HttpEntity<>(body, headers);
     }
+
+    @Override
+    public void streamNextQuestion(String sessionId, String userAnswer, String currentQuestion) {
+        throw new UnsupportedOperationException("Unimplemented method 'streamNextQuestion'");
+    }
 }

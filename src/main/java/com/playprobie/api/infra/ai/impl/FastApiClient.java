@@ -30,6 +30,18 @@ public class FastApiClient implements AiClient {
 	private final ObjectMapper objectMapper;
 
 	@Override
+	public java.util.List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
+			String testPurpose) {
+		throw new UnsupportedOperationException("Unimplemented method 'generateQuestions'");
+	}
+
+	@Override
+	public java.util.List<String> getQuestionFeedback(String gameName, String gameGenre, String gameContext,
+			String testPurpose, String originalQuestion, String feedback) {
+		throw new UnsupportedOperationException("Unimplemented method 'getQuestionFeedback'");
+	}
+
+	@Override
 	public void streamNextQuestion(String sessionId, String userAnswer, String currentQuestion) {
 		log.info("Requesting AI stream for sessionId: {}", sessionId);
 
@@ -38,8 +50,7 @@ public class FastApiClient implements AiClient {
 				userAnswer,
 				currentQuestion,
 				null,
-				null
-		);
+				null);
 
 		Flux<String> eventStream = aiWebClient.post()
 				.uri("/surveys/interaction")
@@ -59,7 +70,7 @@ public class FastApiClient implements AiClient {
 		eventStream.subscribe(
 				chunk -> {
 					log.debug("Received chunk: {}", chunk);
-					
+
 					if (chunk == null || chunk.isBlank()) {
 						return;
 					}
@@ -90,14 +101,13 @@ public class FastApiClient implements AiClient {
 				},
 				() -> {
 					log.info("AI Stream completed for sessionId: {}", sessionId);
-				}
-		);
+				});
 	}
 
 	private void parseAndHandleEvent(String sessionId, String jsonStr) {
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
-			
+
 			String eventType = rootNode.path("event").asText();
 			JsonNode dataNode = rootNode.path("data");
 
@@ -116,22 +126,22 @@ public class FastApiClient implements AiClient {
 
 			case "analyze_answer":
 				sseEmitterService.send(sessionId, "info",
-						SseResponse.of("analyze", 
-								dataNode.path("analysis").asText(), 
+						SseResponse.of("analyze",
+								dataNode.path("analysis").asText(),
 								dataNode.path("action").asText()));
 				break;
 
 			case "token":
 				sseEmitterService.send(sessionId, "token",
-						SseResponse.of("token", 
-								dataNode.path("content").asText(), 
+						SseResponse.of("token",
+								dataNode.path("content").asText(),
 								null));
 				break;
 
 			case "generate_tail_complete":
 				String questionText = dataNode.path("message").asText();
 				int tailQuestionCount = dataNode.path("tail_question_count").asInt();
-				
+
 				sseEmitterService.send(sessionId, "question",
 						QuestionEventData.ofTail(questionText, tailQuestionCount));
 				break;
@@ -142,8 +152,8 @@ public class FastApiClient implements AiClient {
 
 			case "error":
 				sseEmitterService.send(sessionId, "error",
-						SseResponse.of("error", 
-								dataNode.path("message").asText("알 수 없는 오류"), 
+						SseResponse.of("error",
+								dataNode.path("message").asText("알 수 없는 오류"),
 								null));
 				break;
 
