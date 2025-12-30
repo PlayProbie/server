@@ -1,4 +1,4 @@
-package com.playprobie.api.domain.game.repository;
+package com.playprobie.api.domain.game.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

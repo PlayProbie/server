@@ -1,4 +1,4 @@
-package com.playprobie.api.domain.survey.repository;
+package com.playprobie.api.domain.survey.dao;
 
 import java.util.List;
 

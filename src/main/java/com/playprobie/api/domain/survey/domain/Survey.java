@@ -62,7 +62,7 @@ public class Survey extends BaseTimeEntity {
 		this.endAt = endAt;
 	}
 
-	public void setSurveyUrl(String surveyUrl) {
+	public void assignUrl(String surveyUrl) {
 		this.surveyUrl = surveyUrl;
 	}
 

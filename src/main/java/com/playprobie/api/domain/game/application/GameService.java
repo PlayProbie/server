@@ -1,4 +1,4 @@
-package com.playprobie.api.domain.game.service;
+package com.playprobie.api.domain.game.application;
 
 import java.util.List;
 
@@ -9,8 +9,9 @@ import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.game.domain.GameGenre;
 import com.playprobie.api.domain.game.dto.CreateGameRequest;
 import com.playprobie.api.domain.game.dto.GameResponse;
-import com.playprobie.api.domain.game.repository.GameRepository;
+import com.playprobie.api.domain.game.dao.GameRepository;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
+import com.playprobie.api.global.error.exception.InvalidValueException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,6 +55,6 @@ public class GameService {
                 return g;
             }
         }
-        throw new IllegalArgumentException("유효하지 않은 장르 코드: " + code);
+        throw new InvalidValueException(code);
     }
 }

@@ -1,4 +1,4 @@
-package com.playprobie.api.domain.game.controller;
+package com.playprobie.api.domain.game.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.playprobie.api.domain.game.dto.CreateGameRequest;
 import com.playprobie.api.domain.game.dto.GameResponse;
-import com.playprobie.api.domain.game.service.GameService;
+import com.playprobie.api.domain.game.application.GameService;
+import com.playprobie.api.global.common.response.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,14 +25,14 @@ public class GameController {
     private final GameService gameService;
 
     @PostMapping
-    public ResponseEntity<GameResponse> createGame(@Valid @RequestBody CreateGameRequest request) {
+    public ResponseEntity<ApiResponse<GameResponse>> createGame(@Valid @RequestBody CreateGameRequest request) {
         GameResponse response = gameService.createGame(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
     }
 
     @GetMapping("/{gameId}")
-    public ResponseEntity<GameResponse> getGame(@PathVariable Long gameId) {
+    public ResponseEntity<ApiResponse<GameResponse>> getGame(@PathVariable Long gameId) {
         GameResponse response = gameService.getGame(gameId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.of(response));
     }
 }
