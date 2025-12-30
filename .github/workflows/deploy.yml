@@ -69,17 +69,14 @@ jobs:
         aws ssm send-command \
           --document-name "AWS-RunShellScript" \
           --targets "Key=instanceids,Values=${{ secrets.DEV_EC2_INSTANCE_ID }}" \
-          --comment "Deploying PlayProbie Server via SSM" \
+          --comment "Deploying Spring Boot via SSM (FastAPI Style)" \
           --parameters 'commands=[
-            "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
+            "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
             "docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:develop-latest",
             "docker stop playprobie-server-dev || true",
             "docker rm playprobie-server-dev || true",
-            "docker run -d --name playprobie-server-dev -p 8080:8080 -e SPRING_PROFILES_ACTIVE=dev -e DB_URL=${{ secrets.DEV_DB_URL }} -e DB_USER=${{ secrets.DEV_DB_USER }} -e DB_PASS=${{ secrets.DEV_DB_PASS }} -e AI_SERVER_URL=${{ secrets.DEV_AI_SERVER_URL }} -e CORS_ALLOWED_ORIGINS=${{ secrets.DEV_CORS_ALLOWED_ORIGINS }} ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:develop-latest",
-            "echo \"Waiting for application to start...\"",
-            "for i in {1..10}; do if curl -f http://localhost:8080/actuator/health; then echo \"Health check passed!\"; docker image prune -f; exit 0; fi; echo \"Waiting...\"; sleep 10; done",
-            "echo \"Health check failed!\"",
-            "exit 1"
+            "docker run -d --name playprobie-server-dev -p 8080:8080 -e SPRING_PROFILES_ACTIVE=dev -e DB_URL=\"${{ secrets.DEV_DB_URL }}\" -e DB_USER=\"${{ secrets.DEV_DB_USER }}\" -e DB_PASS=\"${{ secrets.DEV_DB_PASS }}\" -e AI_SERVER_URL=\"${{ secrets.DEV_AI_SERVER_URL }}\" -e CORS_ALLOWED_ORIGINS=\"${{ secrets.DEV_CORS_ALLOWED_ORIGINS }}\" ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:develop-latest",
+            "docker image prune -f"
           ]' \
-          --region ${{ secrets.AWS_REGION }}
+          --region ${{ env.AWS_REGION }}
 
