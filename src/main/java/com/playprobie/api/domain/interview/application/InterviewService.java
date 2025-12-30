@@ -32,29 +32,29 @@ public class InterviewService {
 	@Transactional
 	public InterviewStartResponse createSession(Long surveyId) {
 		Survey survey = surveyRepository.findById(surveyId)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
 
 		/* tester profile 임시 생성 */
 		TesterProfile testerProfile = TesterProfile.builder()
-			.testerId("f1e2d3c4-b5a6-7980-1234-567890abcdef")
-			.ageGroup("20s")
-			.gender("M")
-			.preferGenre("STRATEGY")
-			.build();
+				.testerId("f1e2d3c4-b5a6-7980-1234-567890abcdef")
+				.ageGroup("20s")
+				.gender("M")
+				.preferGenre("STRATEGY")
+				.build();
 
 		SurveySession session = SurveySession.builder()
-			.survey(survey)
-			.testerProfile(testerProfile)
-			.build();
+				.survey(survey)
+				.testerProfile(testerProfile)
+				.build();
 
 		SurveySession surveySession = surveySessionRepository.save(session);
 
 		String sseUrl = "/interview/sessions/" + testerProfile.getTesterId() + "/stream";
 
 		return InterviewStartResponse.builder()
-			.session(SessionInfo.from(surveySession))
-			.sseUrl(sseUrl)
-			.build();
+				.session(SessionInfo.from(surveySession))
+				.sseUrl(sseUrl)
+				.build();
 	}
 
 	@Transactional
@@ -66,10 +66,17 @@ public class InterviewService {
 
 	private SurveySession findAndValidateSession(Long sessionId, Long surveyId) {
 		SurveySession session = surveySessionRepository.findById(sessionId)
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 
 		session.validateSurveyId(surveyId);
 
 		return session;
 	}
+
+	@Transactional
+	public InterviewLog saveInterviewLog(InterviewLog log) {
+		return interviewLogRepository.save(log);
+	}
+
+
 }
