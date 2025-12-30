@@ -17,7 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/games")
+@RequestMapping("/games")
 @RequiredArgsConstructor
 public class GameController {
 
