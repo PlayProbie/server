@@ -9,10 +9,10 @@ import org.springframework.context.annotation.Profile;
 
 import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.game.domain.GameGenre;
-import com.playprobie.api.domain.game.repository.GameRepository;
+import com.playprobie.api.domain.game.dao.GameRepository;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.TestPurpose;
-import com.playprobie.api.domain.survey.repository.SurveyRepository;
+import com.playprobie.api.domain.survey.dao.SurveyRepository;
 
 import lombok.RequiredArgsConstructor;
 

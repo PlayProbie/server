@@ -22,3 +22,8 @@ logging:
   level:
     com.playprobie: DEBUG # 우리 코드는 상세하게
     org.springframework.web: DEBUG
+
+# AI 서버 설정
+ai:
+  server:
+    url: http://localhost:8000
