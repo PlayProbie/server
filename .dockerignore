@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Build
+build
+bin
+out
+.gradle
+
+# Documentation
+*.md
+docs
+
+# Agent/Config
+.agent
+GEMINI.md
+
+# Test artifacts
+*.log
+*.tmp
