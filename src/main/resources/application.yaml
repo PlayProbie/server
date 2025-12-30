@@ -28,5 +28,4 @@ springdoc:
     display-request-duration: true
 
 cors:
-  allowed-origins:
-    - ${CORS_ALLOWED_ORIGINS}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:}
