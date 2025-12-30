@@ -6,6 +6,8 @@ import com.playprobie.api.global.domain.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "fixed_question")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@EqualsAndHashCode(of = {"id"}, callSuper = false)
+@EqualsAndHashCode(of = { "id" }, callSuper = false)
 public class FixedQuestion extends BaseTimeEntity {
 
 	@Id
@@ -37,10 +39,31 @@ public class FixedQuestion extends BaseTimeEntity {
 	@Column(name = "q_order")
 	private Integer order;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "q_status")
+	private QuestionStatus status;
+
 	@Builder
-	public FixedQuestion(Long surveyId, String content, Integer order) {
+	public FixedQuestion(Long surveyId, String content, Integer order, QuestionStatus status) {
 		this.surveyId = Objects.requireNonNull(surveyId, "FixedQuestion 생성 시 surveyId는 필수입니다");
 		this.content = content;
 		this.order = order;
+		this.status = status != null ? status : QuestionStatus.DRAFT;
+	}
+
+	public void updateContent(String content) {
+		this.content = content;
+	}
+
+	public void confirm() {
+		this.status = QuestionStatus.CONFIRMED;
+	}
+
+	public boolean isDraft() {
+		return this.status == QuestionStatus.DRAFT;
+	}
+
+	public boolean isConfirmed() {
+		return this.status == QuestionStatus.CONFIRMED;
 	}
 }

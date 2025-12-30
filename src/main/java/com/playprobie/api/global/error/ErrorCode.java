@@ -13,7 +13,16 @@ public enum ErrorCode {
 	INTERNAL_SERVER_ERROR(500, "C004", "서버 내부 오류가 발생했습니다."),
 	HANDLE_ACCESS_DENIED(403, "C005", "접근 권한이 없습니다."),
 	INVALID_TYPE_VALUE(400, "C006", "잘못된 타입의 값입니다."),
-	SURVEY_SESSION_NOT_FOUND(404, "S001", "요청하신 설문 세션을 찾을 수 없습니다.");
+
+	// Game
+	GAME_NOT_FOUND(404, "G001", "게임을 찾을 수 없습니다."),
+
+	// Survey
+	SURVEY_NOT_FOUND(404, "S001", "설문을 찾을 수 없습니다."),
+	QUESTION_NOT_FOUND(404, "S002", "질문을 찾을 수 없습니다."),
+	QUESTION_ALREADY_CONFIRMED(400, "S003", "이미 확정된 질문은 수정할 수 없습니다.");
+  SURVEY_SESSION_NOT_FOUND(404, "S004", "요청하신 설문 세션을 찾을 수 없습니다.");
+
 
 	private final int status;
 	private final String code;

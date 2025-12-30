@@ -1,11 +1,12 @@
 package com.playprobie.api.domain.game.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.playprobie.api.global.domain.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,23 +30,55 @@ public class Game extends BaseTimeEntity {
 	@Column(name = "game_name", nullable = false)
 	private String name;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "game_genre")
-	private GameGenre genre;
+	@Column(name = "game_genre", columnDefinition = "TEXT")
+	private String genresJson;
 
 	@Column(name = "game_context", columnDefinition = "TEXT")
 	private String context;
 
 	@Builder
-	public Game(String name, GameGenre genre, String context) {
+	public Game(String name, List<GameGenre> genres, String context) {
 		this.name = name;
-		this.genre = genre;
+		this.genresJson = convertGenresToJson(genres);
 		this.context = context;
 	}
 
-	public void update(String name, GameGenre genre, String context) {
+	public List<GameGenre> getGenres() {
+		if (genresJson == null || genresJson.isBlank()) {
+			return new ArrayList<>();
+		}
+		List<GameGenre> result = new ArrayList<>();
+		String cleaned = genresJson.replace("[", "").replace("]", "").replace("\"", "");
+		for (String code : cleaned.split(",")) {
+			String trimmed = code.trim();
+			for (GameGenre g : GameGenre.values()) {
+				if (g.getCode().equals(trimmed)) {
+					result.add(g);
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	private String convertGenresToJson(List<GameGenre> genres) {
+		if (genres == null || genres.isEmpty()) {
+			return "[]";
+		}
+		StringBuilder sb = new StringBuilder("[");
+		for (int i = 0; i < genres.size(); i++) {
+			sb.append("\"").append(genres.get(i).getCode()).append("\"");
+			if (i < genres.size() - 1) {
+				sb.append(",");
+			}
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+
+	public void update(String name, List<GameGenre> genres, String context) {
 		this.name = name;
-		this.genre = genre;
+		this.genresJson = convertGenresToJson(genres);
 		this.context = context;
 	}
 

@@ -1,4 +1,6 @@
 spring:
+  jackson:
+    property-naming-strategy: SNAKE_CASE
   datasource:
     url: jdbc:h2:mem:playprobie_db;MODE=MySQL # 메모리 DB 사용
     driver-class-name: org.h2.Driver
@@ -20,3 +22,8 @@ logging:
   level:
     com.playprobie: DEBUG # 우리 코드는 상세하게
     org.springframework.web: DEBUG
+
+# AI 서버 설정
+ai:
+  server:
+    url: http://localhost:8000
