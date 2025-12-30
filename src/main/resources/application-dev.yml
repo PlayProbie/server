@@ -16,3 +16,8 @@ logging:
   level:
     com.playprobie: INFO
     org.springframework: INFO
+
+# AI 서버 설정
+ai:
+  server:
+    url: ${AI_SERVER_URL:http://localhost:8000}

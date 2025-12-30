@@ -9,12 +9,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
+import com.playprobie.api.domain.survey.domain.QuestionStatus;
 
 public interface FixedQuestionRepository extends JpaRepository<FixedQuestion, Long> {
 
     Optional<FixedQuestion> findFirstBySurveyIdOrderByOrderAsc(Long surveyId);
 
     List<FixedQuestion> findBySurveyIdOrderByOrderAsc(Long surveyId);
+
+    List<FixedQuestion> findBySurveyIdAndStatusOrderByOrderAsc(Long surveyId, QuestionStatus status);
+
+    void deleteBySurveyId(Long surveyId);
 
     /**
      * N+1 최적화: 여러 설문의 첫 번째 질문 일괄 조회
