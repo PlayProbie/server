@@ -9,7 +9,7 @@ spring:
     password: ${DB_PASS:password}
   jpa:
     hibernate:
-      ddl-auto: validate # 실제 운영에선 테이블 맘대로 바꾸면 안됨 (검증만)
+      ddl-auto: create
     show-sql: false # 운영에선 SQL 로그 끄기
 
 logging:

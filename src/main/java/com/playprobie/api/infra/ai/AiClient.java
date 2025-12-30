@@ -34,4 +34,7 @@ public interface AiClient {
          */
         List<String> getQuestionFeedback(String gameName, String gameGenre, String gameContext,
                         String testPurpose, String originalQuestion, String feedback);
+ 
+        void streamNextQuestion(String sessionId, String userAnswer, String currentQuestion);
 }
+  

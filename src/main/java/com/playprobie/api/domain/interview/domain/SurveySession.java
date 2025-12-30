@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import com.playprobie.api.domain.survey.domain.Survey;
+import com.playprobie.api.global.error.exception.EntityNotFoundException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -104,5 +105,14 @@ public class SurveySession {
 		}
 		this.status = SessionStatus.DROPPED;
 		this.endedAt = LocalDateTime.now();
+	}
+
+	/**
+	 * 해당 세션이 파라미터로 넘어온 surveyId에 속하는지 검증
+	 */
+	public void validateSurveyId(Long surveyId) {
+		if (this.survey == null || !this.survey.getId().equals(surveyId)) {
+			throw new EntityNotFoundException();
+		}
 	}
 }

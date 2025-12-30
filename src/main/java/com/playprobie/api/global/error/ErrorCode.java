@@ -21,6 +21,8 @@ public enum ErrorCode {
 	SURVEY_NOT_FOUND(404, "S001", "설문을 찾을 수 없습니다."),
 	QUESTION_NOT_FOUND(404, "S002", "질문을 찾을 수 없습니다."),
 	QUESTION_ALREADY_CONFIRMED(400, "S003", "이미 확정된 질문은 수정할 수 없습니다.");
+  SURVEY_SESSION_NOT_FOUND(404, "S004", "요청하신 설문 세션을 찾을 수 없습니다.");
+
 
 	private final int status;
 	private final String code;
