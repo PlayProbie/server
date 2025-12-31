@@ -2,6 +2,9 @@ package com.playprobie.api.domain.interview.domain;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
 
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
@@ -47,6 +50,10 @@ public class SurveySession {
 	@Column(name = "session_id")
 	private Long id;
 
+	@UuidGenerator(style = UuidGenerator.Style.TIME)
+	@Column(name = "session_uuid")
+	private UUID uuid;
+
 	/**
 	 * 연결된 설문 (필수)
 	 *
@@ -58,7 +65,11 @@ public class SurveySession {
 	@JoinColumn(name = "survey_id", nullable = false)
 	private Survey survey;
 
-	@Embedded // 테스터 정보 그룹화
+	/**
+	 * 초기 생성 시점에 null일 수 있으며
+	 * 추후 업데이트
+	 */
+	@Embedded
 	private TesterProfile testerProfile;
 
 	@Enumerated(EnumType.STRING)
@@ -74,9 +85,18 @@ public class SurveySession {
 	@Builder
 	public SurveySession(Survey survey, TesterProfile testerProfile) {
 		this.survey = Objects.requireNonNull(survey, "SurveySession 생성 시 Survey는 필수입니다");
-		this.testerProfile = Objects.requireNonNull(testerProfile, "SurveySession 생성 시 TesterProfile은 필수입니다");
+		this.uuid = UUID.randomUUID();
+		this.testerProfile = testerProfile;
 		this.status = SessionStatus.IN_PROGRESS;
 		this.startedAt = LocalDateTime.now();
+	}
+
+	/**
+	 * @param testerProfile
+	 * @desc 설문이 종료 후 tester정보를 업데이트
+	 */
+	public void registerTesterProfile(TesterProfile testerProfile) {
+		this.testerProfile = testerProfile;
 	}
 
 	/**
