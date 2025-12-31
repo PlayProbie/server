@@ -1,21 +1,25 @@
 package com.playprobie.api.infra.sse.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-public class SseResponse {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class SseResponse<T> {
 
-	private String type;
-	private String text;
-	private String action;
+	private String id;
+	private String event;
+	private T data;
 
-	public static SseResponse of(String type, String text, String action) {
-		return SseResponse.builder()
-			.type(type)
-			.text(text)
-			.action(action)
+	// 팩토리 메서드: 타입 추론을 통해 깔끔하게 생성
+	public static <T> SseResponse<T> of(String id, String event, T data) {
+		return SseResponse.<T>builder()
+			.id(id)
+			.event(event)
+			.data(data)
 			.build();
 	}
 }
