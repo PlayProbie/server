@@ -1,9 +1,12 @@
-package com.playprobie.api.infra.sse;
+package com.playprobie.api.infra.sse.service;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.playprobie.api.infra.sse.repository.SseEmitterRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,26 +20,13 @@ public class SseEmitterService {
 
 	private final SseEmitterRepository emitterRepository;
 
-	public SseEmitter connect(String sessionId) {
-		log.info("Creating new SseEmitter. SessionId: {}", sessionId);
+	public SseEmitter connect(UUID uuid) {
+		String sessionUuid = uuid.toString();
 		SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
+		emitterRepository.save(sessionUuid, emitter);
 
-		emitter.onCompletion(() -> {
-			log.info("SSE completed. SessionId: {}", sessionId);
-			emitterRepository.deleteById(sessionId);
-		});
-		emitter.onTimeout(() -> {
-			log.warn("SSE timed out. SessionId: {}", sessionId);
-			emitterRepository.deleteById(sessionId);
-		});
-		emitter.onError((e) -> {
-			log.error("SSE error: {}. SessionId: {}", e.getMessage(), sessionId);
-			emitterRepository.deleteById(sessionId);
-		});
-		emitterRepository.save(sessionId, emitter);
-		log.info("SseEmitter saved. SessionId: {}", sessionId);
-
-		send(sessionId, "connect", "connected");
+		//TODO: spring 자체 메시지 전송
+		send(sessionUuid, "connect", "connected");
 		return emitter;
 	}
 
@@ -54,7 +44,7 @@ public class SseEmitterService {
 						emitter.completeWithError(e);
 					}
 				},
-				() -> log.warn("No active emitter found. SessionId: {}", sessionId));
+				() -> log.warn("SSE Emitter를 찾을 수 없습니다. SessionId: {}", sessionId));
 	}
 
 	public void complete(String sessionId) {
