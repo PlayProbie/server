@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 테스트용 초기 데이터 설정
  * - local 프로파일에서만 실행
+ * TODO: 검증
  */
 @Configuration
 @Profile("local")
