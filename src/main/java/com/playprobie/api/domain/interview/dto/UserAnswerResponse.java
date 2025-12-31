@@ -6,7 +6,7 @@ import java.time.ZoneId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record MessageAcceptResponse(
+public record UserAnswerResponse(
         boolean accepted,
 
         @JsonProperty("saved_log") SavedLog savedLog) {
@@ -24,9 +24,9 @@ public record MessageAcceptResponse(
             @JsonProperty("answered_at") @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime answeredAt) {
     }
 
-    public static MessageAcceptResponse of(Integer turnNum, String qType, Long fixedQId,
+    public static UserAnswerResponse of(Integer turnNum, String qType, Long fixedQId,
             String questionText, String answerText) {
-        return new MessageAcceptResponse(
+        return new UserAnswerResponse(
                 true,
                 new SavedLog(turnNum, qType, fixedQId, questionText, answerText,
                         OffsetDateTime.now(ZoneId.of("Asia/Seoul"))));

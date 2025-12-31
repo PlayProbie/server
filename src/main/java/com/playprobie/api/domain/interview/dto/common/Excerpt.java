@@ -1,5 +1,7 @@
 package com.playprobie.api.domain.interview.dto.common;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 
 import lombok.Builder;
@@ -7,6 +9,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class Excerpt {
 	private int turnNum;
 	private String qType;
