@@ -1,6 +1,7 @@
 package com.playprobie.api.domain.interview.api;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,18 +13,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.playprobie.api.domain.interview.application.InterviewService;
-import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
-import com.playprobie.api.domain.interview.domain.InterviewLog;
-import com.playprobie.api.domain.interview.domain.QuestionType;
-import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
-import com.playprobie.api.domain.interview.dto.InterviewStartResponse;
-import com.playprobie.api.domain.interview.dto.MessageAcceptResponse;
-import com.playprobie.api.domain.interview.dto.MessageRequest;
-import com.playprobie.api.global.domain.ApiResponse;
-import com.playprobie.api.infra.sse.SseEmitterService;
-import com.playprobie.api.infra.ai.AiClient;
+import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
+import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
+import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
+import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.infra.ai.impl.FastApiClient;
+import com.playprobie.api.infra.sse.service.SseEmitterService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,72 +31,44 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 public class InterviewApi {
 
-	/* mocking server 용도 선언 */
-	private final AiClient aiClient;
-
+	private final FastApiClient fastApiClient;
 	private final SseEmitterService sseEmitterService;
 	private final InterviewService interviewService;
 	private final SurveySessionRepository surveySessionRepository;
 
-	@PostMapping("/surveys/interview/{surveyId}")
-	public ResponseEntity<ApiResponse<InterviewStartResponse>> createSession(@PathVariable Long surveyId) {
-		return ResponseEntity.ok(ApiResponse.of(interviewService.createSession(surveyId)));
+	@PostMapping("/interview/{surveyId}")
+	public ResponseEntity<ApiResponse<InterviewCreateResponse>> createSession(
+			@PathVariable Long surveyId) {
+		return ResponseEntity.status(201).body(ApiResponse.of(interviewService.createSession(surveyId)));
 	}
 
-	@GetMapping("/surveys/interview/{surveyId}/{sessionId}")
-	public ResponseEntity<ApiResponse<InterviewHistoryResponse>> selectInterviewList(@PathVariable Long surveyId,
-			@PathVariable Long sessionId) {
-		return ResponseEntity.ok(ApiResponse.of(interviewService.getInterviewHistory(surveyId, sessionId)));
+	@GetMapping("/interview/{surveyId}/{sessionUuid}")
+	public ResponseEntity<ApiResponse<InterviewHistoryResponse>> selectInterviewList(
+			@PathVariable Long surveyId,
+			@PathVariable UUID sessionUuid) {
+		return ResponseEntity.ok(ApiResponse.of(interviewService.getInterviewHistory(surveyId, sessionUuid)));
 	}
 
-	@GetMapping(value = "/interview/{sessionId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public SseEmitter stream(@PathVariable String sessionId) throws IOException {
-		return sseEmitterService.connect(sessionId);
+	@GetMapping(value = "/interview/{sessionUuid}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public SseEmitter stream(@PathVariable UUID sessionUuid) throws IOException {
+		return sseEmitterService.connect(sessionUuid);
 	}
 
-	@PostMapping("interview/{sessionId}/messages")
-	public ResponseEntity<ApiResponse<MessageAcceptResponse>> receiveAnswer(
-			@PathVariable String sessionId,
-			@RequestBody MessageRequest request) {
+	@PostMapping("interview/{sessionUuid}/messages")
+	public ResponseEntity<ApiResponse<UserAnswerResponse>> receiveAnswer(
+			@PathVariable UUID sessionUuid,
+			@RequestBody UserAnswerRequest request) {
+		String sessionId = sessionUuid.toString();
 
-		// TODO: 실제 구현 시 대기 중인 질문 조회 및 저장 로직 필요
-		// 현재는 임시로 응답 생성
-		String currentQuestion = "어느 지점에서 막혔나요?"; // 대기 중인 질문에서 조회
+		//TODO: fixed_question Key값을 얻기 위한 임시 조회
+		FixedQuestionResponse currentQuestion = interviewService.getFirstQuestion(sessionId);
 
 		// AI 스트리밍 시작
-		aiClient.streamNextQuestion(sessionId, request.answerText(), currentQuestion);
+		fastApiClient.streamNextQuestion(sessionId, request);
 
-		String seesionId = sessionId;
-		long fixedQId = 10L;
-		int turnNum = request.turnNum();
-		QuestionType qType = QuestionType.TAIL;
-		String questionText = currentQuestion;
-		String answerText = request.answerText();
-		int tokensUsed = 10;
+		// 질문과 응답 저장
+		UserAnswerResponse userAnswerResponse = interviewService.saveInterviewLog(sessionId, request, currentQuestion);
 
-		SurveySession surveySession =
-			surveySessionRepository.findById(Long.valueOf(sessionId))
-				.orElseThrow(() -> new RuntimeException("Session not found"));
-
-		InterviewLog interviewLog = InterviewLog.builder()
-			.session(surveySession)
-			.fixedQuestionId(fixedQId)
-			.turnNum(turnNum)
-			.type(qType)
-			.questionText(questionText)
-			.answerText(answerText)
-			.build();
-
-		InterviewLog savedLog = interviewService.saveInterviewLog(interviewLog);
-
-		// 저장된 로그 응답
-		MessageAcceptResponse response = MessageAcceptResponse.of(
-				savedLog.getTurnNum(),
-				String.valueOf(savedLog.getType()),
-				savedLog.getFixedQuestionId(),
-				savedLog.getQuestionText(),
-				savedLog.getAnswerText());
-
-		return ResponseEntity.status(201).body(ApiResponse.of(response));
+		return ResponseEntity.status(201).body(ApiResponse.of(userAnswerResponse));
 	}
 }

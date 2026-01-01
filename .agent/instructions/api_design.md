@@ -9,22 +9,21 @@
 
 | 규칙        | 설명              | 예시                  |
 |-----------|-----------------|---------------------|
-| Base Path | `/api/v1` 사용    | `/api/v1/users`     |
 | 리소스명      | 복수형, kebab-case | `/users`            |
 | 계층 표현     | 중첩 리소스로 표현      | `/users/{id}/roles` |
 
 ### URL 예시
 
 ```
-GET    /api/v1/users              # 사용자 목록
-POST   /api/v1/users              # 사용자 생성
-GET    /api/v1/users/{id}         # 사용자 상세
-PUT    /api/v1/users/{id}         # 사용자 전체 수정
-PATCH  /api/v1/users/{id}         # 사용자 부분 수정
-DELETE /api/v1/users/{id}         # 사용자 삭제
+GET    /users              # 사용자 목록
+POST   /users              # 사용자 생성
+GET    /users/{id}         # 사용자 상세
+PUT    /users/{id}         # 사용자 전체 수정
+PATCH  /users/{id}         # 사용자 부분 수정
+DELETE /users/{id}         # 사용자 삭제
 
-GET    /api/v1/users/{id}/roles   # 사용자의 권한 목록
-POST   /api/v1/users/{id}/roles   # 권한 추가
+GET    /users/{id}/roles   # 사용자의 권한 목록
+POST   /users/{id}/roles   # 권한 추가
 ```
 
 ---

@@ -2,6 +2,8 @@ package com.playprobie.api.infra.ai;
 
 import java.util.List;
 
+import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+
 /**
  * AI 클라이언트 인터페이스
  * FastAPI AI 서버와 통신
@@ -34,7 +36,7 @@ public interface AiClient {
          */
         List<String> getQuestionFeedback(String gameName, String gameGenre, String gameContext,
                         String testPurpose, String originalQuestion, String feedback);
- 
-        void streamNextQuestion(String sessionId, String userAnswer, String currentQuestion);
+
+        void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
 }
   

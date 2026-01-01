@@ -12,7 +12,7 @@ import com.playprobie.api.domain.survey.application.SurveyResultService;
 import com.playprobie.api.domain.survey.dto.SurveyResultDetailResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultListResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultSummaryResponse;
-import com.playprobie.api.global.domain.ApiResponse;
+import com.playprobie.api.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 

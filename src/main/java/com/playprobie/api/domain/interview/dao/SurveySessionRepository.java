@@ -1,6 +1,8 @@
 package com.playprobie.api.domain.interview.dao;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,8 @@ import com.playprobie.api.domain.interview.domain.SessionStatus;
 import com.playprobie.api.domain.interview.domain.SurveySession;
 
 public interface SurveySessionRepository extends JpaRepository<SurveySession, Long> {
+
+    Optional<SurveySession> findByUuid(UUID uuid);
 
     @Query("""
             SELECT COUNT(ss) FROM SurveySession ss
