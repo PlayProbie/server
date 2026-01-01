@@ -3,6 +3,9 @@ package com.playprobie.api.infra.ai;
 import java.util.List;
 
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+import com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest;
+import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
+import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 
 /**
  * AI 클라이언트 인터페이스
@@ -13,11 +16,6 @@ public interface AiClient {
         /**
          * 고정 질문 초안 생성
          * POST /fixed-questions/draft
-         *
-         * @param gameName    게임 이름
-         * @param gameGenre   게임 장르
-         * @param gameContext 게임 설명
-         * @param testPurpose 테스트 목적
          * @return 생성된 질문 목록 (최대 5개)
          */
         List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose);
@@ -26,17 +24,13 @@ public interface AiClient {
          * 질문 피드백 기반 대안 생성
          * POST /fixed-questions/feedback
          *
-         * @param gameName         게임 이름
-         * @param gameGenre        게임 장르
-         * @param gameContext      게임 설명
-         * @param testPurpose      테스트 목적
-         * @param originalQuestion 원본 질문
-         * @param feedback         사용자 피드백
-         * @return 대안 질문 목록 (3개)
+         * @return 대안 질문 목록 (3개), feedback
          */
-        List<String> getQuestionFeedback(String gameName, String gameGenre, String gameContext,
-                        String testPurpose, String originalQuestion, String feedback);
+        GenerateFeedbackResponse getQuestionFeedback(GenerateFeedbackRequest request);
 
+        /**
+         * streaming 대화 토큰 전달
+         */
         void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
 }
   

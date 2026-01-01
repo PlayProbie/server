@@ -13,7 +13,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.infra.ai.AiClient;
-import com.playprobie.api.infra.ai.dto.AiInteractionRequest;
+import com.playprobie.api.infra.ai.dto.request.AiInteractionRequest;
+import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
+import com.playprobie.api.infra.ai.dto.request.GenerateQuestionRequest;
+import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
+import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
 import com.playprobie.api.infra.sse.dto.payload.AnalysisPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
@@ -25,6 +29,7 @@ import com.playprobie.api.infra.sse.dto.SseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
@@ -37,13 +42,39 @@ public class FastApiClient implements AiClient {
 
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose) {
-		return List.of();
+		GenerateQuestionRequest request = GenerateQuestionRequest.builder()
+			.gameName(gameName)
+			.gameGenre(gameGenre)
+			.gameContext(gameContext)
+			.testPurpose(testPurpose)
+			.build();
+
+		Mono<GenerateQuestionResponse> response = aiWebClient.post()
+			.uri("/fixed-questions/draft")
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON)
+			.bodyValue(request)
+			.retrieve()
+			.bodyToMono(GenerateQuestionResponse.class);
+
+		GenerateQuestionResponse result = response.block();
+
+		return result.getQuestions();
 	}
 
 	@Override
-	public List<String> getQuestionFeedback(String gameName, String gameGenre, String gameContext, String testPurpose,
-			String originalQuestion, String feedback) {
-		return List.of();
+	public GenerateFeedbackResponse getQuestionFeedback(GenerateFeedbackRequest request) {
+		Mono<GenerateFeedbackResponse> response = aiWebClient.post()
+			.uri("/fixed-questions/feedback")
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON)
+			.bodyValue(request)
+			.retrieve()
+			.bodyToMono(GenerateFeedbackResponse.class);
+
+		GenerateFeedbackResponse result = response.block();
+
+		return result;
 	}
 
 	@Override
@@ -141,5 +172,4 @@ public class FastApiClient implements AiClient {
 				log.debug("Unknown event type received: {}", eventType);
 		}
 	}
-
 }
