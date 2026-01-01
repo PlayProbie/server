@@ -3,7 +3,6 @@ package com.playprobie.api.infra.ai;
 import java.util.List;
 
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
-import com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 
@@ -16,6 +15,7 @@ public interface AiClient {
         /**
          * 고정 질문 초안 생성
          * POST /fixed-questions/draft
+         * 
          * @return 생성된 질문 목록 (최대 5개)
          */
         List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose);
@@ -33,4 +33,3 @@ public interface AiClient {
          */
         void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
 }
-  
