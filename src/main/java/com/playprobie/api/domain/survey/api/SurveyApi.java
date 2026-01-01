@@ -11,14 +11,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.playprobie.api.domain.survey.dto.AiQuestionsRequest;
+import com.playprobie.api.domain.survey.dto.request.AiQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
-import com.playprobie.api.domain.survey.dto.CreateSurveyRequest;
+import com.playprobie.api.domain.survey.dto.request.CreateSurveyRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
-import com.playprobie.api.domain.survey.dto.QuestionFeedbackItem;
+import com.playprobie.api.domain.survey.dto.QuestionFeedbackResponse;
 import com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest;
-import com.playprobie.api.domain.survey.dto.SurveyResponse;
+import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
 import com.playprobie.api.domain.survey.application.SurveyService;
 import com.playprobie.api.global.common.response.ApiResponse;
 
@@ -28,11 +28,9 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/surveys")
 @RequiredArgsConstructor
-public class SurveyController {
+public class SurveyApi {
 
     private final SurveyService surveyService;
-
-    // ========== Survey CRUD ==========
 
     /**
      * 설문 생성
@@ -54,8 +52,6 @@ public class SurveyController {
         return ResponseEntity.ok(ApiResponse.of(response));
     }
 
-    // ========== AI 질문 생성 ==========
-
     /**
      * AI 질문 자동 생성 (미리보기, DB 저장 X)
      * POST /surveys/ai-questions
@@ -63,24 +59,31 @@ public class SurveyController {
     @PostMapping("/ai-questions")
     public ResponseEntity<ApiResponse<List<String>>> generateAiQuestions(
             @Valid @RequestBody AiQuestionsRequest request) {
-        List<String> questions = surveyService.generateAiQuestions(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(questions));
+        List<String> result = surveyService.generateAiQuestions(request);
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(ApiResponse.of(result));
     }
-
-    // ========== 질문 피드백 ==========
 
     /**
      * 질문 피드백 (다중 질문에 대한 피드백 + 대안 제공)
      * POST /surveys/question-feedback
      */
     @PostMapping("/question-feedback")
-    public ResponseEntity<ApiResponse<List<QuestionFeedbackItem>>> getQuestionFeedback(
+    public ResponseEntity<ApiResponse<QuestionFeedbackResponse>> getQuestionFeedback(
             @Valid @RequestBody QuestionFeedbackRequest request) {
-        List<QuestionFeedbackItem> feedback = surveyService.getQuestionFeedback(request);
+        //TODO: 우선 클라이언트에서 질문 하나씩만을 받는다. 추후 생성된 질문 모두를 전달해 줄 예정
+        String question = request.questions().get(0);
+        String gameGenre = String.join(", ", request.gameGenre());
+        QuestionFeedbackResponse feedback = surveyService.getQuestionFeedback(
+            request.gameName(),
+            gameGenre,
+            request.gameContext(),
+            request.testPurpose(),
+            question
+        );
         return ResponseEntity.ok(ApiResponse.of(feedback));
     }
-
-    // ========== 고정 질문 저장 ==========
 
     /**
      * 고정 질문 저장
@@ -92,8 +95,6 @@ public class SurveyController {
         FixedQuestionsCountResponse response = surveyService.createFixedQuestions(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
     }
-
-    // ========== 질문 조회 ==========
 
     /**
      * 확정(CONFIRMED) 질문 목록 조회
