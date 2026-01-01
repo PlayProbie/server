@@ -19,7 +19,7 @@ import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
 import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
-import com.playprobie.api.global.domain.ApiResponse;
+import com.playprobie.api.global.common.response.ApiResponse;
 import com.playprobie.api.infra.ai.impl.FastApiClient;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
