@@ -1,4 +1,4 @@
-package com.playprobie.api.domain.survey.dto;
+package com.playprobie.api.domain.survey.dto.response;
 
 import java.time.LocalDateTime;
 

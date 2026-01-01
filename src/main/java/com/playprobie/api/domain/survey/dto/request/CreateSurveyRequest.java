@@ -1,9 +1,8 @@
-package com.playprobie.api.domain.survey.dto;
+package com.playprobie.api.domain.survey.dto.request;
 
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.playprobie.api.domain.survey.domain.TestPurpose;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

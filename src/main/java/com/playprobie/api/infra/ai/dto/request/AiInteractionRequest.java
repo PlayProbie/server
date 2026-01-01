@@ -1,4 +1,4 @@
-package com.playprobie.api.infra.ai.dto;
+package com.playprobie.api.infra.ai.dto.request;
 
 import java.util.List;
 import java.util.Map;

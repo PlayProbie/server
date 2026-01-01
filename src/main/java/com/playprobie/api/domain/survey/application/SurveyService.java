@@ -11,19 +11,20 @@ import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.TestPurpose;
-import com.playprobie.api.domain.survey.dto.AiQuestionsRequest;
+import com.playprobie.api.domain.survey.dto.request.AiQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
-import com.playprobie.api.domain.survey.dto.CreateSurveyRequest;
+import com.playprobie.api.domain.survey.dto.request.CreateSurveyRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
-import com.playprobie.api.domain.survey.dto.QuestionFeedbackItem;
-import com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest;
-import com.playprobie.api.domain.survey.dto.SurveyResponse;
+import com.playprobie.api.domain.survey.dto.QuestionFeedbackResponse;
+import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 import com.playprobie.api.global.util.HashIdEncoder;
 import com.playprobie.api.infra.ai.AiClient;
+import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
+import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -72,23 +73,17 @@ public class SurveyService {
                 .orElseThrow(EntityNotFoundException::new);
     }
 
-    // ========== AI 질문 생성 (미리보기) ==========
-
     /**
      * AI를 통해 질문 생성 (DB 저장 없이 미리보기)
      * POST /surveys/ai-questions
      */
     public List<String> generateAiQuestions(AiQuestionsRequest request) {
-        String gameGenre = String.join(", ", request.gameGenre());
-
         return aiClient.generateQuestions(
                 request.gameName(),
-                gameGenre,
+                String.join(", ", request.gameGenre()),
                 request.gameContext(),
                 request.testPurpose());
     }
-
-    // ========== 질문 피드백 ==========
 
     /**
      * 질문에 대한 피드백 제공
@@ -96,30 +91,23 @@ public class SurveyService {
      * 
      * Note: FastAPI는 단일 질문에 대해 피드백을 받으므로, 각 질문에 대해 순차 호출
      */
-    public List<QuestionFeedbackItem> getQuestionFeedback(QuestionFeedbackRequest request) {
-        String gameGenre = String.join(", ", request.gameGenre());
+    public QuestionFeedbackResponse getQuestionFeedback(String gameName, String gameGenre, String gameContext, String testPurpose, String question) {
+        GenerateFeedbackRequest request = GenerateFeedbackRequest.builder()
+            .gameName(gameName)
+            .gameGenre(gameGenre)
+            .gameContext(gameContext)
+            .testPurpose(testPurpose)
+            .originalQuestion(question)
+            .build();
 
-        return request.questions().stream()
-                .map(question -> {
-                    // FastAPI의 /fixed-questions/feedback은 original_question + feedback을 받음
-                    // 여기서는 question을 original_question으로, 기본 피드백 요청으로 처리
-                    List<String> candidates = aiClient.getQuestionFeedback(
-                            request.gameName(),
-                            gameGenre,
-                            request.gameContext(),
-                            request.testPurpose(),
-                            question,
-                            "이 질문을 더 개선해주세요");
+        GenerateFeedbackResponse aiResponse= aiClient.getQuestionFeedback(request);
 
-                    return new QuestionFeedbackItem(
-                            question,
-                            "질문을 분석하여 대안을 생성했습니다.",
-                            candidates);
-                })
-                .toList();
+        return new QuestionFeedbackResponse(
+            question,
+            aiResponse.getFeedback(),
+            aiResponse.getCandidates()
+        );
     }
-
-    // ========== 고정 질문 저장 ==========
 
     /**
      * 고정 질문 저장

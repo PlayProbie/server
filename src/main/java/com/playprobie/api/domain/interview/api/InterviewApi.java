@@ -1,6 +1,5 @@
 package com.playprobie.api.domain.interview.api;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.playprobie.api.domain.interview.application.InterviewService;
-import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
+
 import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
 import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
 import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
@@ -34,7 +33,6 @@ public class InterviewApi {
 	private final FastApiClient fastApiClient;
 	private final SseEmitterService sseEmitterService;
 	private final InterviewService interviewService;
-	private final SurveySessionRepository surveySessionRepository;
 
 	@PostMapping("/interview/{surveyId}")
 	public ResponseEntity<ApiResponse<InterviewCreateResponse>> createSession(
@@ -50,7 +48,7 @@ public class InterviewApi {
 	}
 
 	@GetMapping(value = "/interview/{sessionUuid}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public SseEmitter stream(@PathVariable UUID sessionUuid) throws IOException {
+	public SseEmitter stream(@PathVariable UUID sessionUuid) {
 		return sseEmitterService.connect(sessionUuid);
 	}
 
@@ -60,7 +58,7 @@ public class InterviewApi {
 			@RequestBody UserAnswerRequest request) {
 		String sessionId = sessionUuid.toString();
 
-		//TODO: fixed_question Key값을 얻기 위한 임시 조회
+		// TODO: fixed_question Key값을 얻기 위한 임시 조회
 		FixedQuestionResponse currentQuestion = interviewService.getFirstQuestion(sessionId);
 
 		// AI 스트리밍 시작
