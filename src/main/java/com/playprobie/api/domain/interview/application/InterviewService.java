@@ -1,6 +1,7 @@
 package com.playprobie.api.domain.interview.application;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -37,8 +38,8 @@ public class InterviewService {
 	private final FixedQuestionRepository fixedQuestionRepository;
 
 	@Transactional
-	public InterviewCreateResponse createSession(Long surveyId) {
-		Survey survey = surveyRepository.findById(surveyId)
+	public InterviewCreateResponse createSession(UUID surveyUuid) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
 				.orElseThrow(EntityNotFoundException::new);
 
 		SurveySession surveySession = SurveySession.builder()
@@ -48,14 +49,9 @@ public class InterviewService {
 
 		SurveySession savedSession = surveySessionRepository.save(surveySession);
 
-		FixedQuestionResponse fixedQuestionResponse = fixedQuestionRepository.findFirstBySurveyIdOrderByOrderAsc(surveyId)
-				.map(FixedQuestionResponse::from)
-				.orElseThrow(EntityNotFoundException::new);
-
 		return InterviewCreateResponse.builder()
 				.session(SessionInfo.from(savedSession))
 				.sseUrl(InterviewUrlProvider.getStreamUrl(savedSession.getUuid()))
-				.questionText(fixedQuestionResponse.qContent())
 				.build();
 	}
 
@@ -79,15 +75,33 @@ public class InterviewService {
 		UUID uuid = UUID.fromString(sessionUuid);
 
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 
 		return fixedQuestionRepository.findFirstBySurveyIdOrderByOrderAsc(session.getSurvey().getId())
-			.map(FixedQuestionResponse::from)
-			.orElseThrow(EntityNotFoundException::new);
+				.map(FixedQuestionResponse::from)
+				.orElseThrow(EntityNotFoundException::new);
 	}
 
-	public UserAnswerResponse saveInterviewLog(String sessionId, UserAnswerRequest request, FixedQuestionResponse currentQuestion) {
-		//---------------------------------------------------//
+	public FixedQuestionResponse getQuestionById(Long fixedQId) {
+		return fixedQuestionRepository.findById(fixedQId)
+				.map(FixedQuestionResponse::from)
+				.orElseThrow(EntityNotFoundException::new);
+	}
+
+	public Optional<FixedQuestionResponse> getNextQuestion(String sessionId, int currentOrder) {
+		UUID uuid = UUID.fromString(sessionId);
+		SurveySession session = surveySessionRepository.findByUuid(uuid)
+				.orElseThrow(SessionNotFoundException::new);
+
+		return fixedQuestionRepository
+				.findFirstBySurveyIdAndOrderGreaterThanOrderByOrderAsc(
+						session.getSurvey().getId(), currentOrder)
+				.map(FixedQuestionResponse::from);
+	}
+
+	public UserAnswerResponse saveInterviewLog(String sessionId, UserAnswerRequest request,
+			FixedQuestionResponse currentQuestion) {
+		// ---------------------------------------------------//
 		// String seesionId = sessionId; //uuid
 		// long fixedQId = currentQuestion.fixedQId();
 		// int turnNum = request.getTurnNum(); // null 체크 추가
@@ -95,28 +109,28 @@ public class InterviewService {
 		// String questionText = currentQuestion.qContent();
 		// String answerText = request.getAnswerText();
 		// int tokensUsed = 0;
-		//---------------------------------------------------//
-		//TODO: 예외처리
+		// ---------------------------------------------------//
+		// TODO: 예외처리
 		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
-			.orElseThrow(() -> new RuntimeException("Session not found"));
+				.orElseThrow(() -> new RuntimeException("Session not found"));
 
 		InterviewLog interviewLog = InterviewLog.builder()
-			.session(surveySession)
-			.fixedQuestionId(currentQuestion.fixedQId())
-			.turnNum(request.getTurnNum())
-			//TODO: AI-Server 작업 완료 후 type지정
-			.type(null)
-			.questionText(currentQuestion.qContent())
-			.answerText(request.getAnswerText())
-			.build();
+				.session(surveySession)
+				.fixedQuestionId(currentQuestion.fixedQId())
+				.turnNum(request.getTurnNum())
+				// TODO: AI-Server 작업 완료 후 type지정
+				.type(null)
+				.questionText(currentQuestion.qContent())
+				.answerText(request.getAnswerText())
+				.build();
 
 		InterviewLog savedLog = interviewLogRepository.save(interviewLog);
 
 		return UserAnswerResponse.of(
-			savedLog.getTurnNum(),
-			String.valueOf(savedLog.getType()),
-			savedLog.getFixedQuestionId(),
-			savedLog.getQuestionText(),
-			savedLog.getAnswerText());
+				savedLog.getTurnNum(),
+				String.valueOf(savedLog.getType()),
+				savedLog.getFixedQuestionId(),
+				savedLog.getQuestionText(),
+				savedLog.getAnswerText());
 	}
 }
