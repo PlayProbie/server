@@ -1,32 +1,37 @@
 package com.playprobie.api.domain.survey.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.playprobie.api.domain.survey.domain.Survey;
 
 public record SurveyResponse(
+
 		@JsonProperty("survey_id") Long surveyId,
+
+		@JsonProperty("survey_uuid") java.util.UUID surveyUuid,
 
 		@JsonProperty("survey_name") String surveyName,
 
 		@JsonProperty("survey_url") String surveyUrl,
 
-		@JsonProperty("started_at") LocalDateTime startedAt,
+		@JsonProperty("started_at") OffsetDateTime startedAt,
 
-		@JsonProperty("ended_at") LocalDateTime endedAt,
+		@JsonProperty("ended_at") OffsetDateTime endedAt,
 
 		@JsonProperty("test_purpose") String testPurpose,
 
-		@JsonProperty("created_at") LocalDateTime createdAt) {
+		@JsonProperty("created_at") OffsetDateTime createdAt) {
 	public static SurveyResponse from(Survey survey) {
 		return new SurveyResponse(
 				survey.getId(),
+				survey.getUuid(),
 				survey.getName(),
 				survey.getSurveyUrl(),
-				survey.getStartAt(),
-				survey.getEndAt(),
+				survey.getStartAt().atZone(ZoneId.systemDefault()).toOffsetDateTime(),
+				survey.getEndAt().atZone(ZoneId.systemDefault()).toOffsetDateTime(),
 				survey.getTestPurpose() != null ? survey.getTestPurpose().getCode() : null,
-				survey.getCreatedAt());
+				survey.getCreatedAt().atZone(ZoneId.systemDefault()).toOffsetDateTime());
 	}
 }

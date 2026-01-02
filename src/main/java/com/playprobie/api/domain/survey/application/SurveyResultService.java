@@ -72,7 +72,9 @@ public class SurveyResultService {
                                                 .sessionId(session.getId())
                                                 .surveyName(session.getSurvey().getName())
                                                 .surveyId(session.getSurvey().getId())
-                                                .testerId(session.getTesterProfile().getTesterId())
+                                                .testerId(session.getTesterProfile() != null
+                                                                ? session.getTesterProfile().getTesterId()
+                                                                : null)
                                                 .status(session.getStatus())
                                                 .firstQuestion(firstQuestionMap.get(session.getSurvey().getId()))
                                                 .endedAt(session.getEndedAt())
@@ -107,7 +109,8 @@ public class SurveyResultService {
                                 .sessionId(session.getId())
                                 .surveyName(session.getSurvey().getName())
                                 .surveyId(session.getSurvey().getId())
-                                .testerId(session.getTesterProfile().getTesterId())
+                                .testerId(session.getTesterProfile() != null ? session.getTesterProfile().getTesterId()
+                                                : null)
                                 .status(session.getStatus())
                                 .endedAt(session.getEndedAt())
                                 .build();

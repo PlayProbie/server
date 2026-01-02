@@ -21,7 +21,6 @@ import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
-import com.playprobie.api.global.util.HashIdEncoder;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
@@ -40,6 +39,9 @@ public class SurveyService {
 
     // ========== Survey CRUD ==========
 
+    @org.springframework.beans.factory.annotation.Value("${playprobie.base-url}")
+    private String baseUrl;
+
     @Transactional
     public SurveyResponse createSurvey(CreateSurveyRequest request) {
         Game game = gameService.getGameEntity(request.gameId());
@@ -49,14 +51,14 @@ public class SurveyService {
                 .game(game)
                 .name(request.surveyName())
                 .testPurpose(testPurpose)
-                .startAt(request.startedAt())
-                .endAt(request.endedAt())
+                .startAt(request.startedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
+                .endAt(request.endedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
                 .build();
 
         Survey savedSurvey = surveyRepository.save(survey);
 
-        // URL 생성 (Base62 인코딩)
-        String surveyUrl = "https://playprobie.shop/" + HashIdEncoder.encode(savedSurvey.getId());
+        // URL 생성 (UUID 사용)
+        String surveyUrl = baseUrl + "/surveys/chat/" + savedSurvey.getUuid();
         savedSurvey.assignUrl(surveyUrl);
 
         return SurveyResponse.from(savedSurvey);
@@ -91,22 +93,22 @@ public class SurveyService {
      * 
      * Note: FastAPI는 단일 질문에 대해 피드백을 받으므로, 각 질문에 대해 순차 호출
      */
-    public QuestionFeedbackResponse getQuestionFeedback(String gameName, String gameGenre, String gameContext, String testPurpose, String question) {
+    public QuestionFeedbackResponse getQuestionFeedback(String gameName, String gameGenre, String gameContext,
+            String testPurpose, String question) {
         GenerateFeedbackRequest request = GenerateFeedbackRequest.builder()
-            .gameName(gameName)
-            .gameGenre(gameGenre)
-            .gameContext(gameContext)
-            .testPurpose(testPurpose)
-            .originalQuestion(question)
-            .build();
+                .gameName(gameName)
+                .gameGenre(gameGenre)
+                .gameContext(gameContext)
+                .testPurpose(testPurpose)
+                .originalQuestion(question)
+                .build();
 
-        GenerateFeedbackResponse aiResponse= aiClient.getQuestionFeedback(request);
+        GenerateFeedbackResponse aiResponse = aiClient.getQuestionFeedback(request);
 
         return new QuestionFeedbackResponse(
-            question,
-            aiResponse.getFeedback(),
-            aiResponse.getCandidates()
-        );
+                question,
+                aiResponse.getFeedback(),
+                aiResponse.getCandidates());
     }
 
     /**

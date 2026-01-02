@@ -24,7 +24,9 @@ import com.playprobie.api.global.common.response.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/surveys")
 @RequiredArgsConstructor
@@ -61,8 +63,8 @@ public class SurveyApi {
             @Valid @RequestBody AiQuestionsRequest request) {
         List<String> result = surveyService.generateAiQuestions(request);
         return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(ApiResponse.of(result));
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.of(result));
     }
 
     /**
@@ -72,16 +74,14 @@ public class SurveyApi {
     @PostMapping("/question-feedback")
     public ResponseEntity<ApiResponse<QuestionFeedbackResponse>> getQuestionFeedback(
             @Valid @RequestBody QuestionFeedbackRequest request) {
-        //TODO: 우선 클라이언트에서 질문 하나씩만을 받는다. 추후 생성된 질문 모두를 전달해 줄 예정
         String question = request.questions().get(0);
         String gameGenre = String.join(", ", request.gameGenre());
         QuestionFeedbackResponse feedback = surveyService.getQuestionFeedback(
-            request.gameName(),
-            gameGenre,
-            request.gameContext(),
-            request.testPurpose(),
-            question
-        );
+                request.gameName(),
+                gameGenre,
+                request.gameContext(),
+                request.testPurpose(),
+                question);
         return ResponseEntity.ok(ApiResponse.of(feedback));
     }
 

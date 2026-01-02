@@ -35,4 +35,7 @@ public interface FixedQuestionRepository extends JpaRepository<FixedQuestion, Lo
     List<FixedQuestion> findFirstQuestionsBySurveyIds(@Param("surveyIds") Set<Long> surveyIds);
 
     List<FixedQuestion> findAllByIdIn(Set<Long> ids);
+
+    // 현재 order보다 큰 다음 질문 조회
+    Optional<FixedQuestion> findFirstBySurveyIdAndOrderGreaterThanOrderByOrderAsc(Long surveyId, Integer order);
 }
