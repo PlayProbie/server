@@ -20,6 +20,8 @@ import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.common.response.ApiResponse;
 import com.playprobie.api.infra.ai.impl.FastApiClient;
+import com.playprobie.api.infra.sse.dto.QuestionPayload;
+import com.playprobie.api.infra.sse.dto.SseResponse;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
 import lombok.RequiredArgsConstructor;
@@ -36,7 +38,7 @@ public class InterviewApi {
 
 	@PostMapping("/interview/{surveyId}")
 	public ResponseEntity<ApiResponse<InterviewCreateResponse>> createSession(
-			@PathVariable Long surveyId) {
+			@PathVariable UUID surveyId) {
 		return ResponseEntity.status(201).body(ApiResponse.of(interviewService.createSession(surveyId)));
 	}
 
@@ -49,7 +51,19 @@ public class InterviewApi {
 
 	@GetMapping(value = "/interview/{sessionUuid}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public SseEmitter stream(@PathVariable UUID sessionUuid) {
-		return sseEmitterService.connect(sessionUuid);
+		SseEmitter emitter = sseEmitterService.connect(sessionUuid);
+
+		// SSE 연결 후 첫 질문 전송
+		String sessionId = sessionUuid.toString();
+		FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
+		QuestionPayload questionPayload = QuestionPayload.of(
+				firstQuestion.fixedQId(),
+				"FIXED",
+				firstQuestion.qContent(),
+				firstQuestion.qOrder());
+		sseEmitterService.send(sessionId, "question", SseResponse.of(sessionId, "question", questionPayload));
+
+		return emitter;
 	}
 
 	@PostMapping("interview/{sessionUuid}/messages")
@@ -58,8 +72,8 @@ public class InterviewApi {
 			@RequestBody UserAnswerRequest request) {
 		String sessionId = sessionUuid.toString();
 
-		// TODO: fixed_question Key값을 얻기 위한 임시 조회
-		FixedQuestionResponse currentQuestion = interviewService.getFirstQuestion(sessionId);
+		// 클라이언트가 전송한 질문 ID로 질문 정보 조회
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(request.getFixedQId());
 
 		// AI 스트리밍 시작
 		fastApiClient.streamNextQuestion(sessionId, request);

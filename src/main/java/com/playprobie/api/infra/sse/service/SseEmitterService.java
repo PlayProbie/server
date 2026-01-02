@@ -25,7 +25,6 @@ public class SseEmitterService {
 		SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 		emitterRepository.save(sessionUuid, emitter);
 
-		//TODO: spring 자체 메시지 전송
 		send(sessionUuid, "connect", "connected");
 		return emitter;
 	}
@@ -35,7 +34,7 @@ public class SseEmitterService {
 				emitter -> {
 					try {
 						emitter.send(SseEmitter.event()
-								.id(sessionId)
+
 								.name(eventName)
 								.data(data));
 					} catch (IOException | IllegalStateException e) {

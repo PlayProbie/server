@@ -26,3 +26,6 @@ springdoc:
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+
+playprobie:
+  base-url: ${PLAYPROBIE_BASE_URL:http://localhost:5173}

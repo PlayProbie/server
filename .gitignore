@@ -38,3 +38,4 @@ out/
 
 ### Application Secrets ###
 src/main/resources/application-local.yml
+.DS_Store

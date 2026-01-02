@@ -33,6 +33,9 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "survey_id")
 	private Long id;
 
+	@Column(name = "survey_uuid", nullable = false, unique = true)
+	private java.util.UUID uuid;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "game_id", nullable = false)
 	private Game game;
@@ -60,6 +63,7 @@ public class Survey extends BaseTimeEntity {
 		this.testPurpose = testPurpose;
 		this.startAt = startAt;
 		this.endAt = endAt;
+		this.uuid = java.util.UUID.randomUUID();
 	}
 
 	public void assignUrl(String surveyUrl) {

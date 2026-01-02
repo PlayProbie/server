@@ -13,5 +13,4 @@ import lombok.Getter;
 public class InterviewCreateResponse {
 	private SessionInfo session;
 	private String sseUrl;
-	private String questionText;
 }
