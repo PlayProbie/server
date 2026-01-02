@@ -26,6 +26,7 @@ public enum ErrorCode {
 	// User
 	USER_NOT_FOUND(404, "U001", "사용자를 찾을 수 없습니다."),
 	EMAIL_DUPLICATE(400, "U002", "이미 사용 중인 이메일입니다."),
+	INVALID_CREDENTIALS(401, "U003", "이메일 또는 비밀번호가 올바르지 않습니다."),
 
 	// Workspace
 	WORKSPACE_NOT_FOUND(404, "W001", "워크스페이스를 찾을 수 없습니다."),
