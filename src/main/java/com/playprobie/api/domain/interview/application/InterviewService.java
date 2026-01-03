@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
+import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
 import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
@@ -99,27 +100,65 @@ public class InterviewService {
 				.map(FixedQuestionResponse::from);
 	}
 
+	/**
+	 * 꼬리 질문을 InterviewLog에 저장합니다.
+	 * AI 서버에서 generate_tail_complete 이벤트를 받았을 때 호출됩니다.
+	 */
+	@Transactional
+	public void saveTailQuestionLog(String sessionId, Long fixedQId, String tailQuestionText, int tailQuestionCount) {
+		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+				.orElseThrow(SessionNotFoundException::new);
+
+		// 해당 고정 질문 내에서의 최대 turnNum을 조회하여 +1
+		Integer maxTurnNum = interviewLogRepository.findMaxTurnNumBySessionIdAndFixedQId(
+				surveySession.getId(), fixedQId);
+		int nextTurnNum = (maxTurnNum != null ? maxTurnNum : 0) + 1;
+
+		InterviewLog interviewLog = InterviewLog.builder()
+				.session(surveySession)
+				.fixedQuestionId(fixedQId)
+				.turnNum(nextTurnNum)
+				.type(QuestionType.TAIL)
+				.questionText(tailQuestionText)
+				.answerText(null) // 아직 응답 없음
+				.build();
+
+		interviewLogRepository.save(interviewLog);
+		log.info("Saved tail question log for session: {}, fixedQId: {}, turnNum: {}", sessionId, fixedQId,
+				nextTurnNum);
+	}
+
 	public UserAnswerResponse saveInterviewLog(String sessionId, UserAnswerRequest request,
 			FixedQuestionResponse currentQuestion) {
-		// ---------------------------------------------------//
-		// String seesionId = sessionId; //uuid
-		// long fixedQId = currentQuestion.fixedQId();
-		// int turnNum = request.getTurnNum(); // null 체크 추가
-		// QuestionType qType = null;
-		// String questionText = currentQuestion.qContent();
-		// String answerText = request.getAnswerText();
-		// int tokensUsed = 0;
-		// ---------------------------------------------------//
-		// TODO: 예외처리
 		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
 				.orElseThrow(() -> new RuntimeException("Session not found"));
 
+		// turn_num > 1이면 꼬리질문 응답 → 기존 레코드 업데이트
+		if (request.getTurnNum() > 1) {
+			InterviewLog tailLog = interviewLogRepository
+					.findBySessionIdAndFixedQuestionIdAndTurnNum(
+							surveySession.getId(),
+							request.getFixedQId(),
+							request.getTurnNum())
+					.orElseThrow(() -> new RuntimeException("Tail question log not found"));
+
+			tailLog.updateAnswer(request.getAnswerText());
+			InterviewLog savedLog = interviewLogRepository.save(tailLog);
+
+			return UserAnswerResponse.of(
+					savedLog.getTurnNum(),
+					String.valueOf(savedLog.getType()),
+					savedLog.getFixedQuestionId(),
+					savedLog.getQuestionText(),
+					savedLog.getAnswerText());
+		}
+
+		// 고정질문 응답인 경우 새 레코드 생성
 		InterviewLog interviewLog = InterviewLog.builder()
 				.session(surveySession)
 				.fixedQuestionId(currentQuestion.fixedQId())
 				.turnNum(request.getTurnNum())
-				// TODO: AI-Server 작업 완료 후 type지정
-				.type(null)
+				.type(QuestionType.FIXED)
 				.questionText(currentQuestion.qContent())
 				.answerText(request.getAnswerText())
 				.build();

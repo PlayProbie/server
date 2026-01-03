@@ -16,7 +16,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -24,9 +23,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "interview_log", uniqueConstraints = {
-		@UniqueConstraint(name = "uk_session_turn", columnNames = { "session_id", "turn_num" })
-})
+@Table(name = "interview_log")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @EqualsAndHashCode(of = { "id" }, callSuper = false)
@@ -78,5 +75,10 @@ public class InterviewLog extends BaseTimeEntity {
 	public void updateAnalysis(LogAnalysis analysis, Integer tokensUsed) {
 		this.analysis = analysis;
 		this.tokensUsed = tokensUsed;
+	}
+
+	// 꼬리질문에 대한 응답 업데이트
+	public void updateAnswer(String answerText) {
+		this.answerText = answerText;
 	}
 }

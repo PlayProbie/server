@@ -58,7 +58,7 @@ public class SurveyService {
         Survey savedSurvey = surveyRepository.save(survey);
 
         // URL 생성 (UUID 사용)
-        String surveyUrl = baseUrl + "/surveys/chat/" + savedSurvey.getUuid();
+        String surveyUrl = baseUrl + "/surveys/session/" + savedSurvey.getUuid();
         savedSurvey.assignUrl(surveyUrl);
 
         return SurveyResponse.from(savedSurvey);

@@ -24,9 +24,7 @@ import com.playprobie.api.infra.sse.dto.QuestionPayload;
 import com.playprobie.api.infra.sse.dto.payload.AnalysisPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
 import com.playprobie.api.infra.sse.dto.payload.StatusPayload;
-import com.playprobie.api.infra.sse.dto.payload.TailQuestionPayload;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
-import com.playprobie.api.infra.sse.dto.SseResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +80,7 @@ public class FastApiClient implements AiClient {
 
 	@Override
 	public void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest) {
+		Long fixedQId = userAnswerRequest.getFixedQId();
 
 		AiInteractionRequest aiInteractionRequest = new AiInteractionRequest(
 				sessionId,
@@ -102,7 +101,7 @@ public class FastApiClient implements AiClient {
 		eventStream.subscribe(
 				sse -> {
 					String data = sse.data();
-					parseAndHandleEvent(sessionId, data);
+					parseAndHandleEvent(sessionId, fixedQId, data);
 				},
 				error -> {
 					log.error("Error connecting to AI Server: {}", error.getMessage());
@@ -114,7 +113,7 @@ public class FastApiClient implements AiClient {
 				});
 	}
 
-	private void parseAndHandleEvent(String sessionId, String jsonStr) {
+	private void parseAndHandleEvent(String sessionId, Long fixedQId, String jsonStr) {
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
 			/**
@@ -122,17 +121,17 @@ public class FastApiClient implements AiClient {
 			 */
 			String eventType = rootNode.path("event").asText();
 			JsonNode dataNode = rootNode.path("data");
-			handleEvent(sessionId, eventType, dataNode);
+			handleEvent(sessionId, fixedQId, eventType, dataNode);
 		} catch (JsonProcessingException e) {
 			log.error("Failed to parse JSON event. Data: {} | Error: {}", jsonStr, e.getMessage());
 		}
 	}
 
-	private void handleEvent(String sessionId, String eventType, JsonNode dataNode) {
+	private void handleEvent(String sessionId, Long fixedQId, String eventType, JsonNode dataNode) {
 		switch (eventType) {
 			case "start": // 스트리밍 처리 시작
 				StatusPayload startPayload = StatusPayload.builder().status(dataNode.path("status").asText()).build();
-				sseEmitterService.send(sessionId, "start", SseResponse.of(sessionId, "start", startPayload));
+				sseEmitterService.send(sessionId, "start", startPayload);
 				break;
 
 			case "done": // 모든 처리 완료 → 다음 질문 발송
@@ -144,13 +143,12 @@ public class FastApiClient implements AiClient {
 				break;
 
 			case "question": // 고정 질문 전송
-				Long fixedQId = dataNode.path("fixed_q_id").asLong();
+				Long eventFixedQId = dataNode.path("fixed_q_id").asLong();
 				String qType = dataNode.path("q_type").asText();
 				String questionText = dataNode.path("question_text").asText();
 				int turnNum = dataNode.path("turn_num").asInt();
-				QuestionPayload fixedQuestionPayload = QuestionPayload.of(fixedQId, qType, questionText, turnNum);
-				sseEmitterService.send(sessionId, "question",
-						SseResponse.of(sessionId, "question", fixedQuestionPayload));
+				QuestionPayload fixedQuestionPayload = QuestionPayload.of(eventFixedQId, qType, questionText, turnNum);
+				sseEmitterService.send(sessionId, "question", fixedQuestionPayload);
 				break;
 
 			case "analyze_answer": // 답변 분석 완료
@@ -165,32 +163,28 @@ public class FastApiClient implements AiClient {
 				String content = dataNode.path("content").asText();
 				int tokenTurnNum = dataNode.path("turn_num").asInt(1);
 				QuestionPayload questionPayload = QuestionPayload.of(null, "TAIL", content, tokenTurnNum);
-				sseEmitterService.send(
-						sessionId,
-						eventType,
-						SseResponse.of(sessionId + "_" + System.currentTimeMillis(), eventType, questionPayload));
+				sseEmitterService.send(sessionId, eventType, questionPayload);
 				break;
 
-			case "generate_tail_complete": // 꼬리 질문 생성 완료
-				String message = dataNode.path("message").asText();
+			case "generate_tail_complete": // 꼬리 질문 생성 완료 → DB 저장
+				String tailQuestionText = dataNode.path("message").asText();
 				int tailQuestionCount = dataNode.path("tail_question_count").asInt();
-				TailQuestionPayload tailQuestionPayload = TailQuestionPayload.builder().message(message)
-						.tailQuestionCount(tailQuestionCount).build();
-				// sseEmitterService.send(sessionId, eventType, SseResponse.of(sessionId,
-				// eventType, tailQuestionPayload));
+				// 꼬리 질문을 InterviewLog에 저장
+				interviewService.saveTailQuestionLog(sessionId, fixedQId, tailQuestionText, tailQuestionCount);
+				log.info("Tail question saved - sessionId: {}, fixedQId: {}, count: {}", sessionId, fixedQId,
+						tailQuestionCount);
 				break;
 
 			case "interview_complete": // 인터뷰 종료
 				StatusPayload completePayload = StatusPayload.builder().status("completed").build();
-				sseEmitterService.send(sessionId, "interview_complete",
-						SseResponse.of(sessionId, "interview_complete", completePayload));
+				sseEmitterService.send(sessionId, "interview_complete", completePayload);
 				sseEmitterService.complete(sessionId);
 				break;
 
 			case "error": // 예외 발생
 				String errMessage = dataNode.path("message").asText();
 				ErrorPayload errorPayload = ErrorPayload.builder().message(errMessage).build();
-				sseEmitterService.send(sessionId, eventType, SseResponse.of(sessionId, eventType, errorPayload));
+				sseEmitterService.send(sessionId, eventType, errorPayload);
 				break;
 
 			default:
@@ -204,13 +198,12 @@ public class FastApiClient implements AiClient {
 				"FIXED",
 				nextQuestion.qContent(),
 				nextQuestion.qOrder());
-		sseEmitterService.send(sessionId, "question", SseResponse.of(sessionId, "question", questionPayload));
+		sseEmitterService.send(sessionId, "question", questionPayload);
 	}
 
 	private void sendInterviewComplete(String sessionId) {
 		StatusPayload completePayload = StatusPayload.builder().status("completed").build();
-		sseEmitterService.send(sessionId, "interview_complete",
-				SseResponse.of(sessionId, "interview_complete", completePayload));
+		sseEmitterService.send(sessionId, "interview_complete", completePayload);
 		sseEmitterService.complete(sessionId);
 	}
 }

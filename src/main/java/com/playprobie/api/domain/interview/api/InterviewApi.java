@@ -21,7 +21,7 @@ import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.common.response.ApiResponse;
 import com.playprobie.api.infra.ai.impl.FastApiClient;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
-import com.playprobie.api.infra.sse.dto.SseResponse;
+
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
 import lombok.RequiredArgsConstructor;
@@ -61,7 +61,7 @@ public class InterviewApi {
 				"FIXED",
 				firstQuestion.qContent(),
 				firstQuestion.qOrder());
-		sseEmitterService.send(sessionId, "question", SseResponse.of(sessionId, "question", questionPayload));
+		sseEmitterService.send(sessionId, "question", questionPayload);
 
 		return emitter;
 	}
