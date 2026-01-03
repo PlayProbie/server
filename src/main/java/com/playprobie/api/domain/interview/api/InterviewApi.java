@@ -12,16 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.playprobie.api.domain.interview.application.InterviewService;
-
-import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
 import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
-import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
+import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.common.response.ApiResponse;
 import com.playprobie.api.infra.ai.impl.FastApiClient;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
-
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
 import lombok.RequiredArgsConstructor;
@@ -38,14 +36,14 @@ public class InterviewApi {
 
 	@PostMapping("/interview/{surveyId}")
 	public ResponseEntity<ApiResponse<InterviewCreateResponse>> createSession(
-			@PathVariable UUID surveyId) {
+		@PathVariable UUID surveyId) {
 		return ResponseEntity.status(201).body(ApiResponse.of(interviewService.createSession(surveyId)));
 	}
 
 	@GetMapping("/interview/{surveyId}/{sessionUuid}")
 	public ResponseEntity<ApiResponse<InterviewHistoryResponse>> selectInterviewList(
-			@PathVariable Long surveyId,
-			@PathVariable UUID sessionUuid) {
+		@PathVariable Long surveyId,
+		@PathVariable UUID sessionUuid) {
 		return ResponseEntity.ok(ApiResponse.of(interviewService.getInterviewHistory(surveyId, sessionUuid)));
 	}
 
@@ -57,10 +55,10 @@ public class InterviewApi {
 		String sessionId = sessionUuid.toString();
 		FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
 		QuestionPayload questionPayload = QuestionPayload.of(
-				firstQuestion.fixedQId(),
-				"FIXED",
-				firstQuestion.qContent(),
-				firstQuestion.qOrder());
+			firstQuestion.fixedQId(),
+			"FIXED",
+			firstQuestion.qContent(),
+			firstQuestion.qOrder());
 		sseEmitterService.send(sessionId, "question", questionPayload);
 
 		return emitter;
@@ -68,8 +66,8 @@ public class InterviewApi {
 
 	@PostMapping("interview/{sessionUuid}/messages")
 	public ResponseEntity<ApiResponse<UserAnswerResponse>> receiveAnswer(
-			@PathVariable UUID sessionUuid,
-			@RequestBody UserAnswerRequest request) {
+		@PathVariable UUID sessionUuid,
+		@RequestBody UserAnswerRequest request) {
 		String sessionId = sessionUuid.toString();
 
 		// 클라이언트가 전송한 질문 ID로 질문 정보 조회

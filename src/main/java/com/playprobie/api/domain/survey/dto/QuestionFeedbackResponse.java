@@ -9,9 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * POST /surveys/question-feedback 응답의 각 항목
  */
 public record QuestionFeedbackResponse(
-        @JsonProperty("question") String question,
-
-        @JsonProperty("ai_feedback") String aiFeedback,
-
-        @JsonProperty("suggestions") List<String> suggestions) {
+	@JsonProperty("question") String question,
+	@JsonProperty("ai_feedback") String aiFeedback,
+	@JsonProperty("suggestions") List<String> suggestions) {
 }
