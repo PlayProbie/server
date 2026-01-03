@@ -22,4 +22,12 @@ ai:
   server:
     url: ${AI_SERVER_URL:http://localhost:8000}
 
-
+# AWS Configuration (GitHub Secrets → 환경변수로 주입)
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  access-key: ${AWS_ACCESS_KEY_ID:}
+  secret-key: ${AWS_SECRET_ACCESS_KEY:}
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:}
+  gamelift:
+    role-arn: ${AWS_GAMELIFT_ROLE_ARN:}
