@@ -38,9 +38,6 @@ public class User extends BaseTimeEntity {
     @Column(name = "phone")
     private String phone;
 
-    // @Column(name = "profile_image_url")
-    // private String profileImageUrl;
-
     @Column(name = "provider")
     private String provider;
 

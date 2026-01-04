@@ -14,8 +14,6 @@ import com.playprobie.api.domain.auth.dto.SignupResponse;
 import com.playprobie.api.domain.auth.dto.TokenResponse;
 import com.playprobie.api.global.common.response.ApiResponse;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
