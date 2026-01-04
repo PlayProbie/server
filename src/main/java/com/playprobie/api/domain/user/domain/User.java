@@ -38,8 +38,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "profile_image_url")
-    private String profileImageUrl;
+    // @Column(name = "profile_image_url")
+    // private String profileImageUrl;
 
     @Column(name = "provider")
     private String provider;
@@ -53,12 +53,12 @@ public class User extends BaseTimeEntity {
 
     @Builder
     public User(String email, String password, String name, String phone,
-            String profileImageUrl, String provider, String providerId) {
+            String provider, String providerId) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.phone = phone;
-        this.profileImageUrl = profileImageUrl;
+        // this.profileImageUrl = profileImageUrl;
         this.provider = provider;
         this.providerId = providerId;
         this.status = UserStatus.ACTIVE;
@@ -87,10 +87,9 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
-    public void updateProfile(String name, String phone, String profileImageUrl) {
+    public void updateProfile(String name, String phone) {
         this.name = name;
         this.phone = phone;
-        this.profileImageUrl = profileImageUrl;
     }
 
     public void suspend() {
