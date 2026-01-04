@@ -1,7 +1,13 @@
 package com.playprobie.api.domain.user.domain;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.global.domain.BaseTimeEntity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,6 +15,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -48,6 +55,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "status", nullable = false)
     private UserStatus status;
 
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+    private List<Workspace> workspaces = new ArrayList<>();
+
     @Builder
     public User(String email, String password, String name, String phone,
             String provider, String providerId) {
@@ -55,7 +65,6 @@ public class User extends BaseTimeEntity {
         this.password = password;
         this.name = name;
         this.phone = phone;
-        // this.profileImageUrl = profileImageUrl;
         this.provider = provider;
         this.providerId = providerId;
         this.status = UserStatus.ACTIVE;
@@ -99,5 +108,9 @@ public class User extends BaseTimeEntity {
 
     public boolean isOAuthUser() {
         return this.provider != null;
+    }
+
+    public List<Workspace> getWorkspaces() {
+        return Collections.unmodifiableList(workspaces);
     }
 }
