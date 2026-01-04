@@ -30,7 +30,7 @@ public class AwsConfig {
     @Bean
     public S3Client s3Client(AwsCredentialsProvider credentialsProvider) {
         return S3Client.builder()
-                .region(Region.of(awsProperties.getRegion()))
+                .region(Region.of(awsProperties.getS3().getRegion()))
                 .credentialsProvider(credentialsProvider)
                 .build();
     }
@@ -38,7 +38,7 @@ public class AwsConfig {
     @Bean(destroyMethod = "close")
     public S3Presigner s3Presigner(AwsCredentialsProvider credentialsProvider) {
         return S3Presigner.builder()
-                .region(Region.of(awsProperties.getRegion()))
+                .region(Region.of(awsProperties.getS3().getRegion()))
                 .credentialsProvider(credentialsProvider)
                 .build();
     }

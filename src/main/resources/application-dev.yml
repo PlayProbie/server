@@ -28,7 +28,8 @@ aws:
   access-key: ${AWS_ACCESS_KEY_ID:}
   secret-key: ${AWS_SECRET_ACCESS_KEY:}
   s3:
-    bucket-name: ${AWS_S3_BUCKET_NAME:}
+    region: ${S3_REGION:ap-northeast-1}
+    bucket-name: ${S3_BUCKET_NAME:playprobie-dev-ap-northeast-1}
     role-arn: ${AWS_S3_ROLE_ARN:}
   gamelift:
     role-arn: ${AWS_GAMELIFT_ROLE_ARN:}

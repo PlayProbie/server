@@ -34,6 +34,8 @@ public class AwsProperties {
     @Getter
     @Setter
     public static class S3Properties {
+        @NotBlank(message = "S3 region is required")
+        private String region;
         @NotBlank(message = "S3 bucket name is required")
         private String bucketName;
         private String roleArn;
