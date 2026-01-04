@@ -1,6 +1,7 @@
 package com.playprobie.api.infra.ai.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,14 +15,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.interview.application.InterviewService;
+import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.AiInteractionRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateQuestionRequest;
+import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
+import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
 import com.playprobie.api.infra.sse.dto.payload.AnalysisPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
@@ -46,19 +50,19 @@ public class FastApiClient implements AiClient {
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose) {
 		GenerateQuestionRequest request = GenerateQuestionRequest.builder()
-			.gameName(gameName)
-			.gameGenre(gameGenre)
-			.gameContext(gameContext)
-			.testPurpose(testPurpose)
-			.build();
+				.gameName(gameName)
+				.gameGenre(gameGenre)
+				.gameContext(gameContext)
+				.testPurpose(testPurpose)
+				.build();
 
 		Mono<GenerateQuestionResponse> response = aiWebClient.post()
-			.uri("/fixed-questions/draft")
-			.contentType(MediaType.APPLICATION_JSON)
-			.accept(MediaType.APPLICATION_JSON)
-			.bodyValue(request)
-			.retrieve()
-			.bodyToMono(GenerateQuestionResponse.class);
+				.uri("/fixed-questions/draft")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(GenerateQuestionResponse.class);
 
 		GenerateQuestionResponse result = response.block();
 
@@ -68,12 +72,12 @@ public class FastApiClient implements AiClient {
 	@Override
 	public GenerateFeedbackResponse getQuestionFeedback(GenerateFeedbackRequest request) {
 		Mono<GenerateFeedbackResponse> response = aiWebClient.post()
-			.uri("/fixed-questions/feedback")
-			.contentType(MediaType.APPLICATION_JSON)
-			.accept(MediaType.APPLICATION_JSON)
-			.bodyValue(request)
-			.retrieve()
-			.bodyToMono(GenerateFeedbackResponse.class);
+				.uri("/fixed-questions/feedback")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(GenerateFeedbackResponse.class);
 
 		GenerateFeedbackResponse result = response.block();
 
@@ -87,44 +91,44 @@ public class FastApiClient implements AiClient {
 		int nextTurnNum = userAnswerRequest.getTurnNum() + 1;
 
 		AiInteractionRequest aiInteractionRequest = new AiInteractionRequest(
-			sessionId,
-			userAnswerRequest.getAnswerText(),
-			userAnswerRequest.getQuestionText(),
-			null,
-			null);
+				sessionId,
+				userAnswerRequest.getAnswerText(),
+				userAnswerRequest.getQuestionText(),
+				null,
+				null);
 
 		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
-			.uri("/surveys/interaction")
-			.contentType(MediaType.APPLICATION_JSON)
-			.accept(MediaType.TEXT_EVENT_STREAM)
-			.bodyValue(aiInteractionRequest)
-			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
-			});
+				.uri("/surveys/interaction")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.TEXT_EVENT_STREAM)
+				.bodyValue(aiInteractionRequest)
+				.retrieve()
+				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+				});
 
 		final AtomicReference<String> nextAction = new AtomicReference<>(
-			null);
+				null);
 		final AtomicBoolean tailQuestionGenerated = new AtomicBoolean(
-			false);
+				false);
 
 		eventStream.subscribe(
-			sse -> {
-				String data = sse.data();
-				parseAndHandleEvent(sessionId, fixedQId, nextTurnNum, data, nextAction, tailQuestionGenerated);
-			},
-			error -> {
-				log.error("Error connecting to AI Server: {}", error.getMessage());
-				sseEmitterService.send(sessionId, "error", "AI 서버 통신 오류");
-				sseEmitterService.complete(sessionId);
-			},
-			() -> {// complete callback function
-				log.info("AI Stream completed for sessionId: {}", sessionId);
-			});
+				sse -> {
+					String data = sse.data();
+					parseAndHandleEvent(sessionId, fixedQId, nextTurnNum, data, nextAction, tailQuestionGenerated);
+				},
+				error -> {
+					log.error("Error connecting to AI Server: {}", error.getMessage());
+					sseEmitterService.send(sessionId, "error", "AI 서버 통신 오류");
+					sseEmitterService.complete(sessionId);
+				},
+				() -> {// complete callback function
+					log.info("AI Stream completed for sessionId: {}", sessionId);
+				});
 	}
 
 	private void parseAndHandleEvent(String sessionId, Long fixedQId, int nextTurnNum, String jsonStr,
-		AtomicReference<String> nextAction,
-		AtomicBoolean tailQuestionGenerated) {
+			AtomicReference<String> nextAction,
+			AtomicBoolean tailQuestionGenerated) {
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
 			/**
@@ -139,8 +143,8 @@ public class FastApiClient implements AiClient {
 	}
 
 	private void handleEvent(String sessionId, Long fixedQId, int nextTurnNum, String eventType, JsonNode dataNode,
-		AtomicReference<String> nextAction,
-		AtomicBoolean tailQuestionGenerated) {
+			AtomicReference<String> nextAction,
+			AtomicBoolean tailQuestionGenerated) {
 		switch (eventType) {
 			case "start": // 스트리밍 처리 시작
 				StatusPayload startPayload = StatusPayload.builder().status(dataNode.path("status").asText()).build();
@@ -157,8 +161,8 @@ public class FastApiClient implements AiClient {
 				// [Robustness] 꼬리질문 action이지만 실제 생성된 내용이 없으면 PASS_TO_NEXT로 변경
 				if ("TAIL_QUESTION".equals(action) && !tailQuestionGenerated.get()) {
 					log.warn(
-						"AI requested TAIL_QUESTION but generated no content. Falling back to PASS_TO_NEXT. sessionId={}",
-						sessionId);
+							"AI requested TAIL_QUESTION but generated no content. Falling back to PASS_TO_NEXT. sessionId={}",
+							sessionId);
 					action = "PASS_TO_NEXT";
 				}
 
@@ -168,9 +172,9 @@ public class FastApiClient implements AiClient {
 					int currentOrder = currentQuestion.qOrder();
 
 					interviewService.getNextQuestion(sessionId, currentOrder)
-						.ifPresentOrElse(
-							nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-							() -> sendInterviewComplete(sessionId));
+							.ifPresentOrElse(
+									nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
+									() -> sendInterviewComplete(sessionId));
 				} else {
 					// TAIL_QUESTION 이거나 action이 없는 경우 대기
 					log.info("Action is {}, waiting for user answer.", action);
@@ -194,7 +198,7 @@ public class FastApiClient implements AiClient {
 				log.info("Analysis result - action: {}, analysis: {}", actionResult, analysis);
 
 				AnalysisPayload analysisPayload = AnalysisPayload.builder().action(actionResult).analysis(analysis)
-					.build();
+						.build();
 				// sseEmitterService.send(sessionId, eventType, SseResponse.of(sessionId,
 				// eventType, analysisPayload));
 				break;
@@ -214,7 +218,7 @@ public class FastApiClient implements AiClient {
 				// 꼬리 질문을 InterviewLog에 저장
 				interviewService.saveTailQuestionLog(sessionId, fixedQId, tailQuestionText, tailQuestionCount);
 				log.info("Tail question saved - sessionId: {}, fixedQId: {}, count: {}", sessionId, fixedQId,
-					tailQuestionCount);
+						tailQuestionCount);
 				break;
 
 			case "interview_complete": // 인터뷰 종료
@@ -236,16 +240,19 @@ public class FastApiClient implements AiClient {
 
 	private void sendNextQuestion(String sessionId, FixedQuestionResponse nextQuestion) {
 		QuestionPayload questionPayload = QuestionPayload.of(
-			nextQuestion.fixedQId(),
-			"FIXED",
-			nextQuestion.qContent(),
-			1);
+				nextQuestion.fixedQId(),
+				"FIXED",
+				nextQuestion.qContent(),
+				1);
 		sseEmitterService.send(sessionId, "question", questionPayload);
 	}
 
 	private void sendInterviewComplete(String sessionId) {
 		// 세션 상태 완료로 변경
 		interviewService.completeSession(sessionId);
+
+		// 세션 완료 후 임베딩 요청 (비동기)
+		triggerSessionEmbedding(sessionId);
 
 		StatusPayload completePayload = StatusPayload.builder().status("completed").build();
 		sseEmitterService.send(sessionId, "interview_complete", completePayload);
@@ -258,5 +265,53 @@ public class FastApiClient implements AiClient {
 		}
 
 		sseEmitterService.complete(sessionId);
+	}
+
+	// 세션 완료 시 고정질문별로 그룹핑된 Q&A 데이터를 AI 서버에 임베딩 요청
+	private void triggerSessionEmbedding(String sessionId) {
+		try {
+			Map<Long, List<InterviewLog>> logsByFixedQuestion = interviewService
+					.getLogsGroupedByFixedQuestion(sessionId);
+
+			Long surveyId = interviewService.getSurveyIdBySession(sessionId);
+
+			logsByFixedQuestion.forEach((fixedQuestionId, logs) -> {
+				List<SessionEmbeddingRequest.QaPair> qaPairs = logs.stream()
+						.filter(l -> l.getAnswerText() != null)
+						.map(l -> SessionEmbeddingRequest.QaPair.of(
+								l.getQuestionText(),
+								l.getAnswerText(),
+								l.getType().name()))
+						.toList();
+
+				if (!qaPairs.isEmpty()) {
+					SessionEmbeddingRequest request = SessionEmbeddingRequest.builder()
+							.sessionId(sessionId)
+							.surveyId(surveyId)
+							.fixedQuestionId(fixedQuestionId)
+							.qaPairs(qaPairs)
+							.build();
+
+					embedSessionData(request);
+				}
+			});
+		} catch (Exception e) {
+			log.error("Failed to trigger session embedding for sessionId: {}", sessionId, e);
+		}
+	}
+
+	@Override
+	public void embedSessionData(SessionEmbeddingRequest request) {
+		aiWebClient.post()
+				.uri("/embedding")
+				.contentType(MediaType.APPLICATION_JSON)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(SessionEmbeddingResponse.class)
+				.subscribe(
+						result -> log.info("Embedding success for session: {}, fixedQId: {}, embeddingId: {}",
+								request.sessionId(), request.fixedQuestionId(), result.embeddingId()),
+						error -> log.error("Embedding failed for session: {}, fixedQId: {}, error: {}",
+								request.sessionId(), request.fixedQuestionId(), error.getMessage()));
 	}
 }

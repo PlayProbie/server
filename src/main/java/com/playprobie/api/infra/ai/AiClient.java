@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
+import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 
 /**
@@ -32,4 +33,7 @@ public interface AiClient {
          * streaming 대화 토큰 전달
          */
         void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
+
+        // 세션 완료 시 임베딩 요청 (비동기)
+        void embedSessionData(SessionEmbeddingRequest request);
 }
