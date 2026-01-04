@@ -5,6 +5,6 @@ import com.playprobie.api.global.error.exception.BusinessException;
 
 public class S3AccessException extends BusinessException {
     public S3AccessException() {
-        super(ErrorCode.S3_ACCESS_FAILED);
+        super(ErrorCode.S3_ACCESS_ERROR);
     }
 }

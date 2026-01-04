@@ -8,19 +8,21 @@ import com.playprobie.api.domain.game.domain.GameBuild;
 public record GameBuildResponse(
         UUID id,
         UUID gameUuid,
-        String originalFilename,
-        String s3Key,
+        String version,
+        String s3Prefix,
         String status,
-        Long fileSize,
+        Integer totalFiles,
+        Long totalSize,
         LocalDateTime createdAt) {
     public static GameBuildResponse from(GameBuild gameBuild) {
         return new GameBuildResponse(
                 gameBuild.getUuid(),
                 gameBuild.getGame().getUuid(),
-                gameBuild.getOriginalFilename(),
-                gameBuild.getS3Key(),
+                gameBuild.getVersion(),
+                gameBuild.getS3Prefix(),
                 gameBuild.getStatus().name(),
-                gameBuild.getFileSize(),
+                gameBuild.getTotalFiles(),
+                gameBuild.getTotalSize(),
                 gameBuild.getCreatedAt());
     }
 }
