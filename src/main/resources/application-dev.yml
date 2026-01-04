@@ -29,5 +29,6 @@ aws:
   secret-key: ${AWS_SECRET_ACCESS_KEY:}
   s3:
     bucket-name: ${AWS_S3_BUCKET_NAME:}
+    role-arn: ${AWS_S3_ROLE_ARN:}
   gamelift:
     role-arn: ${AWS_GAMELIFT_ROLE_ARN:}

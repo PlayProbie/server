@@ -11,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.gamelift.GameLiftClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.sts.StsClient;
 
 @Configuration
 @RequiredArgsConstructor
@@ -45,6 +46,14 @@ public class AwsConfig {
     @Bean
     public GameLiftClient gameLiftClient(AwsCredentialsProvider credentialsProvider) {
         return GameLiftClient.builder()
+                .region(Region.of(awsProperties.getRegion()))
+                .credentialsProvider(credentialsProvider)
+                .build();
+    }
+
+    @Bean
+    public StsClient stsClient(AwsCredentialsProvider credentialsProvider) {
+        return StsClient.builder()
                 .region(Region.of(awsProperties.getRegion()))
                 .credentialsProvider(credentialsProvider)
                 .build();
