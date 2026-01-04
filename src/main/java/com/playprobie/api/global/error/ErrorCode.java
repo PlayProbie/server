@@ -16,6 +16,9 @@ public enum ErrorCode {
 
 	// Game
 	GAME_NOT_FOUND(404, "G001", "게임을 찾을 수 없습니다."),
+	GAME_BUILD_NOT_FOUND(404, "G002", "게임 빌드를 찾을 수 없습니다."),
+	S3_FILE_NOT_FOUND(404, "G003", "S3에 해당 파일이 존재하지 않습니다."),
+	S3_ACCESS_FAILED(500, "G004", "S3 접근 중 오류가 발생했습니다."),
 
 	// Survey
 	SURVEY_NOT_FOUND(404, "S001", "설문을 찾을 수 없습니다."),

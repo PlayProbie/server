@@ -9,11 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * - AI가 제공하는 피드백 + 대안 3개
  */
 public record QuestionReviewResponse(
-        @JsonProperty("draft_q_id") Long draftQId,
-
-        @JsonProperty("original_content") String originalContent,
-
-        @JsonProperty("feedback") String feedback,
-
-        @JsonProperty("alternatives") List<String> alternatives) {
+	@JsonProperty("draft_q_id") Long draftQId,
+	@JsonProperty("original_content") String originalContent,
+	@JsonProperty("feedback") String feedback,
+	@JsonProperty("alternatives") List<String> alternatives) {
 }

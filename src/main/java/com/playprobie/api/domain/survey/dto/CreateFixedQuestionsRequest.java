@@ -13,13 +13,11 @@ import jakarta.validation.constraints.NotNull;
  * POST /surveys/fixed_questions
  */
 public record CreateFixedQuestionsRequest(
-        @NotNull(message = "설문 ID는 필수입니다") @JsonProperty("survey_id") Long surveyId,
+	@NotNull(message = "설문 ID는 필수입니다") @JsonProperty("survey_id") Long surveyId,
+	@NotEmpty(message = "질문 목록은 필수입니다") @Valid @JsonProperty("questions") List<QuestionItem> questions) {
 
-        @NotEmpty(message = "질문 목록은 필수입니다") @Valid @JsonProperty("questions") List<QuestionItem> questions) {
-
-    public record QuestionItem(
-            @NotNull(message = "질문 내용은 필수입니다") @JsonProperty("q_content") String qContent,
-
-            @NotNull(message = "질문 순서는 필수입니다") @JsonProperty("q_order") Integer qOrder) {
-    }
+	public record QuestionItem(
+		@NotNull(message = "질문 내용은 필수입니다") @JsonProperty("q_content") String qContent,
+		@NotNull(message = "질문 순서는 필수입니다") @JsonProperty("q_order") Integer qOrder) {
+	}
 }
