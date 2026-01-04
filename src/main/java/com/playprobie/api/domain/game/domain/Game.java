@@ -27,6 +27,9 @@ public class Game extends BaseTimeEntity {
 	@Column(name = "game_id")
 	private Long id;
 
+	@Column(name = "game_uuid", nullable = false, unique = true, columnDefinition = "CHAR(36)")
+	private java.util.UUID uuid;
+
 	@Column(name = "game_name", nullable = false)
 	private String name;
 
@@ -38,6 +41,7 @@ public class Game extends BaseTimeEntity {
 
 	@Builder
 	public Game(String name, List<GameGenre> genres, String context) {
+		this.uuid = java.util.UUID.randomUUID();
 		this.name = name;
 		this.genresJson = convertGenresToJson(genres);
 		this.context = context;
