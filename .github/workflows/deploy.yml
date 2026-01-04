@@ -75,7 +75,7 @@ jobs:
             "docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:develop-latest",
             "docker stop playprobie-server-dev || true",
             "docker rm playprobie-server-dev || true",
-            "docker run -d --name playprobie-server-dev -p 8080:8080 -e SPRING_PROFILES_ACTIVE=dev -e DB_URL=\"${{ secrets.DEV_DB_URL }}\" -e DB_USER=\"${{ secrets.DEV_DB_USER }}\" -e DB_PASS=\"${{ secrets.DEV_DB_PASS }}\" -e AI_SERVER_URL=\"${{ secrets.DEV_AI_SERVER_URL }}\" -e CORS_ALLOWED_ORIGINS=\"${{ secrets.DEV_CORS_ALLOWED_ORIGINS }}\" -e PLAYPROBIE_BASE_URL=\"${{ secrets.DEV_PLAYPROBIE_BASE_URL }}\" ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:develop-latest",
+            "docker run -d --name playprobie-server-dev -p 8080:8080 -e SPRING_PROFILES_ACTIVE=dev -e DB_URL=\"${{ secrets.DEV_DB_URL }}\" -e DB_USER=\"${{ secrets.DEV_DB_USER }}\" -e DB_PASS=\"${{ secrets.DEV_DB_PASS }}\" -e AI_SERVER_URL=\"${{ secrets.DEV_AI_SERVER_URL }}\" -e CORS_ALLOWED_ORIGINS=\"${{ secrets.DEV_CORS_ALLOWED_ORIGINS }}\" -e PLAYPROBIE_BASE_URL=\"${{ secrets.DEV_PLAYPROBIE_BASE_URL }}\" -e JWT_SECRET=\"${{ secrets.DEV_JWT_SECRET }}\" -e JWT_EXPIRATION=\"${{ secrets.DEV_JWT_EXPIRATION }}\" ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:develop-latest",
             "docker image prune -f"
           ]' \
           --region ${{ env.AWS_REGION }}

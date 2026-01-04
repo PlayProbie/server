@@ -32,5 +32,5 @@ playprobie:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:ZGV2LXNlY3JldC1rZXktZm9yLWxvY2FsLWRldmVsb3BtZW50LW9ubHktMzItYnl0ZXM=}
-  access-token-expiration: 3600000  # 1시간 (ms)
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_EXPIRATION:3600000}  # 1시간 (ms)
