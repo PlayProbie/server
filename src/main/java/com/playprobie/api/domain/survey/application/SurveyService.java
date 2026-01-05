@@ -13,6 +13,7 @@ import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.TestPurpose;
+import com.playprobie.api.domain.survey.domain.TestStage;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
@@ -46,14 +47,30 @@ public class SurveyService {
 	public SurveyResponse createSurvey(CreateSurveyRequest request) {
 		Game game = gameService.getGameEntity(request.gameId());
 		TestPurpose testPurpose = parseTestPurpose(request.testPurpose());
+		TestStage testStage = parseTestStage(request.testStage());
+
+		// themeDetails 검증: 키가 themePriorities에 포함되어야 함
+		if (request.themeDetails() != null && !request.themeDetails().isEmpty()) {
+			for (String key : request.themeDetails().keySet()) {
+				if (!request.themePriorities().contains(key)) {
+					throw new IllegalArgumentException(
+							"theme_details의 키('" + key + "')는 theme_priorities에 포함되어야 합니다");
+				}
+			}
+		}
 
 		Survey survey = Survey.builder()
-			.game(game)
-			.name(request.surveyName())
-			.testPurpose(testPurpose)
-			.startAt(request.startedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
-			.endAt(request.endedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
-			.build();
+				.game(game)
+				.name(request.surveyName())
+				.testPurpose(testPurpose)
+				.startAt(request.startedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
+				.endAt(request.endedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
+				// 신규 필드
+				.testStage(testStage)
+				.themePriorities(request.themePriorities())
+				.themeDetails(request.themeDetails())
+				.versionNote(request.versionNote())
+				.build();
 
 		Survey savedSurvey = surveyRepository.save(survey);
 
@@ -66,13 +83,13 @@ public class SurveyService {
 
 	public SurveyResponse getSurvey(Long surveyId) {
 		Survey survey = surveyRepository.findById(surveyId)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
 		return SurveyResponse.from(survey);
 	}
 
 	public Survey getSurveyEntity(Long surveyId) {
 		return surveyRepository.findById(surveyId)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
 	}
 
 	/**
@@ -81,10 +98,10 @@ public class SurveyService {
 	 */
 	public List<String> generateAiQuestions(AiQuestionsRequest request) {
 		return aiClient.generateQuestions(
-			request.gameName(),
-			String.join(", ", request.gameGenre()),
-			request.gameContext(),
-			request.testPurpose());
+				request.gameName(),
+				String.join(", ", request.gameGenre()),
+				request.gameContext(),
+				request.testPurpose());
 	}
 
 	/**
@@ -94,21 +111,21 @@ public class SurveyService {
 	 * Note: FastAPI는 단일 질문에 대해 피드백을 받으므로, 각 질문에 대해 순차 호출
 	 */
 	public QuestionFeedbackResponse getQuestionFeedback(String gameName, String gameGenre, String gameContext,
-		String testPurpose, String question) {
+			String testPurpose, String question) {
 		GenerateFeedbackRequest request = GenerateFeedbackRequest.builder()
-			.gameName(gameName)
-			.gameGenre(gameGenre)
-			.gameContext(gameContext)
-			.testPurpose(testPurpose)
-			.originalQuestion(question)
-			.build();
+				.gameName(gameName)
+				.gameGenre(gameGenre)
+				.gameContext(gameContext)
+				.testPurpose(testPurpose)
+				.originalQuestion(question)
+				.build();
 
 		GenerateFeedbackResponse aiResponse = aiClient.getQuestionFeedback(request);
 
 		return new QuestionFeedbackResponse(
-			question,
-			aiResponse.getFeedback(),
-			aiResponse.getCandidates());
+				question,
+				aiResponse.getFeedback(),
+				aiResponse.getCandidates());
 	}
 
 	/**
@@ -123,13 +140,13 @@ public class SurveyService {
 		}
 
 		List<FixedQuestion> questions = request.questions().stream()
-			.map(item -> FixedQuestion.builder()
-				.surveyId(request.surveyId())
-				.content(item.qContent())
-				.order(item.qOrder())
-				.status(QuestionStatus.CONFIRMED)
-				.build())
-			.toList();
+				.map(item -> FixedQuestion.builder()
+						.surveyId(request.surveyId())
+						.content(item.qContent())
+						.order(item.qOrder())
+						.status(QuestionStatus.CONFIRMED)
+						.build())
+				.toList();
 
 		fixedQuestionRepository.saveAll(questions);
 
@@ -147,9 +164,9 @@ public class SurveyService {
 			throw new EntityNotFoundException();
 		}
 		return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(surveyId, QuestionStatus.CONFIRMED)
-			.stream()
-			.map(FixedQuestionResponse::from)
-			.toList();
+				.stream()
+				.map(FixedQuestionResponse::from)
+				.toList();
 	}
 
 	// ========== Private ==========
@@ -161,5 +178,14 @@ public class SurveyService {
 			}
 		}
 		throw new IllegalArgumentException("Invalid test purpose code: " + code);
+	}
+
+	private TestStage parseTestStage(String code) {
+		for (TestStage ts : TestStage.values()) {
+			if (ts.getCode().equals(code) || ts.name().equals(code)) {
+				return ts;
+			}
+		}
+		throw new IllegalArgumentException("Invalid test stage code: " + code);
 	}
 }
