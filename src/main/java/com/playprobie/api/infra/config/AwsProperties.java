@@ -44,6 +44,8 @@ public class AwsProperties {
     @Getter
     @Setter
     public static class GameLiftProperties {
+        @NotBlank(message = "GameLift region is required")
+        private String region;
         private String roleArn;
     }
 }

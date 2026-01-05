@@ -38,7 +38,17 @@ public enum ErrorCode {
 	// Workspace
 	WORKSPACE_NOT_FOUND(404, "W001", "워크스페이스를 찾을 수 없습니다."),
 	WORKSPACE_MEMBER_NOT_FOUND(404, "W002", "워크스페이스 멤버를 찾을 수 없습니다."),
-	WORKSPACE_ACCESS_DENIED(403, "W003", "해당 워크스페이스에 접근 권한이 없습니다.");
+	WORKSPACE_ACCESS_DENIED(403, "W003", "해당 워크스페이스에 접근 권한이 없습니다."),
+
+	// Streaming Resource (JIT Provisioning)
+	STREAMING_RESOURCE_NOT_FOUND(404, "SR001", "스트리밍 리소스를 찾을 수 없습니다."),
+	STREAMING_RESOURCE_ALREADY_EXISTS(409, "SR002", "이미 스트리밍 리소스가 연결되어 있습니다."),
+
+	// Tester Session (Streaming)
+	INVALID_SIGNAL_REQUEST(400, "T001", "잘못된 Signal Request입니다."),
+	RESOURCE_NOT_AVAILABLE(404, "T002", "리소스 미할당 또는 세션 불가"),
+	GAMELIFT_SERVICE_ERROR(503, "T003", "GameLift 서비스 오류"),
+	SESSION_CAPACITY_EXCEEDED(429, "T004", "현재 접속 가능한 세션이 꽉 찼습니다.");
 
 	private final int status;
 	private final String code;

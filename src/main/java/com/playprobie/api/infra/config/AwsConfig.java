@@ -58,4 +58,13 @@ public class AwsConfig {
                 .credentialsProvider(credentialsProvider)
                 .build();
     }
+
+    @Bean
+    public software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient gameLiftStreamsClient(
+            AwsCredentialsProvider credentialsProvider) {
+        return software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient.builder()
+                .region(Region.of(awsProperties.getGamelift().getRegion()))
+                .credentialsProvider(credentialsProvider)
+                .build();
+    }
 }
