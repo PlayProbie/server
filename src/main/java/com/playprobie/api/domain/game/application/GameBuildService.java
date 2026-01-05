@@ -106,10 +106,15 @@ public class GameBuildService {
         verifyAtLeastOneFileExists(gameBuild.getS3Prefix());
 
         // 클라이언트 값 신뢰 (GameLift가 최종 검증)
-        gameBuild.markAsUploaded(request.expectedFileCount(), request.expectedTotalSize());
+        gameBuild.markAsUploaded(
+                request.expectedFileCount(),
+                request.expectedTotalSize(),
+                request.osType(),
+                request.executablePath());
 
-        log.info("Upload completed: buildId={}, files={}, size={}",
-                buildId, request.expectedFileCount(), request.expectedTotalSize());
+        log.info("Upload completed: buildId={}, files={}, size={}, osType={}, executablePath={}",
+                buildId, request.expectedFileCount(), request.expectedTotalSize(),
+                request.osType(), request.executablePath());
 
         return GameBuildResponse.from(gameBuild);
     }
