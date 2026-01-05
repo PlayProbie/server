@@ -42,6 +42,12 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class FastApiClient implements AiClient {
 
+	/**
+	 * 고정 질문당 최대 꼬리질문 횟수
+	 * 이 횟수를 초과하면 AI 응답과 관계없이 다음 고정 질문으로 진행
+	 */
+	private static final int MAX_TAIL_QUESTION_COUNT = 2;
+
 	private final WebClient aiWebClient;
 	private final SseEmitterService sseEmitterService;
 	private final ObjectMapper objectMapper;
@@ -84,32 +90,59 @@ public class FastApiClient implements AiClient {
 		return result;
 	}
 
+	/**
+	 * AI 서버에 답변 분석 및 꼬리질문 생성 요청을 보냅니다.
+	 * SSE 스트리밍으로 응답을 받아 클라이언트에 전달합니다.
+	 * 꼬리질문 횟수가 MAX_TAIL_QUESTION_COUNT를 초과하면 AI 호출 없이 다음 질문으로 진행합니다.
+	 */
 	@Override
 	public void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest) {
+		// 현재 고정질문 ID 추출
 		Long fixedQId = userAnswerRequest.getFixedQId();
 		// 다음 턴 번호 계산 (현재 답변의 턴 + 1)
+		// 예: 사용자가 turnNum=2에서 답변 → 다음 꼬리질문은 turnNum=3
 		int nextTurnNum = userAnswerRequest.getTurnNum() + 1;
 
-		AiInteractionRequest aiInteractionRequest = new AiInteractionRequest(
-				sessionId,
-				userAnswerRequest.getAnswerText(),
-				userAnswerRequest.getQuestionText(),
-				null,
-				null);
+		// 현재까지 진행된 꼬리질문 횟수 계산
+		// turnNum=1: 고정질문 (꼬리질문 0회)
+		// turnNum=2: 첫번째 꼬리질문 응답 (꼬리질문 1회)
+		// turnNum=3: 두번째 꼬리질문 응답 (꼬리질문 2회)
+		int currentTailCount = userAnswerRequest.getTurnNum() - 1;
 
+		// 디버그 로그: 현재 꼬리질문 횟수와 최대 허용 횟수 출력
+		log.info("📊 [TAIL COUNT] sessionId={}, fixedQId={}, currentTailCount={}, max={}",
+				sessionId, fixedQId, currentTailCount, MAX_TAIL_QUESTION_COUNT);
+
+		// 꼬리질문 횟수 제한 체크 - 초과 시 AI 호출 없이 바로 다음 질문으로 이동
+		if (currentTailCount >= MAX_TAIL_QUESTION_COUNT) {
+			log.info("🛑 [TAIL LIMIT EXCEEDED] Skipping AI call, proceeding to next question. sessionId={}", sessionId);
+			// AI 호출 없이 바로 다음 고정 질문으로 이동
+			handleTailLimitExceeded(sessionId, fixedQId);
+			return;
+		}
+
+		// AI 서버에 보낼 요청 DTO 생성
+		AiInteractionRequest aiInteractionRequest = new AiInteractionRequest(
+				sessionId, // 세션 ID
+				userAnswerRequest.getAnswerText(), // 사용자 답변
+				userAnswerRequest.getQuestionText(), // 현재 질문 텍스트
+				null, // game_info (미사용)
+				null); // conversation_history (미사용)
+
+		// AI 서버에 SSE 스트리밍 요청 전송
 		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
-				.uri("/surveys/interaction")
+				.uri("/surveys/interaction") // AI 서버 엔드포인트
 				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.TEXT_EVENT_STREAM)
+				.accept(MediaType.TEXT_EVENT_STREAM) // SSE 응답 타입
 				.bodyValue(aiInteractionRequest)
 				.retrieve()
 				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
 				});
 
-		final AtomicReference<String> nextAction = new AtomicReference<>(
-				null);
-		final AtomicBoolean tailQuestionGenerated = new AtomicBoolean(
-				false);
+		// AI 응답에서 추출한 action 저장 (TAIL_QUESTION 또는 PASS_TO_NEXT)
+		final AtomicReference<String> nextAction = new AtomicReference<>(null);
+		// 꼬리질문이 실제로 생성되었는지 여부 추적
+		final AtomicBoolean tailQuestionGenerated = new AtomicBoolean(false);
 
 		eventStream.subscribe(
 				sse -> {
@@ -129,6 +162,7 @@ public class FastApiClient implements AiClient {
 	private void parseAndHandleEvent(String sessionId, Long fixedQId, int nextTurnNum, String jsonStr,
 			AtomicReference<String> nextAction,
 			AtomicBoolean tailQuestionGenerated) {
+		log.debug("📥 [SSE RAW] sessionId={}, rawJson={}", sessionId, jsonStr);
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
 			/**
@@ -136,9 +170,10 @@ public class FastApiClient implements AiClient {
 			 */
 			String eventType = rootNode.path("event").asText();
 			JsonNode dataNode = rootNode.path("data");
+			log.info("📨 [SSE PARSED] sessionId={}, eventType={}, data={}", sessionId, eventType, dataNode);
 			handleEvent(sessionId, fixedQId, nextTurnNum, eventType, dataNode, nextAction, tailQuestionGenerated);
 		} catch (JsonProcessingException e) {
-			log.error("Failed to parse JSON event. Data: {} | Error: {}", jsonStr, e.getMessage());
+			log.error("❌ Failed to parse JSON event. Data: {} | Error: {}", jsonStr, e.getMessage());
 		}
 	}
 
@@ -152,11 +187,15 @@ public class FastApiClient implements AiClient {
 				break;
 
 			case "done": // 모든 처리 완료
+				log.info("✅ [DONE EVENT] sessionId={}, action={}, tailQuestionGenerated={}",
+						sessionId, nextAction.get(), tailQuestionGenerated.get());
+
 				// done 이벤트를 클라이언트로 전송
 				StatusPayload donePayload = StatusPayload.builder().status("completed").build();
 				sseEmitterService.send(sessionId, "done", donePayload);
 
 				String action = nextAction.get();
+				log.info("🔍 [ACTION CHECK] sessionId={}, rawAction={}", sessionId, action);
 
 				// [Robustness] 꼬리질문 action이지만 실제 생성된 내용이 없으면 PASS_TO_NEXT로 변경
 				if ("TAIL_QUESTION".equals(action) && !tailQuestionGenerated.get()) {
@@ -167,6 +206,7 @@ public class FastApiClient implements AiClient {
 				}
 
 				if ("PASS_TO_NEXT".equals(action)) {
+					log.info("➡️ [PASS_TO_NEXT] Proceeding to next question. sessionId={}", sessionId);
 					// 다음 고정 질문 발송
 					FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
 					int currentOrder = currentQuestion.qOrder();
@@ -175,9 +215,12 @@ public class FastApiClient implements AiClient {
 							.ifPresentOrElse(
 									nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
 									() -> sendInterviewComplete(sessionId));
+				} else if ("TAIL_QUESTION".equals(action)) {
+					// TAIL_QUESTION: 꼬리질문 생성됨, 클라이언트 답변 대기
+					log.info("⏳ [TAIL_QUESTION] Waiting for user answer. sessionId={}", sessionId);
 				} else {
-					// TAIL_QUESTION 이거나 action이 없는 경우 대기
-					log.info("Action is {}, waiting for user answer.", action);
+					// action이 null이거나 알 수 없는 값인 경우
+					log.warn("⚠️ [UNKNOWN ACTION] action={}, sessionId={}. Defaulting to wait.", action, sessionId);
 				}
 				break;
 
@@ -197,8 +240,10 @@ public class FastApiClient implements AiClient {
 				nextAction.set(actionResult);
 				log.info("Analysis result - action: {}, analysis: {}", actionResult, analysis);
 
-				// 분석 결과는 로깅만 하고 클라이언트에 전송하지 않음
-				// sseEmitterService.send(sessionId, eventType, analysisPayload);
+				AnalysisPayload analysisPayload = AnalysisPayload.builder().action(actionResult).analysis(analysis)
+						.build();
+				// sseEmitterService.send(sessionId, eventType, SseResponse.of(sessionId,
+				// eventType, analysisPayload));
 				break;
 
 			case "token": // 꼬리 질문 생성 중
@@ -354,5 +399,22 @@ public class FastApiClient implements AiClient {
 				.retrieve()
 				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
 				});
+	/**
+	 * 꼬리질문 횟수 제한 초과 시 호출
+	 * AI 호출 없이 바로 다음 고정 질문으로 이동
+	 */
+	private void handleTailLimitExceeded(String sessionId, Long fixedQId) {
+		// done 이벤트를 클라이언트로 전송
+		StatusPayload donePayload = StatusPayload.builder().status("tail_limit_exceeded").build();
+		sseEmitterService.send(sessionId, "done", donePayload);
+
+		// 다음 고정 질문 발송
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
+		int currentOrder = currentQuestion.qOrder();
+
+		interviewService.getNextQuestion(sessionId, currentOrder)
+				.ifPresentOrElse(
+						nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
+						() -> sendInterviewComplete(sessionId));
 	}
 }
