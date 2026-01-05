@@ -56,8 +56,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Whitelist: 인증 없이 접근 가능한 Public URL
                         .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
-                        // 정적 리소스 (선택적)
-                        .requestMatchers(SecurityConstants.STATIC_RESOURCES).permitAll()
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())

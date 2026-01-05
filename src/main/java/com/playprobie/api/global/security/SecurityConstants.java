@@ -42,14 +42,4 @@ public final class SecurityConstants {
             "/interview/*/stream",
             "/interview/*/messages",
     };
-
-    /**
-     * 정적 리소스 URL 패턴 (선택적 사용)
-     */
-    public static final String[] STATIC_RESOURCES = {
-            "/css/**",
-            "/js/**",
-            "/images/**",
-            "/webjars/**"
-    };
 }
