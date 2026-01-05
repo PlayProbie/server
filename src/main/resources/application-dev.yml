@@ -33,3 +33,8 @@ aws:
     role-arn: ${AWS_S3_ROLE_ARN:}
   gamelift:
     role-arn: ${AWS_GAMELIFT_ROLE_ARN:}
+
+# Application Settings
+app:
+  cookie:
+    secure: true  # HTTPS 환경에서 Secure Cookie 사용
