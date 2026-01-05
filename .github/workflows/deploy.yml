@@ -98,6 +98,8 @@ jobs:
               "echo \"AI_SERVER_URL=${{ secrets.DEV_AI_SERVER_URL }}\" >> /tmp/playprobie/.env",
               "echo \"CORS_ALLOWED_ORIGINS=${{ secrets.DEV_CORS_ALLOWED_ORIGINS }}\" >> /tmp/playprobie/.env",
               "echo \"PLAYPROBIE_BASE_URL=${{ secrets.DEV_PLAYPROBIE_BASE_URL }}\" >> /tmp/playprobie/.env",
+              "echo \"JWT_SECRET=${{ secrets.DEV_JWT_SECRET }}\" >> /tmp/playprobie/.env",
+              "echo \"JWT_EXPIRATION=${{ secrets.DEV_JWT_EXPIRATION }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_REGION=${{ secrets.DEV_AWS_REGION }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_ACCESS_KEY_ID=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_SECRET_ACCESS_KEY=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}\" >> /tmp/playprobie/.env",
