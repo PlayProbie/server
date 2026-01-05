@@ -13,12 +13,16 @@ public enum ErrorCode {
 	INTERNAL_SERVER_ERROR(500, "C004", "서버 내부 오류가 발생했습니다."),
 	HANDLE_ACCESS_DENIED(403, "C005", "접근 권한이 없습니다."),
 	INVALID_TYPE_VALUE(400, "C006", "잘못된 타입의 값입니다."),
+	SESSION_EXPIRED(400, "C007", "세션이 만료되었습니다."), // Moved from S001 and re-coded to C007
 
 	// Game
 	GAME_NOT_FOUND(404, "G001", "게임을 찾을 수 없습니다."),
 	GAME_BUILD_NOT_FOUND(404, "G002", "게임 빌드를 찾을 수 없습니다."),
-	S3_FILE_NOT_FOUND(404, "G003", "S3에 해당 파일이 존재하지 않습니다."),
-	S3_ACCESS_FAILED(500, "G004", "S3 접근 중 오류가 발생했습니다."),
+
+	// Game Build (S3 operations)
+	S3_FILE_NOT_FOUND(404, "G003", "S3에서 파일을 찾을 수 없습니다."), // Renamed from S3_FILE_NOT_FOUND(G003) and message updated
+	S3_ACCESS_ERROR(500, "G004", "S3 접근 중 오류가 발생했습니다."), // Replaced S3_ACCESS_FAILED(G004)
+	STS_CLIENT_ERROR(500, "G005", "임시 자격 증명 발급 중 오류가 발생했습니다."),
 
 	// Survey
 	SURVEY_NOT_FOUND(404, "S001", "설문을 찾을 수 없습니다."),

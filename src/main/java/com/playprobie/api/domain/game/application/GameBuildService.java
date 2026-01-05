@@ -1,18 +1,23 @@
 package com.playprobie.api.domain.game.application;
 
-import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.game.dao.GameBuildRepository;
 import com.playprobie.api.domain.game.dao.GameRepository;
+import com.playprobie.api.domain.game.domain.BuildStatus;
 import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.game.domain.GameBuild;
 import com.playprobie.api.domain.game.dto.CompleteUploadRequest;
-import com.playprobie.api.domain.game.dto.CreatePresignedUrlRequest;
-import com.playprobie.api.domain.game.dto.CreatePresignedUrlResponse;
+import com.playprobie.api.domain.game.dto.CreateGameBuildRequest;
+import com.playprobie.api.domain.game.dto.CreateGameBuildResponse;
 import com.playprobie.api.domain.game.dto.GameBuildResponse;
 import com.playprobie.api.domain.game.exception.GameBuildNotFoundException;
 import com.playprobie.api.domain.game.exception.GameNotFoundException;
@@ -24,14 +29,18 @@ import com.playprobie.api.infra.config.AwsProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.StsException;
 
 @Service
 @RequiredArgsConstructor
@@ -40,106 +49,199 @@ public class GameBuildService {
 
     private final GameBuildRepository gameBuildRepository;
     private final GameRepository gameRepository;
-    private final S3Presigner s3Presigner;
+    private final StsClient stsClient;
     private final S3Client s3Client;
     private final AwsProperties awsProperties;
 
-    private static final Duration PRESIGNED_URL_EXPIRATION = Duration.ofMinutes(10);
-
+    /**
+     * 새 게임 빌드를 생성하고 임시 자격 증명을 발급합니다.
+     */
     @Transactional
-    public CreatePresignedUrlResponse createPresignedUrl(UUID gameUuid, CreatePresignedUrlRequest request) {
-        // 1. Game 조회 (UUID)
+    public CreateGameBuildResponse createBuild(UUID gameUuid, CreateGameBuildRequest request) {
         Game game = gameRepository.findByUuid(gameUuid)
                 .orElseThrow(GameNotFoundException::new);
 
-        // 2. Build UUID 생성
         UUID buildUuid = UUID.randomUUID();
 
-        // 3. S3 Key 생성 (gameUuid/buildUuid-filename)
-        String s3Key = String.format("%s/%s-%s",
-                game.getUuid(),
-                buildUuid,
-                request.filename());
-
-        // 4. GameBuild 생성
         GameBuild gameBuild = GameBuild.builder()
                 .game(game)
                 .uuid(buildUuid)
-                .originalFilename(request.filename())
-                .s3Key(s3Key)
-                .fileSize(request.fileSize())
+                .version(request.version())
                 .build();
+
         gameBuildRepository.save(gameBuild);
 
-        // 5. Presigned URL 생성
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(awsProperties.getS3().getBucketName())
-                .key(s3Key)
-                .contentType("application/zip")
-                .contentLength(request.fileSize())
-                .build();
+        String s3Prefix = gameBuild.getS3Prefix();
 
-        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(PRESIGNED_URL_EXPIRATION)
-                .putObjectRequest(putObjectRequest)
-                .build();
+        // STS AssumeRole & Policy Injection
+        Credentials creds = getTemporaryCredentials(s3Prefix);
 
-        PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+        log.info("Game build created and credentials generated: buildId={}, s3Prefix={}", buildUuid, s3Prefix);
 
-        log.info("Presigned URL generated for buildId={}, s3Key={}", gameBuild.getUuid(), s3Key);
-
-        return new CreatePresignedUrlResponse(
-                gameBuild.getUuid(),
-                presignedRequest.url().toString(),
-                s3Key,
-                PRESIGNED_URL_EXPIRATION.toSeconds());
+        return new CreateGameBuildResponse(
+                buildUuid,
+                request.version(),
+                s3Prefix,
+                new CreateGameBuildResponse.AwsCredentials(
+                        creds.accessKeyId(),
+                        creds.secretAccessKey(),
+                        creds.sessionToken(),
+                        creds.expiration().toEpochMilli()));
     }
 
+    /**
+     * 업로드 완료를 확인하고 빌드 상태를 변경합니다.
+     */
     @Transactional
-    public GameBuildResponse completeUpload(UUID gameUuid, UUID buildId, CompleteUploadRequest request) {
-        // 1. UUID로 GameBuild 조회 및 Game 소속 확인
+    public GameBuildResponse completeUpload(
+            UUID gameUuid, UUID buildId, CompleteUploadRequest request) {
+
+        GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
+
+        if (gameBuild.getStatus() == BuildStatus.UPLOADED) {
+            return GameBuildResponse.from(gameBuild);
+        }
+
+        // Light Verification: 최소 1개 파일 존재 확인
+        verifyAtLeastOneFileExists(gameBuild.getS3Prefix());
+
+        // 클라이언트 값 신뢰 (GameLift가 최종 검증)
+        gameBuild.markAsUploaded(request.expectedFileCount(), request.expectedTotalSize());
+
+        log.info("Upload completed: buildId={}, files={}, size={}",
+                buildId, request.expectedFileCount(), request.expectedTotalSize());
+
+        return GameBuildResponse.from(gameBuild);
+    }
+
+    /**
+     * 빌드 삭제 - S3 파일 일괄 삭제
+     */
+    @Transactional
+    public void deleteBuild(UUID gameUuid, UUID buildId) {
+        GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
+
+        // S3에서 prefix 하위 모든 파일 삭제
+        deleteS3Objects(gameBuild.getS3Prefix());
+
+        // DB에서 빌드 삭제
+        gameBuildRepository.delete(gameBuild);
+
+        log.info("Build deleted: buildId={}, s3Prefix={}", buildId, gameBuild.getS3Prefix());
+    }
+
+    private Credentials getTemporaryCredentials(String s3Prefix) {
+        try {
+            // [Security] Session Policy: 오직 이 Prefix에만 PutObject 허용
+            String policy = buildSessionPolicy(s3Prefix);
+
+            AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
+                    .roleArn(awsProperties.getS3().getRoleArn())
+                    .roleSessionName("GameUpload-" + UUID.randomUUID())
+                    .policy(policy)
+                    .durationSeconds(3600) // 1시간
+                    .build();
+
+            AssumeRoleResponse response = stsClient.assumeRole(assumeRoleRequest);
+            return response.credentials();
+        } catch (StsException e) {
+            log.error("STS AssumeRole failed: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
+        } catch (Exception e) {
+            log.error("Unexpected error during STS AssumeRole: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
+        }
+    }
+
+    private String buildSessionPolicy(String s3Prefix) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode policy = mapper.createObjectNode();
+            policy.put("Version", "2012-10-17");
+
+            ArrayNode statements = policy.putArray("Statement");
+            ObjectNode statement = statements.addObject();
+            statement.put("Effect", "Allow");
+            statement.put("Action", "s3:PutObject");
+            statement.put("Resource", String.format("arn:aws:s3:::%s/%s*",
+                    awsProperties.getS3().getBucketName(), s3Prefix));
+
+            return mapper.writeValueAsString(policy);
+        } catch (Exception e) {
+            log.error("Failed to build session policy: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
+        }
+    }
+
+    private void deleteS3Objects(String prefix) {
+        try {
+            String continuationToken = null;
+            do {
+                ListObjectsV2Request.Builder listReqBuilder = ListObjectsV2Request.builder()
+                        .bucket(awsProperties.getS3().getBucketName())
+                        .prefix(prefix);
+
+                if (continuationToken != null) {
+                    listReqBuilder.continuationToken(continuationToken);
+                }
+
+                ListObjectsV2Response listResponse = s3Client.listObjectsV2(listReqBuilder.build());
+
+                if (listResponse.hasContents()) {
+                    List<ObjectIdentifier> objectIds = listResponse.contents().stream()
+                            .map(obj -> ObjectIdentifier.builder().key(obj.key()).build())
+                            .toList();
+
+                    DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                            .bucket(awsProperties.getS3().getBucketName())
+                            .delete(Delete.builder().objects(objectIds).build())
+                            .build();
+
+                    s3Client.deleteObjects(deleteRequest);
+                    log.info("S3 objects deleted: count={}", objectIds.size());
+                }
+
+                continuationToken = listResponse.isTruncated() ? listResponse.nextContinuationToken() : null;
+            } while (continuationToken != null);
+
+        } catch (S3Exception e) {
+            log.error("S3 delete failed: {}", e.getMessage(), e);
+            throw new S3AccessException();
+        }
+    }
+
+    private void verifyAtLeastOneFileExists(String prefix) {
+        try {
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                    .bucket(awsProperties.getS3().getBucketName())
+                    .prefix(prefix)
+                    .maxKeys(1) // 1개만 확인
+                    .build();
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(request);
+
+            if (!response.hasContents() || response.contents().isEmpty()) {
+                log.warn("No files found in S3 prefix: {}", prefix);
+                throw new BusinessException(ErrorCode.S3_FILE_NOT_FOUND);
+            }
+
+            log.debug("At least one file exists in prefix: {}", prefix);
+
+        } catch (S3Exception e) {
+            log.error("S3 list failed: {}", e.getMessage(), e);
+            throw new S3AccessException();
+        }
+    }
+
+    private GameBuild getVerifiedBuild(UUID gameUuid, UUID buildId) {
         GameBuild gameBuild = gameBuildRepository.findByUuid(buildId)
                 .orElseThrow(GameBuildNotFoundException::new);
 
-        // 2. GameBuild가 해당 Game에 속하는지 확인
         if (!gameBuild.getGame().getUuid().equals(gameUuid)) {
             throw new GameBuildNotFoundException();
         }
 
-        // 3. S3 Key 일치 확인
-        if (!gameBuild.getS3Key().equals(request.s3Key())) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        // 4. S3 HeadObject로 파일 존재 및 크기 검증
-        verifyS3Upload(gameBuild);
-
-        // 5. 상태 변경
-        gameBuild.markAsUploaded();
-
-        log.info("Upload completed for buildId={}", gameBuild.getUuid());
-        return GameBuildResponse.from(gameBuild);
+        return gameBuild;
     }
 
-    private void verifyS3Upload(GameBuild gameBuild) {
-        try {
-            HeadObjectRequest headRequest = HeadObjectRequest.builder()
-                    .bucket(awsProperties.getS3().getBucketName())
-                    .key(gameBuild.getS3Key())
-                    .build();
-
-            HeadObjectResponse headResponse = s3Client.headObject(headRequest);
-
-            if (!headResponse.contentLength().equals(gameBuild.getFileSize())) {
-                log.warn("File size mismatch: expected={}, actual={}",
-                        gameBuild.getFileSize(), headResponse.contentLength());
-            }
-        } catch (NoSuchKeyException e) {
-            log.error("S3 file not found: s3Key={}", gameBuild.getS3Key());
-            throw new BusinessException(ErrorCode.S3_FILE_NOT_FOUND);
-        } catch (S3Exception e) {
-            log.error("S3 access failed: {}", e.getMessage(), e);
-            throw new S3AccessException();
-        }
-    }
 }

@@ -26,16 +26,19 @@ public class AwsProperties {
     private String secretKey;
 
     @Valid
-    private S3Properties s3;
+    private S3Properties s3 = new S3Properties();
 
     @Valid
-    private GameLiftProperties gamelift;
+    private GameLiftProperties gamelift = new GameLiftProperties();
 
     @Getter
     @Setter
     public static class S3Properties {
+        @NotBlank(message = "S3 region is required")
+        private String region;
         @NotBlank(message = "S3 bucket name is required")
         private String bucketName;
+        private String roleArn;
     }
 
     @Getter

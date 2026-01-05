@@ -11,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.gamelift.GameLiftClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.sts.StsClient;
 
 @Configuration
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class AwsConfig {
     @Bean
     public S3Client s3Client(AwsCredentialsProvider credentialsProvider) {
         return S3Client.builder()
-                .region(Region.of(awsProperties.getRegion()))
+                .region(Region.of(awsProperties.getS3().getRegion()))
                 .credentialsProvider(credentialsProvider)
                 .build();
     }
@@ -37,7 +38,7 @@ public class AwsConfig {
     @Bean(destroyMethod = "close")
     public S3Presigner s3Presigner(AwsCredentialsProvider credentialsProvider) {
         return S3Presigner.builder()
-                .region(Region.of(awsProperties.getRegion()))
+                .region(Region.of(awsProperties.getS3().getRegion()))
                 .credentialsProvider(credentialsProvider)
                 .build();
     }
@@ -45,6 +46,14 @@ public class AwsConfig {
     @Bean
     public GameLiftClient gameLiftClient(AwsCredentialsProvider credentialsProvider) {
         return GameLiftClient.builder()
+                .region(Region.of(awsProperties.getRegion()))
+                .credentialsProvider(credentialsProvider)
+                .build();
+    }
+
+    @Bean
+    public StsClient stsClient(AwsCredentialsProvider credentialsProvider) {
+        return StsClient.builder()
                 .region(Region.of(awsProperties.getRegion()))
                 .credentialsProvider(credentialsProvider)
                 .build();
