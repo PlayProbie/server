@@ -54,13 +54,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**")
-                        .permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-                        // All other requests require authentication
+                        // Whitelist: 인증 없이 접근 가능한 Public URL
+                        .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
+                        // 정적 리소스 (선택적)
+                        .requestMatchers(SecurityConstants.STATIC_RESOURCES).permitAll()
+                        // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
