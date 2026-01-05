@@ -22,12 +22,12 @@ import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.AiInteractionRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateQuestionRequest;
+import com.playprobie.api.infra.ai.dto.request.QuestionAnalysisRequest;
 import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
 import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
-import com.playprobie.api.infra.sse.dto.payload.AnalysisPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
 import com.playprobie.api.infra.sse.dto.payload.StatusPayload;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
@@ -197,10 +197,8 @@ public class FastApiClient implements AiClient {
 				nextAction.set(actionResult);
 				log.info("Analysis result - action: {}, analysis: {}", actionResult, analysis);
 
-				AnalysisPayload analysisPayload = AnalysisPayload.builder().action(actionResult).analysis(analysis)
-						.build();
-				// sseEmitterService.send(sessionId, eventType, SseResponse.of(sessionId,
-				// eventType, analysisPayload));
+				// 분석 결과는 로깅만 하고 클라이언트에 전송하지 않음
+				// sseEmitterService.send(sessionId, eventType, analysisPayload);
 				break;
 
 			case "token": // 꼬리 질문 생성 중
@@ -303,7 +301,7 @@ public class FastApiClient implements AiClient {
 	@Override
 	public void embedSessionData(SessionEmbeddingRequest request) {
 		aiWebClient.post()
-				.uri("/embedding")
+				.uri("/embeddings")
 				.contentType(MediaType.APPLICATION_JSON)
 				.bodyValue(request)
 				.retrieve()
@@ -313,5 +311,22 @@ public class FastApiClient implements AiClient {
 								request.sessionId(), request.fixedQuestionId(), result.embeddingId()),
 						error -> log.error("Embedding failed for session: {}, fixedQId: {}, error: {}",
 								request.sessionId(), request.fixedQuestionId(), error.getMessage()));
+	}
+
+	@Override
+	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId) {
+		QuestionAnalysisRequest request = QuestionAnalysisRequest.builder()
+				.surveyId(surveyId)
+				.fixedQuestionId(fixedQuestionId)
+				.build();
+
+		return aiWebClient.post()
+				.uri("/analytics/questions/{questionId}", fixedQuestionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.TEXT_EVENT_STREAM)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+				});
 	}
 }

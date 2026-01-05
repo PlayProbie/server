@@ -2,10 +2,14 @@ package com.playprobie.api.infra.ai;
 
 import java.util.List;
 
+import org.springframework.http.codec.ServerSentEvent;
+
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
+
+import reactor.core.publisher.Flux;
 
 /**
  * AI 클라이언트 인터페이스
@@ -36,4 +40,7 @@ public interface AiClient {
 
         // 세션 완료 시 임베딩 요청 (비동기)
         void embedSessionData(SessionEmbeddingRequest request);
+
+        // 질문 분석 요청 (SSE 스트리밍)
+        Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId);
 }
