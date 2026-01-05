@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
@@ -80,16 +81,21 @@ public class TesterSessionController {
      * 세션 상태를 확인합니다 (Heartbeat).
      * 
      * <p>
-     * GET /surveys/{surveyUuid}/session/status
+     * GET /surveys/{surveyUuid}/session/status?survey_session_uuid={uuid}
      * 
-     * @param surveyUuid Survey UUID
+     * @param surveyUuid        Survey UUID
+     * @param surveySessionUuid Session UUID
      * @return 200 OK
      */
     @GetMapping("/session/status")
-    public ResponseEntity<ApiResponse<SessionStatusResponse>> getSessionStatus(@PathVariable UUID surveyUuid) {
-        // TODO: 현재 세션 식별 로직 필요 (인증 연동)
-        // 임시로 가장 최근 세션을 조회하는 방식 (실제로는 인증 정보 기반으로 조회해야 함)
-        throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<ApiResponse<SessionStatusResponse>> getSessionStatus(
+            @PathVariable UUID surveyUuid,
+            @RequestParam(name = "survey_session_uuid") UUID surveySessionUuid) {
+
+        boolean isActive = streamingResourceService.isSessionActive(surveySessionUuid);
+        return ResponseEntity.ok(ApiResponse.of(isActive
+                ? SessionStatusResponse.active(surveySessionUuid)
+                : SessionStatusResponse.inactive()));
     }
 
     /**
