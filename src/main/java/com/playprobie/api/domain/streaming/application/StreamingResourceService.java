@@ -216,6 +216,30 @@ public class StreamingResourceService {
                 return TestActionResponse.startTest(resource.getStatus().name(), resource.getCurrentCapacity());
         }
 
+        /**
+         * 설문을 활성화합니다 (Capacity 0 → Max Capacity).
+         */
+        @Transactional
+        public TestActionResponse activateResource(java.util.UUID surveyUuid) {
+                log.info("Activating resource for surveyUuid={}", surveyUuid);
+
+                Survey survey = surveyRepository.findByUuid(surveyUuid)
+                                .orElseThrow(SurveyNotFoundException::new);
+
+                StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId())
+                                .orElseThrow(StreamingResourceNotFoundException::new);
+
+                // Capacity를 maxCapacity로 변경
+                gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), resource.getMaxCapacity());
+
+                resource.activate(resource.getMaxCapacity());
+                streamingResourceRepository.save(resource);
+
+                log.info("Resource activated for resourceId={}, capacity={}", resource.getId(),
+                                resource.getMaxCapacity());
+                return TestActionResponse.startTest("SCALING", resource.getMaxCapacity());
+        }
+
         @Transactional
         public TestActionResponse startTest(java.util.UUID surveyUuid) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)

@@ -89,6 +89,19 @@ public class Survey extends BaseTimeEntity {
 	}
 
 	/**
+	 * 설문 상태를 업데이트합니다.
+	 */
+	public void updateStatus(SurveyStatus status) {
+		if (status == SurveyStatus.ACTIVE) {
+			activate();
+		} else if (status == SurveyStatus.CLOSED) {
+			close();
+		} else {
+			this.status = status;
+		}
+	}
+
+	/**
 	 * 설문을 활성화합니다 (ACTIVE 상태로 변경).
 	 */
 	public void activate() {

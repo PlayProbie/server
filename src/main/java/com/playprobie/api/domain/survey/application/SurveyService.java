@@ -1,7 +1,10 @@
 package com.playprobie.api.domain.survey.application;
 
+import java.time.ZoneId;
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +15,7 @@ import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
+import com.playprobie.api.domain.survey.domain.SurveyStatus;
 import com.playprobie.api.domain.survey.domain.TestPurpose;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
@@ -19,14 +23,20 @@ import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
 import com.playprobie.api.domain.survey.dto.QuestionFeedbackResponse;
 import com.playprobie.api.domain.survey.dto.request.AiQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.request.CreateSurveyRequest;
+import com.playprobie.api.domain.survey.dto.request.UpdateSurveyStatusRequest;
 import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
+import com.playprobie.api.domain.survey.dto.response.UpdateSurveyStatusResponse;
+import com.playprobie.api.domain.streaming.application.StreamingResourceService;
+import com.playprobie.api.domain.streaming.dto.TestActionResponse;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -35,12 +45,13 @@ public class SurveyService {
 	private final SurveyRepository surveyRepository;
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final GameService gameService;
+	private final StreamingResourceService streamingResourceService;
 	private final AiClient aiClient;
 
-	// ========== Survey CRUD ==========
-
-	@org.springframework.beans.factory.annotation.Value("${playprobie.base-url}")
+	@Value("${playprobie.base-url}")
 	private String baseUrl;
+
+	// ========== Survey CRUD ==========
 
 	@Transactional
 	public SurveyResponse createSurvey(CreateSurveyRequest request) {
@@ -51,8 +62,8 @@ public class SurveyService {
 				.game(game)
 				.name(request.surveyName())
 				.testPurpose(testPurpose)
-				.startAt(request.startedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
-				.endAt(request.endedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
+				.startAt(request.startedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
+				.endAt(request.endedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
 				.build();
 
 		Survey savedSurvey = surveyRepository.save(survey);
@@ -64,32 +75,56 @@ public class SurveyService {
 		return SurveyResponse.from(savedSurvey);
 	}
 
-	public SurveyResponse getSurvey(Long surveyId) {
-		Survey survey = surveyRepository.findById(surveyId)
-				.orElseThrow(EntityNotFoundException::new);
-		return SurveyResponse.from(survey);
+	public List<SurveyResponse> getSurveys(UUID gameUuid) {
+		if (gameUuid != null) {
+			return surveyRepository.findByGameUuid(gameUuid)
+					.stream()
+					.map(SurveyResponse::forList)
+					.toList();
+		}
+		return surveyRepository.findAll()
+				.stream()
+				.map(SurveyResponse::forList)
+				.toList();
 	}
 
-	public SurveyResponse getSurveyByUuid(java.util.UUID surveyUuid) {
+	public SurveyResponse getSurveyByUuid(UUID surveyUuid) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 				.orElseThrow(EntityNotFoundException::new);
 		return SurveyResponse.from(survey);
 	}
 
-	public Survey getSurveyEntity(Long surveyId) {
-		return surveyRepository.findById(surveyId)
-				.orElseThrow(EntityNotFoundException::new);
-	}
-
-	public Survey getSurveyEntity(java.util.UUID surveyUuid) {
+	public Survey getSurveyEntity(UUID surveyUuid) {
 		return surveyRepository.findByUuid(surveyUuid)
 				.orElseThrow(EntityNotFoundException::new);
 	}
 
 	/**
-	 * AI를 통해 질문 생성 (DB 저장 없이 미리보기)
-	 * POST /surveys/ai-questions
+	 * 설문 상태 업데이트 및 스트리밍 리소스 제어
 	 */
+	@Transactional
+	public UpdateSurveyStatusResponse updateSurveyStatus(UUID surveyUuid, UpdateSurveyStatusRequest request) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(EntityNotFoundException::new);
+
+		SurveyStatus newStatus = SurveyStatus.valueOf(request.status());
+		survey.updateStatus(newStatus);
+
+		TestActionResponse streamingAction = null;
+		if (newStatus == SurveyStatus.ACTIVE) {
+			// JIT Provisioning: ACTIVE 시점에 Max Capacity로 확장
+			streamingAction = streamingResourceService.activateResource(surveyUuid);
+		} else if (newStatus == SurveyStatus.CLOSED) {
+			// 설문 종료 시 리소스 즉시 해제
+			streamingResourceService.deleteResource(surveyUuid);
+			streamingAction = TestActionResponse.stopTest("CLEANING", 0);
+		}
+
+		return new UpdateSurveyStatusResponse(surveyUuid, survey.getStatus().name(), streamingAction);
+	}
+
+	// ========== AI & Questions ==========
+
 	public List<String> generateAiQuestions(AiQuestionsRequest request) {
 		return aiClient.generateQuestions(
 				request.gameName(),
@@ -98,12 +133,6 @@ public class SurveyService {
 				request.testPurpose());
 	}
 
-	/**
-	 * 질문에 대한 피드백 제공
-	 * POST /surveys/question-feedback
-	 *
-	 * Note: FastAPI는 단일 질문에 대해 피드백을 받으므로, 각 질문에 대해 순차 호출
-	 */
 	public QuestionFeedbackResponse getQuestionFeedback(String gameName, String gameGenre, String gameContext,
 			String testPurpose, String question) {
 		GenerateFeedbackRequest request = GenerateFeedbackRequest.builder()
@@ -122,13 +151,8 @@ public class SurveyService {
 				aiResponse.getCandidates());
 	}
 
-	/**
-	 * 고정 질문 저장
-	 * POST /surveys/fixed_questions
-	 */
 	@Transactional
 	public FixedQuestionsCountResponse createFixedQuestions(CreateFixedQuestionsRequest request) {
-		// 설문 존재 확인
 		Survey survey = surveyRepository.findByUuid(request.surveyUuid())
 				.orElseThrow(EntityNotFoundException::new);
 
@@ -146,13 +170,7 @@ public class SurveyService {
 		return FixedQuestionsCountResponse.of(questions.size());
 	}
 
-	// ========== 확정 질문 조회 ==========
-
-	/**
-	 * 확정(CONFIRMED) 질문 목록 조회
-	 * GET /surveys/{surveyUuid}/questions
-	 */
-	public List<FixedQuestionResponse> getConfirmedQuestions(java.util.UUID surveyUuid) {
+	public List<FixedQuestionResponse> getConfirmedQuestions(UUID surveyUuid) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 				.orElseThrow(EntityNotFoundException::new);
 		return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(survey.getId(), QuestionStatus.CONFIRMED)
