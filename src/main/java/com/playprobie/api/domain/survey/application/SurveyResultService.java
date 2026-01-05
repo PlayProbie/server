@@ -16,9 +16,12 @@ import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.domain.SessionStatus;
 import com.playprobie.api.domain.interview.domain.SurveySession;
+import com.playprobie.api.domain.game.application.GameService;
+import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
+import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.SurveyResultDetailResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultListResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultSummaryResponse;
@@ -35,12 +38,18 @@ public class SurveyResultService {
         private final SurveySessionRepository sessionRepository;
         private final FixedQuestionRepository fixedQuestionRepository;
         private final InterviewLogRepository interviewLogRepository;
+        private final GameService gameService;
 
         // 전체 응답 요약
         public SurveyResultSummaryResponse getSummary(long gameId, SessionStatus status) {
                 long surveyCount = surveyRepository.countByGameId(gameId);
                 long responseCount = sessionRepository.countByGameIdAndStatus(gameId, status);
                 return SurveyResultSummaryResponse.of(surveyCount, responseCount);
+        }
+
+        public SurveyResultSummaryResponse getSummary(java.util.UUID gameUuid, SessionStatus status) {
+                Game game = gameService.getGameEntity(gameUuid);
+                return getSummary(game.getId(), status);
         }
 
         // 전체 응답 리스트 (커서 페이징)
@@ -69,9 +78,9 @@ public class SurveyResultService {
 
                 List<SurveyResultListResponse.SessionItem> content = sessions.stream()
                                 .map(session -> SurveyResultListResponse.SessionItem.builder()
-                                                .sessionId(session.getId())
+                                                .sessionUuid(session.getUuid())
                                                 .surveyName(session.getSurvey().getName())
-                                                .surveyId(session.getSurvey().getId())
+                                                .surveyUuid(session.getSurvey().getUuid())
                                                 .testerId(session.getTesterProfile() != null
                                                                 ? session.getTesterProfile().getTesterId()
                                                                 : null)
@@ -86,6 +95,11 @@ public class SurveyResultService {
                                 .nextCursor(nextCursor)
                                 .hasNext(hasNext)
                                 .build();
+        }
+
+        public SurveyResultListResponse getResponseList(java.util.UUID gameUuid, Long cursor, int size) {
+                Game game = gameService.getGameEntity(gameUuid);
+                return getResponseList(game.getId(), cursor, size);
         }
 
         // 응답 세부 내용
@@ -104,11 +118,19 @@ public class SurveyResultService {
                                 .build();
         }
 
+        public SurveyResultDetailResponse getResponseDetails(java.util.UUID surveyUuid, java.util.UUID sessionUuid) {
+                Survey survey = surveyRepository.findByUuid(surveyUuid)
+                                .orElseThrow(EntityNotFoundException::new);
+                SurveySession session = sessionRepository.findByUuid(sessionUuid)
+                                .orElseThrow(EntityNotFoundException::new);
+                return getResponseDetails(survey.getId(), session.getId());
+        }
+
         private SurveyResultDetailResponse.SessionInfo buildSessionInfo(SurveySession session) {
                 return SurveyResultDetailResponse.SessionInfo.builder()
-                                .sessionId(session.getId())
+                                .sessionUuid(session.getUuid())
                                 .surveyName(session.getSurvey().getName())
-                                .surveyId(session.getSurvey().getId())
+                                .surveyUuid(session.getSurvey().getUuid())
                                 .testerId(session.getTesterProfile() != null ? session.getTesterProfile().getTesterId()
                                                 : null)
                                 .status(session.getStatus())
@@ -144,7 +166,6 @@ public class SurveyResultService {
                                                         .toList();
 
                                         return SurveyResultDetailResponse.FixedQuestionGroup.builder()
-                                                        .fixedQId(fixedQId)
                                                         .fixedQuestion(questionTextMap.getOrDefault(fixedQId,
                                                                         "Unknown Question"))
                                                         .excerpt(excerpt)

@@ -25,14 +25,14 @@ public class GameService {
 	@Transactional
 	public GameResponse createGame(CreateGameRequest request) {
 		List<GameGenre> genres = request.gameGenre().stream()
-			.map(this::parseGenre)
-			.toList();
+				.map(this::parseGenre)
+				.toList();
 
 		Game game = Game.builder()
-			.name(request.gameName())
-			.genres(genres)
-			.context(request.gameContext())
-			.build();
+				.name(request.gameName())
+				.genres(genres)
+				.context(request.gameContext())
+				.build();
 
 		Game savedGame = gameRepository.save(game);
 		return GameResponse.from(savedGame);
@@ -40,13 +40,23 @@ public class GameService {
 
 	public GameResponse getGame(Long gameId) {
 		Game game = gameRepository.findById(gameId)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
 		return GameResponse.from(game);
 	}
 
 	public Game getGameEntity(Long gameId) {
 		return gameRepository.findById(gameId)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
+	}
+
+	public Game getGameEntity(java.util.UUID gameUuid) {
+		return gameRepository.findByUuid(gameUuid)
+				.orElseThrow(EntityNotFoundException::new);
+	}
+
+	public GameResponse getGameByUuid(java.util.UUID gameUuid) {
+		Game game = getGameEntity(gameUuid);
+		return GameResponse.from(game);
 	}
 
 	private GameGenre parseGenre(String code) {

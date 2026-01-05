@@ -13,6 +13,8 @@ public record GameBuildResponse(
         String status,
         Integer totalFiles,
         Long totalSize,
+        String osType,
+        String executablePath,
         LocalDateTime createdAt) {
     public static GameBuildResponse from(GameBuild gameBuild) {
         return new GameBuildResponse(
@@ -23,6 +25,8 @@ public record GameBuildResponse(
                 gameBuild.getStatus().name(),
                 gameBuild.getTotalFiles(),
                 gameBuild.getTotalSize(),
+                gameBuild.getOsType(),
+                gameBuild.getExecutablePath(),
                 gameBuild.getCreatedAt());
     }
 }

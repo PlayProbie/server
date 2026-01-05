@@ -23,25 +23,25 @@ public class SurveyResultApi {
 
     private final SurveyResultService surveyResultService;
 
-    @GetMapping("/{gameId}")
+    @GetMapping("/{gameUuid}")
     public ResponseEntity<ApiResponse<SurveyResultSummaryResponse>> getSummary(
-            @PathVariable Long gameId,
+            @PathVariable java.util.UUID gameUuid,
             @RequestParam(required = false, defaultValue = "COMPLETED") SessionStatus status) {
-        return ResponseEntity.ok(ApiResponse.of(surveyResultService.getSummary(gameId, status)));
+        return ResponseEntity.ok(ApiResponse.of(surveyResultService.getSummary(gameUuid, status)));
     }
 
-    @GetMapping("/{gameId}/listup")
+    @GetMapping("/{gameUuid}/listup")
     public ResponseEntity<ApiResponse<SurveyResultListResponse>> getResponseList(
-            @PathVariable Long gameId,
+            @PathVariable java.util.UUID gameUuid,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.of(surveyResultService.getResponseList(gameId, cursor, size)));
+        return ResponseEntity.ok(ApiResponse.of(surveyResultService.getResponseList(gameUuid, cursor, size)));
     }
 
-    @GetMapping("/{surveyId}/details/{sessionId}")
+    @GetMapping("/{surveyUuid}/details/{sessionUuid}")
     public ResponseEntity<ApiResponse<SurveyResultDetailResponse>> getResponseDetails(
-            @PathVariable Long surveyId,
-            @PathVariable Long sessionId) {
-        return ResponseEntity.ok(ApiResponse.of(surveyResultService.getResponseDetails(surveyId, sessionId)));
+            @PathVariable java.util.UUID surveyUuid,
+            @PathVariable java.util.UUID sessionUuid) {
+        return ResponseEntity.ok(ApiResponse.of(surveyResultService.getResponseDetails(surveyUuid, sessionUuid)));
     }
 }

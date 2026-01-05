@@ -57,14 +57,21 @@ public class InterviewService {
 	}
 
 	@Transactional
-	public InterviewHistoryResponse getInterviewHistory(Long surveyId, UUID sessionUuid) {
+	public InterviewHistoryResponse getInterviewHistory(Long surveyId, java.util.UUID sessionUuid) {
 		SurveySession session = findAndValidateSession(surveyId, sessionUuid);
 		List<InterviewLog> logs = interviewLogRepository.findBySessionUuidOrderByTurnNumAsc(sessionUuid);
 		String sseUrl = InterviewUrlProvider.getStreamUrl(session.getUuid());
 		return InterviewHistoryResponse.assemble(session, logs, sseUrl);
 	}
 
-	private SurveySession findAndValidateSession(Long surveyId, UUID sessionUuid) {
+	@Transactional
+	public InterviewHistoryResponse getInterviewHistory(java.util.UUID surveyUuid, java.util.UUID sessionUuid) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(EntityNotFoundException::new);
+		return getInterviewHistory(survey.getId(), sessionUuid);
+	}
+
+	private SurveySession findAndValidateSession(Long surveyId, java.util.UUID sessionUuid) {
 		SurveySession session = surveySessionRepository.findByUuid(sessionUuid)
 				.orElseThrow(SessionNotFoundException::new);
 		session.validateSurveyId(surveyId);

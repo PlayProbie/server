@@ -30,9 +30,9 @@ public class GameController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
 	}
 
-	@GetMapping("/{gameId}")
-	public ResponseEntity<ApiResponse<GameResponse>> getGame(@PathVariable Long gameId) {
-		GameResponse response = gameService.getGame(gameId);
+	@GetMapping("/{gameUuid}")
+	public ResponseEntity<ApiResponse<GameResponse>> getGame(@PathVariable java.util.UUID gameUuid) {
+		GameResponse response = gameService.getGameByUuid(gameUuid);
 		return ResponseEntity.ok(ApiResponse.of(response));
 	}
 }

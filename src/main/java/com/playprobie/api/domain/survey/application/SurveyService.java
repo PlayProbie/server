@@ -44,16 +44,16 @@ public class SurveyService {
 
 	@Transactional
 	public SurveyResponse createSurvey(CreateSurveyRequest request) {
-		Game game = gameService.getGameEntity(request.gameId());
+		Game game = gameService.getGameEntity(request.gameUuid());
 		TestPurpose testPurpose = parseTestPurpose(request.testPurpose());
 
 		Survey survey = Survey.builder()
-			.game(game)
-			.name(request.surveyName())
-			.testPurpose(testPurpose)
-			.startAt(request.startedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
-			.endAt(request.endedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
-			.build();
+				.game(game)
+				.name(request.surveyName())
+				.testPurpose(testPurpose)
+				.startAt(request.startedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
+				.endAt(request.endedAt().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime())
+				.build();
 
 		Survey savedSurvey = surveyRepository.save(survey);
 
@@ -66,13 +66,24 @@ public class SurveyService {
 
 	public SurveyResponse getSurvey(Long surveyId) {
 		Survey survey = surveyRepository.findById(surveyId)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
+		return SurveyResponse.from(survey);
+	}
+
+	public SurveyResponse getSurveyByUuid(java.util.UUID surveyUuid) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(EntityNotFoundException::new);
 		return SurveyResponse.from(survey);
 	}
 
 	public Survey getSurveyEntity(Long surveyId) {
 		return surveyRepository.findById(surveyId)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
+	}
+
+	public Survey getSurveyEntity(java.util.UUID surveyUuid) {
+		return surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(EntityNotFoundException::new);
 	}
 
 	/**
@@ -81,10 +92,10 @@ public class SurveyService {
 	 */
 	public List<String> generateAiQuestions(AiQuestionsRequest request) {
 		return aiClient.generateQuestions(
-			request.gameName(),
-			String.join(", ", request.gameGenre()),
-			request.gameContext(),
-			request.testPurpose());
+				request.gameName(),
+				String.join(", ", request.gameGenre()),
+				request.gameContext(),
+				request.testPurpose());
 	}
 
 	/**
@@ -94,21 +105,21 @@ public class SurveyService {
 	 * Note: FastAPI는 단일 질문에 대해 피드백을 받으므로, 각 질문에 대해 순차 호출
 	 */
 	public QuestionFeedbackResponse getQuestionFeedback(String gameName, String gameGenre, String gameContext,
-		String testPurpose, String question) {
+			String testPurpose, String question) {
 		GenerateFeedbackRequest request = GenerateFeedbackRequest.builder()
-			.gameName(gameName)
-			.gameGenre(gameGenre)
-			.gameContext(gameContext)
-			.testPurpose(testPurpose)
-			.originalQuestion(question)
-			.build();
+				.gameName(gameName)
+				.gameGenre(gameGenre)
+				.gameContext(gameContext)
+				.testPurpose(testPurpose)
+				.originalQuestion(question)
+				.build();
 
 		GenerateFeedbackResponse aiResponse = aiClient.getQuestionFeedback(request);
 
 		return new QuestionFeedbackResponse(
-			question,
-			aiResponse.getFeedback(),
-			aiResponse.getCandidates());
+				question,
+				aiResponse.getFeedback(),
+				aiResponse.getCandidates());
 	}
 
 	/**
@@ -118,18 +129,17 @@ public class SurveyService {
 	@Transactional
 	public FixedQuestionsCountResponse createFixedQuestions(CreateFixedQuestionsRequest request) {
 		// 설문 존재 확인
-		if (!surveyRepository.existsById(request.surveyId())) {
-			throw new EntityNotFoundException();
-		}
+		Survey survey = surveyRepository.findByUuid(request.surveyUuid())
+				.orElseThrow(EntityNotFoundException::new);
 
 		List<FixedQuestion> questions = request.questions().stream()
-			.map(item -> FixedQuestion.builder()
-				.surveyId(request.surveyId())
-				.content(item.qContent())
-				.order(item.qOrder())
-				.status(QuestionStatus.CONFIRMED)
-				.build())
-			.toList();
+				.map(item -> FixedQuestion.builder()
+						.surveyId(survey.getId())
+						.content(item.qContent())
+						.order(item.qOrder())
+						.status(QuestionStatus.CONFIRMED)
+						.build())
+				.toList();
 
 		fixedQuestionRepository.saveAll(questions);
 
@@ -140,16 +150,15 @@ public class SurveyService {
 
 	/**
 	 * 확정(CONFIRMED) 질문 목록 조회
-	 * GET /surveys/{surveyId}/questions
+	 * GET /surveys/{surveyUuid}/questions
 	 */
-	public List<FixedQuestionResponse> getConfirmedQuestions(Long surveyId) {
-		if (!surveyRepository.existsById(surveyId)) {
-			throw new EntityNotFoundException();
-		}
-		return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(surveyId, QuestionStatus.CONFIRMED)
-			.stream()
-			.map(FixedQuestionResponse::from)
-			.toList();
+	public List<FixedQuestionResponse> getConfirmedQuestions(java.util.UUID surveyUuid) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(EntityNotFoundException::new);
+		return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(survey.getId(), QuestionStatus.CONFIRMED)
+				.stream()
+				.map(FixedQuestionResponse::from)
+				.toList();
 	}
 
 	// ========== Private ==========

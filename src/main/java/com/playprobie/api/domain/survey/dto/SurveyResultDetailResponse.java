@@ -19,9 +19,9 @@ public class SurveyResultDetailResponse {
     @Getter
     @Builder
     public static class SessionInfo {
-        private Long sessionId;
+        private java.util.UUID sessionUuid;
         private String surveyName;
-        private Long surveyId;
+        private java.util.UUID surveyUuid;
         private String testerId;
         private SessionStatus status;
         private LocalDateTime endedAt;
@@ -30,7 +30,6 @@ public class SurveyResultDetailResponse {
     @Getter
     @Builder
     public static class FixedQuestionGroup {
-        private Long fixedQId;
         private String fixedQuestion;
         private List<ExcerptItem> excerpt;
     }
