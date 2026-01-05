@@ -290,7 +290,8 @@ public class FastApiClient implements AiClient {
 							.qaPairs(qaPairs)
 							.build();
 
-					embedSessionData(request);
+					// Embedding 요청 후 analysis 자동 트리거
+					embedSessionData(request, surveyId, fixedQuestionId);
 				}
 			});
 		} catch (Exception e) {
@@ -300,6 +301,10 @@ public class FastApiClient implements AiClient {
 
 	@Override
 	public void embedSessionData(SessionEmbeddingRequest request) {
+		embedSessionData(request, request.surveyId(), request.fixedQuestionId());
+	}
+
+	private void embedSessionData(SessionEmbeddingRequest request, Long surveyId, Long fixedQuestionId) {
 		aiWebClient.post()
 				.uri("/embeddings")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -307,10 +312,31 @@ public class FastApiClient implements AiClient {
 				.retrieve()
 				.bodyToMono(SessionEmbeddingResponse.class)
 				.subscribe(
-						result -> log.info("Embedding success for session: {}, fixedQId: {}, embeddingId: {}",
-								request.sessionId(), request.fixedQuestionId(), result.embeddingId()),
+						result -> {
+							log.info("Embedding success for session: {}, fixedQId: {}, embeddingId: {}",
+									request.sessionId(), fixedQuestionId, result.embeddingId());
+							// Embedding 완료 후 자동으로 analysis 트리거
+							triggerAnalysis(surveyId, fixedQuestionId);
+						},
 						error -> log.error("Embedding failed for session: {}, fixedQId: {}, error: {}",
-								request.sessionId(), request.fixedQuestionId(), error.getMessage()));
+								request.sessionId(), fixedQuestionId, error.getMessage()));
+	}
+
+	private void triggerAnalysis(Long surveyId, Long fixedQuestionId) {
+		try {
+			log.info("Triggering analysis for survey: {}, question: {}", surveyId, fixedQuestionId);
+			// Analysis를 비동기로 시작 (결과는 DB에 저장됨)
+			streamQuestionAnalysis(surveyId, fixedQuestionId)
+					.subscribe(
+							sse -> log.debug("Analysis progress: {}", sse.event()),
+							error -> log.error("Analysis failed for survey: {}, question: {}, error: {}",
+									surveyId, fixedQuestionId, error.getMessage()),
+							() -> log.info("Analysis completed for survey: {}, question: {}",
+									surveyId, fixedQuestionId)
+					);
+		} catch (Exception e) {
+			log.error("Failed to trigger analysis for survey: {}, question: {}", surveyId, fixedQuestionId, e);
+		}
 	}
 
 	@Override
