@@ -35,7 +35,7 @@ public class AuthService {
 
         // 비밀번호 암호화 및 사용자 생성
         String encodedPassword = passwordEncoder.encode(request.password());
-        User user = User.createWithEmail(request.email(), encodedPassword, request.name());
+        User user = User.createWithEmail(request.email(), encodedPassword, request.name(), request.phone());
 
         User savedUser = userRepository.save(user);
 
@@ -61,6 +61,6 @@ public class AuthService {
         // JWT 토큰 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
 
-        return TokenResponse.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds());
+        return TokenResponse.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds(), user);
     }
 }
