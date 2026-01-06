@@ -2,6 +2,7 @@ package com.playprobie.api.domain.streaming.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.playprobie.api.domain.streaming.application.StreamingResourceService;
 import com.playprobie.api.domain.streaming.dto.CreateStreamingResourceRequest;
 import com.playprobie.api.domain.streaming.dto.StreamingResourceResponse;
+import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.ApiResponse;
 
 import jakarta.validation.Valid;
@@ -43,10 +45,11 @@ public class StreamingResourceController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<StreamingResourceResponse>> createResource(
+            @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID surveyId,
             @Valid @RequestBody CreateStreamingResourceRequest request) {
 
-        StreamingResourceResponse response = streamingResourceService.createResource(surveyId, request);
+        StreamingResourceResponse response = streamingResourceService.createResource(surveyId, request, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
     }
 
@@ -60,8 +63,10 @@ public class StreamingResourceController {
      * @return 200 OK
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<StreamingResourceResponse>> getResource(@PathVariable java.util.UUID surveyId) {
-        StreamingResourceResponse response = streamingResourceService.getResourceByUuid(surveyId);
+    public ResponseEntity<ApiResponse<StreamingResourceResponse>> getResource(
+            @AuthenticationPrincipal(expression = "user") User user,
+            @PathVariable java.util.UUID surveyId) {
+        StreamingResourceResponse response = streamingResourceService.getResourceByUuid(surveyId, user);
         return ResponseEntity.ok(ApiResponse.of(response));
     }
 
@@ -75,8 +80,10 @@ public class StreamingResourceController {
      * @return 204 No Content
      */
     @DeleteMapping
-    public ResponseEntity<Void> deleteResource(@PathVariable java.util.UUID surveyId) {
-        streamingResourceService.deleteResource(surveyId);
+    public ResponseEntity<Void> deleteResource(
+            @AuthenticationPrincipal(expression = "user") User user,
+            @PathVariable java.util.UUID surveyId) {
+        streamingResourceService.deleteResource(surveyId, user);
         return ResponseEntity.noContent().build();
     }
 }

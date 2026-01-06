@@ -18,6 +18,8 @@ import com.playprobie.api.domain.interview.domain.SessionStatus;
 import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.game.application.GameService;
 import com.playprobie.api.domain.game.domain.Game;
+import com.playprobie.api.domain.user.domain.User;
+import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
@@ -39,6 +41,7 @@ public class SurveyResultService {
         private final FixedQuestionRepository fixedQuestionRepository;
         private final InterviewLogRepository interviewLogRepository;
         private final GameService gameService;
+        private final WorkspaceSecurityManager securityManager;
 
         // 전체 응답 요약
         public SurveyResultSummaryResponse getSummary(long gameId, SessionStatus status) {
@@ -47,8 +50,8 @@ public class SurveyResultService {
                 return SurveyResultSummaryResponse.of(surveyCount, responseCount);
         }
 
-        public SurveyResultSummaryResponse getSummary(java.util.UUID gameUuid, SessionStatus status) {
-                Game game = gameService.getGameEntity(gameUuid);
+        public SurveyResultSummaryResponse getSummary(java.util.UUID gameUuid, SessionStatus status, User user) {
+                Game game = gameService.getGameEntity(gameUuid, user);
                 return getSummary(game.getId(), status);
         }
 
@@ -97,8 +100,8 @@ public class SurveyResultService {
                                 .build();
         }
 
-        public SurveyResultListResponse getResponseList(java.util.UUID gameUuid, Long cursor, int size) {
-                Game game = gameService.getGameEntity(gameUuid);
+        public SurveyResultListResponse getResponseList(java.util.UUID gameUuid, Long cursor, int size, User user) {
+                Game game = gameService.getGameEntity(gameUuid, user);
                 return getResponseList(game.getId(), cursor, size);
         }
 
@@ -118,9 +121,12 @@ public class SurveyResultService {
                                 .build();
         }
 
-        public SurveyResultDetailResponse getResponseDetails(java.util.UUID surveyUuid, java.util.UUID sessionUuid) {
+        public SurveyResultDetailResponse getResponseDetails(java.util.UUID surveyUuid, java.util.UUID sessionUuid,
+                        User user) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(EntityNotFoundException::new);
+                securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
+
                 SurveySession session = sessionRepository.findByUuid(sessionUuid)
                                 .orElseThrow(EntityNotFoundException::new);
                 return getResponseDetails(survey.getId(), session.getId());

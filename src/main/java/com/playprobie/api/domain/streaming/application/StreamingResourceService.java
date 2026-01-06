@@ -31,6 +31,8 @@ import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.gamelift.GameLiftService;
 import com.playprobie.api.infra.config.AwsProperties;
+import com.playprobie.api.domain.user.domain.User;
+import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +60,7 @@ public class StreamingResourceService {
         private final SurveySessionRepository surveySessionRepository;
         private final GameLiftService gameLiftService;
         private final AwsProperties awsProperties;
+        private final WorkspaceSecurityManager securityManager;
 
         // ========== Admin: Resource Management ==========
 
@@ -70,12 +73,16 @@ public class StreamingResourceService {
          */
         @Transactional
         public StreamingResourceResponse createResource(java.util.UUID surveyUuid,
-                        CreateStreamingResourceRequest request) {
+                        CreateStreamingResourceRequest request, User user) {
                 log.info("Creating streaming resource for surveyUuid={}, buildId={}", surveyUuid, request.buildId());
 
                 // 1. Survey 조회
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(SurveyNotFoundException::new);
+
+                // Security Check
+                securityManager.validateWriteAccess(survey.getGame().getWorkspace(), user);
+
                 Long surveyId = survey.getId();
 
                 // 2. 기존 리소스 존재 여부 확인
@@ -143,18 +150,20 @@ public class StreamingResourceService {
          * @param surveyId Survey PK
          * @return 리소스 정보
          */
-        public StreamingResourceResponse getResource(Long surveyId) {
+        public StreamingResourceResponse getResource(Long surveyId, User user) {
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
+                securityManager.validateReadAccess(resource.getSurvey().getGame().getWorkspace(), user);
                 return StreamingResourceResponse.from(resource);
         }
 
         /**
          * 스트리밍 리소스를 UUID로 조회합니다.
          */
-        public StreamingResourceResponse getResourceByUuid(UUID uuid) {
+        public StreamingResourceResponse getResourceByUuid(UUID uuid, User user) {
                 StreamingResource resource = streamingResourceRepository.findBySurveyUuid(uuid)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
+                securityManager.validateReadAccess(resource.getSurvey().getGame().getWorkspace(), user);
                 return StreamingResourceResponse.from(resource);
         }
 
@@ -164,18 +173,24 @@ public class StreamingResourceService {
          * @param surveyId Survey PK
          */
         @Transactional
-        public void deleteResource(java.util.UUID surveyUuid) {
+        public void deleteResource(java.util.UUID surveyUuid, User user) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(SurveyNotFoundException::new);
-                deleteResource(survey.getId());
+                // Security Check inside deleteResource(Long, User) or here?
+                // Better here to avoid fetch in overload if possible, but overload does fetch
+                // too.
+                // Let's pass user to overload.
+                deleteResource(survey.getId(), user);
         }
 
         @Transactional
-        public void deleteResource(Long surveyId) {
+        public void deleteResource(Long surveyId, User user) {
                 log.info("Deleting streaming resource for surveyId={}", surveyId);
 
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
+
+                securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
                 // AWS 리소스 삭제
                 if (resource.getAwsStreamGroupId() != null) {
@@ -200,11 +215,12 @@ public class StreamingResourceService {
          * @return 테스트 상태
          */
         @Transactional
-        public TestActionResponse startTest(Long surveyId) {
+        public TestActionResponse startTest(Long surveyId, User user) {
                 log.info("Starting test for surveyId={}", surveyId);
 
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
+                securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
                 // Capacity를 1로 변경
                 gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), 1);
@@ -220,7 +236,7 @@ public class StreamingResourceService {
          * 설문을 활성화합니다 (Capacity 0 → Max Capacity).
          */
         @Transactional
-        public TestActionResponse activateResource(java.util.UUID surveyUuid) {
+        public TestActionResponse activateResource(java.util.UUID surveyUuid, User user) {
                 log.info("Activating resource for surveyUuid={}", surveyUuid);
 
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
@@ -228,6 +244,7 @@ public class StreamingResourceService {
 
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId())
                                 .orElseThrow(StreamingResourceNotFoundException::new);
+                securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
                 // Capacity를 maxCapacity로 변경
                 gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), resource.getMaxCapacity());
@@ -241,10 +258,10 @@ public class StreamingResourceService {
         }
 
         @Transactional
-        public TestActionResponse startTest(java.util.UUID surveyUuid) {
+        public TestActionResponse startTest(java.util.UUID surveyUuid, User user) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(SurveyNotFoundException::new);
-                return startTest(survey.getId());
+                return startTest(survey.getId(), user);
         }
 
         /**
@@ -254,11 +271,12 @@ public class StreamingResourceService {
          * @return 테스트 상태
          */
         @Transactional
-        public TestActionResponse stopTest(Long surveyId) {
+        public TestActionResponse stopTest(Long surveyId, User user) {
                 log.info("Stopping test for surveyId={}", surveyId);
 
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
+                securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
                 // Capacity를 0으로 변경
                 gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), 0);
@@ -271,10 +289,10 @@ public class StreamingResourceService {
         }
 
         @Transactional
-        public TestActionResponse stopTest(java.util.UUID surveyUuid) {
+        public TestActionResponse stopTest(java.util.UUID surveyUuid, User user) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(SurveyNotFoundException::new);
-                return stopTest(survey.getId());
+                return stopTest(survey.getId(), user);
         }
 
         /**
@@ -283,9 +301,10 @@ public class StreamingResourceService {
          * @param surveyId Survey PK
          * @return 리소스 상태
          */
-        public ResourceStatusResponse getResourceStatus(Long surveyId) {
+        public ResourceStatusResponse getResourceStatus(Long surveyId, User user) {
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
+                securityManager.validateReadAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
                 // AWS API 호출하여 인스턴스 준비 상태 확인
                 boolean instancesReady = false;
@@ -301,10 +320,10 @@ public class StreamingResourceService {
                                 instancesReady);
         }
 
-        public ResourceStatusResponse getResourceStatus(java.util.UUID surveyUuid) {
+        public ResourceStatusResponse getResourceStatus(java.util.UUID surveyUuid, User user) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(SurveyNotFoundException::new);
-                return getResourceStatus(survey.getId());
+                return getResourceStatus(survey.getId(), user);
         }
 
         // ========== Tester Session Management ==========

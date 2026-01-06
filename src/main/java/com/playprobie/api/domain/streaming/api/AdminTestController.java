@@ -1,6 +1,7 @@
 package com.playprobie.api.domain.streaming.api;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.playprobie.api.domain.streaming.application.StreamingResourceService;
 import com.playprobie.api.domain.streaming.dto.ResourceStatusResponse;
 import com.playprobie.api.domain.streaming.dto.TestActionResponse;
+import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -37,8 +39,9 @@ public class AdminTestController {
      * @return 200 OK
      */
     @PostMapping("/start-test")
-    public ResponseEntity<ApiResponse<TestActionResponse>> startTest(@PathVariable java.util.UUID surveyId) {
-        TestActionResponse response = streamingResourceService.startTest(surveyId);
+    public ResponseEntity<ApiResponse<TestActionResponse>> startTest(@PathVariable java.util.UUID surveyId,
+            @AuthenticationPrincipal(expression = "user") User user) {
+        TestActionResponse response = streamingResourceService.startTest(surveyId, user);
         return ResponseEntity.ok(ApiResponse.of(response));
     }
 
@@ -52,8 +55,9 @@ public class AdminTestController {
      * @return 200 OK
      */
     @PostMapping("/stop-test")
-    public ResponseEntity<ApiResponse<TestActionResponse>> stopTest(@PathVariable java.util.UUID surveyId) {
-        TestActionResponse response = streamingResourceService.stopTest(surveyId);
+    public ResponseEntity<ApiResponse<TestActionResponse>> stopTest(@PathVariable java.util.UUID surveyId,
+            @AuthenticationPrincipal(expression = "user") User user) {
+        TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
         return ResponseEntity.ok(ApiResponse.of(response));
     }
 
@@ -67,8 +71,9 @@ public class AdminTestController {
      * @return 200 OK
      */
     @GetMapping("/status")
-    public ResponseEntity<ApiResponse<ResourceStatusResponse>> getStatus(@PathVariable java.util.UUID surveyId) {
-        ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId);
+    public ResponseEntity<ApiResponse<ResourceStatusResponse>> getStatus(@PathVariable java.util.UUID surveyId,
+            @AuthenticationPrincipal(expression = "user") User user) {
+        ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);
         return ResponseEntity.ok(ApiResponse.of(response));
     }
 }

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
 import com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest;
 import com.playprobie.api.domain.survey.dto.QuestionFeedbackResponse;
+import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.survey.dto.request.AiQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.request.CreateSurveyRequest;
 import com.playprobie.api.domain.survey.dto.request.UpdateSurveyStatusRequest;
@@ -48,8 +50,9 @@ public class SurveyApi {
 	@GetMapping
 	@Operation(summary = "설문 목록 조회", description = "게임별 또는 전체 설문 목록을 조회합니다.")
 	public ResponseEntity<ApiResponse<List<SurveyResponse>>> getSurveys(
+			@AuthenticationPrincipal(expression = "user") User user,
 			@RequestParam(name = "game_uuid", required = false) UUID gameUuid) {
-		List<SurveyResponse> response = surveyService.getSurveys(gameUuid);
+		List<SurveyResponse> response = surveyService.getSurveys(gameUuid, user);
 		return ResponseEntity.ok(ApiResponse.of(response));
 	}
 
@@ -58,8 +61,10 @@ public class SurveyApi {
 	 */
 	@PostMapping
 	@Operation(summary = "설문 생성", description = "새로운 설문을 생성합니다.")
-	public ResponseEntity<ApiResponse<SurveyResponse>> createSurvey(@Valid @RequestBody CreateSurveyRequest request) {
-		SurveyResponse response = surveyService.createSurvey(request);
+	public ResponseEntity<ApiResponse<SurveyResponse>> createSurvey(
+			@AuthenticationPrincipal(expression = "user") User user,
+			@Valid @RequestBody CreateSurveyRequest request) {
+		SurveyResponse response = surveyService.createSurvey(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
 	}
 
@@ -69,8 +74,9 @@ public class SurveyApi {
 	@GetMapping("/{surveyUuid}")
 	@Operation(summary = "설문 조회", description = "설문 상세 정보를 조회합니다.")
 	public ResponseEntity<ApiResponse<SurveyResponse>> getSurvey(
+			@AuthenticationPrincipal(expression = "user") User user,
 			@PathVariable(name = "surveyUuid") UUID surveyUuid) {
-		SurveyResponse response = surveyService.getSurveyByUuid(surveyUuid);
+		SurveyResponse response = surveyService.getSurveyByUuid(surveyUuid, user);
 		return ResponseEntity.ok(ApiResponse.of(response));
 	}
 
@@ -109,8 +115,9 @@ public class SurveyApi {
 	@PostMapping("/fixed-questions")
 	@Operation(summary = "고정 질문 저장", description = "확정된 질문들을 설문에 저장합니다.")
 	public ResponseEntity<ApiResponse<FixedQuestionsCountResponse>> createFixedQuestions(
+			@AuthenticationPrincipal(expression = "user") User user,
 			@Valid @RequestBody CreateFixedQuestionsRequest request) {
-		FixedQuestionsCountResponse response = surveyService.createFixedQuestions(request);
+		FixedQuestionsCountResponse response = surveyService.createFixedQuestions(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
 	}
 
@@ -120,8 +127,9 @@ public class SurveyApi {
 	@GetMapping("/{surveyUuid}/questions")
 	@Operation(summary = "확정 질문 목록 조회")
 	public ResponseEntity<ApiResponse<List<FixedQuestionResponse>>> getConfirmedQuestions(
+			@AuthenticationPrincipal(expression = "user") User user,
 			@PathVariable(name = "surveyUuid") UUID surveyUuid) {
-		List<FixedQuestionResponse> questions = surveyService.getConfirmedQuestions(surveyUuid);
+		List<FixedQuestionResponse> questions = surveyService.getConfirmedQuestions(surveyUuid, user);
 		return ResponseEntity.ok(ApiResponse.of(questions));
 	}
 
@@ -131,9 +139,10 @@ public class SurveyApi {
 	@PatchMapping("/{surveyUuid}/status")
 	@Operation(summary = "설문 상태 업데이트", description = "설문을 활성화(Scale-out)하거나 종료(Cleanup)합니다.")
 	public ResponseEntity<ApiResponse<UpdateSurveyStatusResponse>> updateSurveyStatus(
+			@AuthenticationPrincipal User user,
 			@PathVariable(name = "surveyUuid") UUID surveyUuid,
 			@Valid @RequestBody UpdateSurveyStatusRequest request) {
-		UpdateSurveyStatusResponse response = surveyService.updateSurveyStatus(surveyUuid, request);
+		UpdateSurveyStatusResponse response = surveyService.updateSurveyStatus(surveyUuid, request, user);
 		return ResponseEntity.ok(ApiResponse.of(response));
 	}
 }

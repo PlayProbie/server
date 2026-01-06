@@ -49,22 +49,22 @@ public class GameBuildApi {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
     }
 
-    @PostMapping("/{buildId}/complete")
+    @PostMapping("/{buildUuid}/complete")
     @Operation(summary = "업로드 완료 처리", description = "S3 업로드 완료를 확인하고 상태를 변경합니다.")
     public ResponseEntity<ApiResponse<GameBuildResponse>> completeUpload(
             @PathVariable UUID gameUuid,
-            @PathVariable UUID buildId,
+            @PathVariable UUID buildUuid,
             @Valid @RequestBody CompleteUploadRequest request) {
-        GameBuild gameBuild = gameBuildService.completeUpload(gameUuid, buildId, request);
+        GameBuild gameBuild = gameBuildService.completeUpload(gameUuid, buildUuid, request);
         return ResponseEntity.ok(ApiResponse.of(GameBuildResponse.forComplete(gameBuild)));
     }
 
-    @DeleteMapping("/{buildId}")
+    @DeleteMapping("/{buildUuid}")
     @Operation(summary = "빌드 삭제", description = "빌드와 S3의 모든 파일을 삭제합니다.")
     public ResponseEntity<Void> deleteBuild(
             @PathVariable UUID gameUuid,
-            @PathVariable UUID buildId) {
-        gameBuildService.deleteBuild(gameUuid, buildId);
+            @PathVariable UUID buildUuid) {
+        gameBuildService.deleteBuild(gameUuid, buildUuid);
         return ResponseEntity.noContent().build();
     }
 }
