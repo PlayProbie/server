@@ -28,6 +28,7 @@ import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
 import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
+import com.playprobie.api.infra.sse.dto.payload.AnalysisPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
 import com.playprobie.api.infra.sse.dto.payload.StatusPayload;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
@@ -398,7 +399,7 @@ public class FastApiClient implements AiClient {
 				.bodyValue(request)
 				.retrieve()
 				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
-				});
+				});	}
 	/**
 	 * 꼬리질문 횟수 제한 초과 시 호출
 	 * AI 호출 없이 바로 다음 고정 질문으로 이동
