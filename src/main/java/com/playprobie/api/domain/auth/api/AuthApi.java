@@ -35,6 +35,12 @@ public class AuthApi {
     @Value("${app.cookie.secure:false}")
     private boolean secureCookie;
 
+    /**
+     * 쿠키 도메인 (서브도메인 간 공유 시 사용, 예: .playprobie.shop)
+     */
+    @Value("${app.cookie.domain:}")
+    private String cookieDomain;
+
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
         SignupResponse response = authService.signup(request);
@@ -49,7 +55,8 @@ public class AuthApi {
         ResponseCookie accessTokenCookie = CookieUtils.createAccessTokenCookie(
                 result.accessToken(),
                 result.expiresInSeconds(),
-                secureCookie);
+                secureCookie,
+                cookieDomain);
 
         // 응답 body에는 token을 포함하지 않음 (Cookie로 전송)
         LoginResponse response = LoginResponse.of(result.expiresInSeconds(), result.user());
@@ -62,7 +69,7 @@ public class AuthApi {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         // Access Token 쿠키 삭제
-        ResponseCookie deleteCookie = CookieUtils.deleteAccessTokenCookie(secureCookie);
+        ResponseCookie deleteCookie = CookieUtils.deleteAccessTokenCookie(secureCookie, cookieDomain);
 
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())

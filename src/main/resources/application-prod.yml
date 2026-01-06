@@ -37,6 +37,7 @@ aws:
 app:
   cookie:
     secure: true  # HTTPS 환경에서 Secure Cookie 사용
+    domain: .playprobie.shop  # 서브도메인 간 쿠키 공유
 
 jwt:
   secret: ${JWT_SECRET}
