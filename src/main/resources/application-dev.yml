@@ -22,4 +22,25 @@ ai:
   server:
     url: ${AI_SERVER_URL:http://localhost:8000}
 
+# AWS Configuration (GitHub Secrets → 환경변수로 주입)
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  access-key: ${AWS_ACCESS_KEY_ID:}
+  secret-key: ${AWS_SECRET_ACCESS_KEY:}
+  s3:
+    region: ${S3_REGION:ap-northeast-1}
+    bucket-name: ${S3_BUCKET_NAME:playprobie-dev-ap-northeast-1}
+    role-arn: ${AWS_S3_ROLE_ARN:}
+  gamelift:
+    region: ${AWS_GAMELIFT_REGION:ap-northeast-1}
+    role-arn: ${AWS_GAMELIFT_ROLE_ARN:}
+
+# Application Settings
+app:
+  cookie:
+    secure: true  # HTTPS 환경에서 Secure Cookie 사용
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_EXPIRATION}
 

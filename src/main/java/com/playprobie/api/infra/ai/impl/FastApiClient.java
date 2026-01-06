@@ -1,6 +1,7 @@
 package com.playprobie.api.infra.ai.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,14 +15,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.interview.application.InterviewService;
+import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.AiInteractionRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateQuestionRequest;
+import com.playprobie.api.infra.ai.dto.request.QuestionAnalysisRequest;
+import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
+import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
 import com.playprobie.api.infra.sse.dto.payload.AnalysisPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
@@ -290,6 +295,9 @@ public class FastApiClient implements AiClient {
 		// 세션 상태 완료로 변경
 		interviewService.completeSession(sessionId);
 
+		// 세션 완료 후 임베딩 요청 (비동기)
+		triggerSessionEmbedding(sessionId);
+
 		StatusPayload completePayload = StatusPayload.builder().status("completed").build();
 		sseEmitterService.send(sessionId, "interview_complete", completePayload);
 
@@ -303,6 +311,95 @@ public class FastApiClient implements AiClient {
 		sseEmitterService.complete(sessionId);
 	}
 
+	// 세션 완료 시 고정질문별로 그룹핑된 Q&A 데이터를 AI 서버에 임베딩 요청
+	private void triggerSessionEmbedding(String sessionId) {
+		try {
+			Map<Long, List<InterviewLog>> logsByFixedQuestion = interviewService
+					.getLogsGroupedByFixedQuestion(sessionId);
+
+			Long surveyId = interviewService.getSurveyIdBySession(sessionId);
+
+			logsByFixedQuestion.forEach((fixedQuestionId, logs) -> {
+				List<SessionEmbeddingRequest.QaPair> qaPairs = logs.stream()
+						.filter(l -> l.getAnswerText() != null)
+						.map(l -> SessionEmbeddingRequest.QaPair.of(
+								l.getQuestionText(),
+								l.getAnswerText(),
+								l.getType().name()))
+						.toList();
+
+				if (!qaPairs.isEmpty()) {
+					SessionEmbeddingRequest request = SessionEmbeddingRequest.builder()
+							.sessionId(sessionId)
+							.surveyId(surveyId)
+							.fixedQuestionId(fixedQuestionId)
+							.qaPairs(qaPairs)
+							.build();
+
+					// Embedding 요청 후 analysis 자동 트리거
+					embedSessionData(request, surveyId, fixedQuestionId);
+				}
+			});
+		} catch (Exception e) {
+			log.error("Failed to trigger session embedding for sessionId: {}", sessionId, e);
+		}
+	}
+
+	@Override
+	public void embedSessionData(SessionEmbeddingRequest request) {
+		embedSessionData(request, request.surveyId(), request.fixedQuestionId());
+	}
+
+	private void embedSessionData(SessionEmbeddingRequest request, Long surveyId, Long fixedQuestionId) {
+		aiWebClient.post()
+				.uri("/embeddings")
+				.contentType(MediaType.APPLICATION_JSON)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(SessionEmbeddingResponse.class)
+				.subscribe(
+						result -> {
+							log.info("Embedding success for session: {}, fixedQId: {}, embeddingId: {}",
+									request.sessionId(), fixedQuestionId, result.embeddingId());
+							// Embedding 완료 후 자동으로 analysis 트리거
+							triggerAnalysis(surveyId, fixedQuestionId);
+						},
+						error -> log.error("Embedding failed for session: {}, fixedQId: {}, error: {}",
+								request.sessionId(), fixedQuestionId, error.getMessage()));
+	}
+
+	private void triggerAnalysis(Long surveyId, Long fixedQuestionId) {
+		try {
+			log.info("Triggering analysis for survey: {}, question: {}", surveyId, fixedQuestionId);
+			// Analysis를 비동기로 시작 (결과는 DB에 저장됨)
+			streamQuestionAnalysis(surveyId, fixedQuestionId)
+					.subscribe(
+							sse -> log.debug("Analysis progress: {}", sse.event()),
+							error -> log.error("Analysis failed for survey: {}, question: {}, error: {}",
+									surveyId, fixedQuestionId, error.getMessage()),
+							() -> log.info("Analysis completed for survey: {}, question: {}",
+									surveyId, fixedQuestionId)
+					);
+		} catch (Exception e) {
+			log.error("Failed to trigger analysis for survey: {}, question: {}", surveyId, fixedQuestionId, e);
+		}
+	}
+
+	@Override
+	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId) {
+		QuestionAnalysisRequest request = QuestionAnalysisRequest.builder()
+				.surveyId(surveyId)
+				.fixedQuestionId(fixedQuestionId)
+				.build();
+
+		return aiWebClient.post()
+				.uri("/analytics/questions/{questionId}", fixedQuestionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.TEXT_EVENT_STREAM)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+				});	}
 	/**
 	 * 꼬리질문 횟수 제한 초과 시 호출
 	 * AI 호출 없이 바로 다음 고정 질문으로 이동

@@ -1,7 +1,5 @@
 package com.playprobie.api.domain.survey.dao;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,9 +8,11 @@ import com.playprobie.api.domain.survey.domain.Survey;
 
 public interface SurveyRepository extends JpaRepository<Survey, Long> {
 
-    List<Survey> findByGameId(Long gameId);
+    java.util.List<Survey> findByGameId(Long gameId);
+
+    java.util.List<Survey> findByGameUuid(java.util.UUID gameUuid);
 
     long countByGameId(Long gameId);
 
-    Optional<Survey> findByUuid(UUID uuid);
+    java.util.Optional<Survey> findByUuid(java.util.UUID uuid);
 }

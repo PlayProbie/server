@@ -3,13 +3,17 @@ package com.playprobie.api.domain.game.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.global.domain.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,6 +31,9 @@ public class Game extends BaseTimeEntity {
 	@Column(name = "game_id")
 	private Long id;
 
+	@Column(name = "game_uuid", nullable = false, unique = true, columnDefinition = "CHAR(36)")
+	private java.util.UUID uuid;
+
 	@Column(name = "game_name", nullable = false)
 	private String name;
 
@@ -36,8 +43,14 @@ public class Game extends BaseTimeEntity {
 	@Column(name = "game_context", columnDefinition = "TEXT")
 	private String context;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "workspace_id")
+	private Workspace workspace;
+
 	@Builder
-	public Game(String name, List<GameGenre> genres, String context) {
+	public Game(Workspace workspace, String name, List<GameGenre> genres, String context) {
+		this.uuid = java.util.UUID.randomUUID();
+    this.workspace = workspace;
 		this.name = name;
 		this.genresJson = convertGenresToJson(genres);
 		this.context = context;

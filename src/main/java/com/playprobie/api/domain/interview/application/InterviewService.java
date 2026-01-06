@@ -1,8 +1,10 @@
 package com.playprobie.api.domain.interview.application;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -57,14 +59,21 @@ public class InterviewService {
 	}
 
 	@Transactional
-	public InterviewHistoryResponse getInterviewHistory(Long surveyId, UUID sessionUuid) {
+	public InterviewHistoryResponse getInterviewHistory(Long surveyId, java.util.UUID sessionUuid) {
 		SurveySession session = findAndValidateSession(surveyId, sessionUuid);
 		List<InterviewLog> logs = interviewLogRepository.findBySessionUuidOrderByTurnNumAsc(sessionUuid);
 		String sseUrl = InterviewUrlProvider.getStreamUrl(session.getUuid());
 		return InterviewHistoryResponse.assemble(session, logs, sseUrl);
 	}
 
-	private SurveySession findAndValidateSession(Long surveyId, UUID sessionUuid) {
+	@Transactional
+	public InterviewHistoryResponse getInterviewHistory(java.util.UUID surveyUuid, java.util.UUID sessionUuid) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(EntityNotFoundException::new);
+		return getInterviewHistory(survey.getId(), sessionUuid);
+	}
+
+	private SurveySession findAndValidateSession(Long surveyId, java.util.UUID sessionUuid) {
 		SurveySession session = surveySessionRepository.findByUuid(sessionUuid)
 				.orElseThrow(SessionNotFoundException::new);
 		session.validateSurveyId(surveyId);
@@ -199,7 +208,7 @@ public class InterviewService {
 				.build();
 
 		InterviewLog savedLog = interviewLogRepository.save(interviewLog); // DB 저장
-
+https://github.com/PlayProbie/server/pull/45/conflict?name=src%252Fmain%252Fjava%252Fcom%252Fplayprobie%252Fapi%252Finfra%252Fai%252Fimpl%252FFastApiClient.java&ancestor_oid=775560630a8c8041163727014d0434d641cc5865&base_oid=627e0bd3fed0277f6ba44aa43741ae9c257c977b&head_oid=d711818ea0cd435114b59d88bb66c71c5083ed68
 		return UserAnswerResponse.of(
 				savedLog.getTurnNum(),
 				String.valueOf(savedLog.getType()),
@@ -216,5 +225,24 @@ public class InterviewService {
 
 		session.complete();
 		log.info("Session completed: {}", sessionUuid);
+	}
+
+	// 세션의 모든 로그를 fixedQuestionId별로 그룹핑
+	public Map<Long, List<InterviewLog>> getLogsGroupedByFixedQuestion(String sessionUuid) {
+		UUID uuid = UUID.fromString(sessionUuid);
+		List<InterviewLog> logs = interviewLogRepository
+				.findBySessionUuidOrderByFixedQuestionIdAscTurnNumAsc(uuid);
+
+		return logs.stream()
+				.collect(Collectors.groupingBy(InterviewLog::getFixedQuestionId));
+	}
+
+	// 세션 UUID로 Survey ID 조회
+	public Long getSurveyIdBySession(String sessionUuid) {
+		UUID uuid = UUID.fromString(sessionUuid);
+		SurveySession session = surveySessionRepository.findByUuid(uuid)
+				.orElseThrow(SessionNotFoundException::new);
+
+		return session.getSurvey().getId();
 	}
 }
