@@ -1,6 +1,7 @@
 package com.playprobie.api.domain.game.application;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +11,9 @@ import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.game.domain.GameGenre;
 import com.playprobie.api.domain.game.dto.CreateGameRequest;
 import com.playprobie.api.domain.game.dto.GameResponse;
-import com.playprobie.api.global.error.exception.EntityNotFoundException;
+import com.playprobie.api.domain.game.dto.UpdateGameRequest;
+import com.playprobie.api.domain.game.exception.GameNotFoundException;
+import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.global.error.exception.InvalidValueException;
 
 import lombok.RequiredArgsConstructor;
@@ -23,12 +26,13 @@ public class GameService {
 	private final GameRepository gameRepository;
 
 	@Transactional
-	public GameResponse createGame(CreateGameRequest request) {
+	public GameResponse createGame(Workspace workspace, CreateGameRequest request) {
 		List<GameGenre> genres = request.gameGenre().stream()
 				.map(this::parseGenre)
 				.toList();
 
 		Game game = Game.builder()
+				.workspace(workspace)
 				.name(request.gameName())
 				.genres(genres)
 				.context(request.gameContext())
@@ -38,25 +42,50 @@ public class GameService {
 		return GameResponse.from(savedGame);
 	}
 
+	public List<GameResponse> getGamesByWorkspace(UUID workspaceUuid) {
+		List<Game> games = gameRepository.findByWorkspaceUuid(workspaceUuid);
+		return games.stream()
+				.map(GameResponse::from)
+				.toList();
+	}
+
 	public GameResponse getGame(Long gameId) {
 		Game game = gameRepository.findById(gameId)
-				.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(GameNotFoundException::new);
 		return GameResponse.from(game);
 	}
 
 	public Game getGameEntity(Long gameId) {
 		return gameRepository.findById(gameId)
-				.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(GameNotFoundException::new);
 	}
 
-	public Game getGameEntity(java.util.UUID gameUuid) {
+	public Game getGameEntity(UUID gameUuid) {
 		return gameRepository.findByUuid(gameUuid)
-				.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(GameNotFoundException::new);
 	}
 
-	public GameResponse getGameByUuid(java.util.UUID gameUuid) {
+	public GameResponse getGameByUuid(UUID gameUuid) {
 		Game game = getGameEntity(gameUuid);
 		return GameResponse.from(game);
+	}
+
+	@Transactional
+	public GameResponse updateGame(UUID gameUuid, UpdateGameRequest request) {
+		Game game = getGameEntity(gameUuid);
+
+		List<GameGenre> genres = request.gameGenre().stream()
+				.map(this::parseGenre)
+				.toList();
+
+		game.update(request.gameName(), genres, request.gameContext());
+		return GameResponse.from(game);
+	}
+
+	@Transactional
+	public void deleteGame(UUID gameUuid) {
+		Game game = getGameEntity(gameUuid);
+		gameRepository.delete(game);
 	}
 
 	private GameGenre parseGenre(String code) {

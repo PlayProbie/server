@@ -3,6 +3,7 @@ package com.playprobie.api.domain.workspace.domain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.user.domain.User;
@@ -18,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -34,6 +36,9 @@ public class Workspace extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "workspace_id")
     private Long id;
+
+    @Column(name = "workspace_uuid", nullable = false, unique = true, columnDefinition = "CHAR(36)")
+    private UUID uuid;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -57,6 +62,13 @@ public class Workspace extends BaseTimeEntity {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
         this.description = description;
+    }
+
+    @PrePersist
+    private void generateUuid() {
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID();
+        }
     }
 
     public static Workspace create(User owner, String name, String description) {
