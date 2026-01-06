@@ -30,14 +30,11 @@ import com.playprobie.api.domain.survey.exception.SurveyNotFoundException;
 import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.gamelift.GameLiftService;
-import com.playprobie.api.infra.config.AwsProperties;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.gameliftstreams.model.CreateApplicationResponse;
-import software.amazon.awssdk.services.gameliftstreams.model.CreateStreamGroupResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.GetStreamGroupResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.StartStreamSessionResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.StreamGroupStatus;
@@ -59,8 +56,8 @@ public class StreamingResourceService {
         private final GameBuildRepository gameBuildRepository;
         private final SurveySessionRepository surveySessionRepository;
         private final GameLiftService gameLiftService;
-        private final AwsProperties awsProperties;
         private final WorkspaceSecurityManager securityManager;
+        private final StreamingProvisioner streamingProvisioner;
 
         // ========== Admin: Resource Management ==========
 
@@ -69,7 +66,7 @@ public class StreamingResourceService {
          * 
          * @param surveyId Survey PK
          * @param request  할당 요청
-         * @return 생성된 리소스 정보
+         * @return 생성된 리소스 정보 (상태: CREATING)
          */
         @Transactional
         public StreamingResourceResponse createResource(java.util.UUID surveyUuid,
@@ -85,17 +82,8 @@ public class StreamingResourceService {
 
                 Long surveyId = survey.getId();
 
-                // 2. 기존 리소스 존재 여부 확인
-                if (streamingResourceRepository.existsBySurveyId(surveyId)) {
-                        throw new StreamingResourceAlreadyExistsException();
-                }
-
-                // Call legacy logic or continue implementation. Since this is a refactor, I
-                // will reuse the logic by getting the Survey entity first.
-                // But to avoid code duplication, I should ideally extract the core logic.
-                // For now, I will implement the UUID version fully or delegate if possible.
-                // However, the original creation logic relies on `surveyRepository.findById`.
-                // Using the retrieved `survey` entity covers the requirement.
+                // 2. 중복 생성 방지
+                validateResourceDuplication(surveyId);
 
                 // 3. GameBuild 조회
                 GameBuild build = gameBuildRepository.findByUuid(request.buildId())
@@ -106,42 +94,31 @@ public class StreamingResourceService {
                         throw new StreamClassIncompatibleException(request.instanceType(), build.getOsType());
                 }
 
-                // 5. StreamingResource 생성 (PENDING 상태)
+                // 5. StreamingResource 생성 (CREATING 상태)
                 StreamingResource resource = StreamingResource.builder()
                                 .survey(survey)
                                 .build(build)
                                 .instanceType(request.instanceType())
                                 .maxCapacity(request.maxCapacity())
                                 .build();
+
                 streamingResourceRepository.save(resource);
 
-                // 6. AWS Application 생성
-                String s3Uri = String.format("s3://%s/%s", awsProperties.getS3().getBucketName(), build.getS3Prefix());
-                CreateApplicationResponse appResponse = gameLiftService.createApplication(
-                                survey.getName() + "-app",
-                                s3Uri,
-                                build.getExecutablePath(),
-                                build.getOsType());
+                // 6. 비동기 프로비저닝 시작
+                streamingProvisioner.provisionResourceAsync(resource.getId());
 
-                resource.assignApplication(appResponse.arn());
-                streamingResourceRepository.save(resource);
-
-                // 7. AWS StreamGroup 생성
-                CreateStreamGroupResponse groupResponse = gameLiftService.createStreamGroup(
-                                survey.getName() + "-group",
-                                request.instanceType());
-
-                // 8. Application을 StreamGroup에 연결 (상태 안정화 대기)
-                waitForStreamGroupStable(groupResponse.arn());
-                gameLiftService.associateApplication(groupResponse.arn(), appResponse.arn());
-
-                resource.assignStreamGroup(groupResponse.arn());
-                streamingResourceRepository.save(resource);
-
-                log.info("Streaming resource created: resourceId={}, appArn={}, groupArn={}",
-                                resource.getId(), appResponse.arn(), groupResponse.arn());
+                log.info("Streaming resource creation initiated: resourceId={}, status={}",
+                                resource.getId(), resource.getStatus());
 
                 return StreamingResourceResponse.from(resource);
+        }
+
+        private void validateResourceDuplication(Long surveyId) {
+                streamingResourceRepository.findBySurveyId(surveyId).ifPresent(resource -> {
+                        if (!resource.getStatus().isTerminatedOrCleaning()) {
+                                throw new StreamingResourceAlreadyExistsException();
+                        }
+                });
         }
 
         /**
@@ -176,10 +153,6 @@ public class StreamingResourceService {
         public void deleteResource(java.util.UUID surveyUuid, User user) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(SurveyNotFoundException::new);
-                // Security Check inside deleteResource(Long, User) or here?
-                // Better here to avoid fetch in overload if possible, but overload does fetch
-                // too.
-                // Let's pass user to overload.
                 deleteResource(survey.getId(), user);
         }
 
@@ -445,29 +418,5 @@ public class StreamingResourceService {
                 return surveySessionRepository.findByUuid(surveySessionUuid)
                                 .map(session -> session.getStatus() == SessionStatus.CONNECTED)
                                 .orElse(false);
-        }
-
-        /**
-         * StreamGroup이 안정적인 상태(ACTIVATING이 아님)가 될 때까지 대기합니다.
-         */
-        private void waitForStreamGroupStable(String streamGroupId) {
-                int maxAttempts = 60;
-                for (int i = 0; i < maxAttempts; i++) {
-                        GetStreamGroupResponse response = gameLiftService.getStreamGroupStatus(streamGroupId);
-                        StreamGroupStatus status = response.status();
-                        log.info("Waiting for StreamGroup stable: status={}, attempt={}", status, i + 1);
-
-                        if (status != StreamGroupStatus.ACTIVATING) {
-                                return;
-                        }
-
-                        try {
-                                Thread.sleep(1000); // 1초 대기
-                        } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-                        }
-                }
-                log.warn("StreamGroup stability wait timed out: {}", streamGroupId);
         }
 }

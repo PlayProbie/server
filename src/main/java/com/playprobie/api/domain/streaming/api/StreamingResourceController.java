@@ -38,24 +38,31 @@ public class StreamingResourceController {
     private final StreamingResourceService streamingResourceService;
 
     /**
-     * 스트리밍 리소스를 할당합니다.
+     * 스트리밍 리소스를 할당합니다 (비동기).
      * 
      * <p>
      * POST /surveys/{surveyId}/streaming-resource
      * 
      * @param surveyId Survey PK
      * @param request  할당 요청
-     * @return 201 Created
+     * @return 202 Accepted (Location 헤더에 상태 조회 URL 포함)
      */
     @PostMapping
-    @Operation(summary = "스트리밍 리소스 할당", description = "GameLift 스트리밍 리소스를 할당합니다.")
+    @Operation(summary = "스트리밍 리소스 할당 (비동기)", description = "GameLift 스트리밍 리소스를 할당합니다. " +
+            "리소스 생성은 비동기로 진행되며, 응답 코드 202 Accepted와 함께 " +
+            "Location 헤더에 포함된 URL을 통해 상태를 조회해야 합니다.")
     public ResponseEntity<ApiResponse<StreamingResourceResponse>> createResource(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID surveyId,
             @Valid @RequestBody CreateStreamingResourceRequest request) {
 
         StreamingResourceResponse response = streamingResourceService.createResource(surveyId, request, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .location(org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest()
+                        .build().toUri())
+                .body(ApiResponse.of(response));
     }
 
     /**

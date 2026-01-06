@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum StreamingResourceStatus {
 
+    CREATING("생성 시작"),
     PENDING("연결 대기"),
     PROVISIONING("리소스 생성 중"),
     READY("준비 완료 (Capacity=0)"),
@@ -20,7 +21,8 @@ public enum StreamingResourceStatus {
     SCALING("확장 중"),
     ACTIVE("서비스 중 (Capacity=N)"),
     CLEANING("정리 중"),
-    TERMINATED("삭제됨");
+    TERMINATED("삭제됨"),
+    ERROR("오류 발생");
 
     private final String description;
 
