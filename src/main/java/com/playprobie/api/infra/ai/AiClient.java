@@ -9,7 +9,10 @@ import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 
+import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
+
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * AI 클라이언트 인터페이스
@@ -39,7 +42,10 @@ public interface AiClient {
         void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
 
         // 세션 완료 시 임베딩 요청 (비동기)
-        void embedSessionData(SessionEmbeddingRequest request);
+        Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request);
+
+        // 질문 분석 수동 트리거 (Mock 데이터 등에서 사용)
+        void triggerAnalysis(Long surveyId, Long fixedQuestionId);
 
         // 질문 분석 요청 (SSE 스트리밍)
         Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId);

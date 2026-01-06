@@ -3,6 +3,7 @@ package com.playprobie.api.global.error;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +17,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+	/**
+	 * HttpMediaTypeNotAcceptableException 처리
+	 * SSE 스트리밍 등에서 Content-Type 협상 실패 시 발생
+	 */
+	@ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+	protected ResponseEntity<String> handleHttpMediaTypeNotAcceptableException(HttpMediaTypeNotAcceptableException e) {
+		log.warn("handleHttpMediaTypeNotAcceptableException: {}", e.getMessage());
+		// JSON이 아닌 plain text로 응답하여 협상 실패 방지
+		return ResponseEntity
+				.status(HttpStatus.NOT_ACCEPTABLE)
+				.body("Media type not acceptable: " + e.getMessage());
+	}
 
 	/**
 	 * javax.validation.Valid or @Validated 으로 binding error 발생시 발생한다.

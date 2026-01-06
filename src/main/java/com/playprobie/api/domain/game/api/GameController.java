@@ -68,6 +68,18 @@ public class GameController {
 		return ResponseEntity.ok(ApiResponse.of(responses));
 	}
 
+	@GetMapping("/games")
+	@Operation(summary = "내 게임 목록 조회", description = "로그인된 사용자가 접근 가능한 모든 게임 목록을 조회합니다.")
+	@ApiResponses({
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
+	})
+	public ResponseEntity<ApiResponse<List<GameResponse>>> getGamesByUser(
+			@AuthenticationPrincipal(expression = "user") User user) {
+		List<GameResponse> responses = gameService.getGamesByUser(user);
+		return ResponseEntity.ok(ApiResponse.of(responses));
+	}
+
 	@GetMapping("/games/{gameUuid}")
 	@Operation(summary = "게임 상세 조회", description = "게임 상세 정보를 조회합니다.")
 	@ApiResponses({

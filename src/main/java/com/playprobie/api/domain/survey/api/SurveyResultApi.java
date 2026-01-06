@@ -1,7 +1,9 @@
 package com.playprobie.api.domain.survey.api;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.playprobie.api.domain.user.domain.User;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +15,6 @@ import com.playprobie.api.domain.survey.application.SurveyResultService;
 import com.playprobie.api.domain.survey.dto.SurveyResultDetailResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultListResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultSummaryResponse;
-import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
