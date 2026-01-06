@@ -32,6 +32,7 @@ public final class SecurityConstants {
             // db, health
             "/h2-console/**",
             "/actuator/**",
+            "/health",
 
             // 정적리소스
             "/favicon.ico",
@@ -41,5 +42,9 @@ public final class SecurityConstants {
             "/interview/*/*",
             "/interview/*/stream",
             "/interview/*/messages",
+
+            // 게임/설문 API (개발용 - 추후 인증 적용 필요)
+            "/games/**",
+            "/surveys/**",
     };
 }

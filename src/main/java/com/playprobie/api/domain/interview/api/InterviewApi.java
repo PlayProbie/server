@@ -35,8 +35,10 @@ public class InterviewApi {
 
 	@PostMapping("/interview/{surveyUuid}")
 	public ResponseEntity<ApiResponse<InterviewCreateResponse>> createSession(
-			@PathVariable(name = "surveyUuid") java.util.UUID surveyUuid) {
-		return ResponseEntity.status(201).body(ApiResponse.of(interviewService.createSession(surveyUuid)));
+			@PathVariable(name = "surveyUuid") java.util.UUID surveyUuid,
+			@RequestBody(required = false) com.playprobie.api.domain.interview.dto.TesterProfileRequest profileRequest) {
+		return ResponseEntity.status(201)
+				.body(ApiResponse.of(interviewService.createSession(surveyUuid, profileRequest)));
 	}
 
 	@GetMapping("/interview/{surveyUuid}/{sessionUuid}")
