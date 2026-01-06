@@ -22,23 +22,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      # 테스트 + 빌드 수행 (Maven Central 403 대응 재시도 로직 포함)
-      - name: Build with Gradle
-        run: |
-          for i in 1 2 3; do
-            echo "Build attempt $i..."
-            ./gradlew clean build --stacktrace && break
-            echo "Build failed, retrying in 30 seconds..."
-            sleep 30
-          done
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -90,12 +73,12 @@ jobs:
             --comment "Deploying Spring Boot via SSM" \
             --parameters 'commands=[
               "set -e",
+              "trap \"rm -f /tmp/playprobie/.env\" EXIT",  
               "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
               "docker pull ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:develop-latest",
               "docker stop playprobie-server-dev || true",
               "docker rm playprobie-server-dev || true",
               "docker image prune -af --filter until=168h",
-              "echo \"Creating .env file...\"",
               "mkdir -p /tmp/playprobie",
               "echo \"SPRING_PROFILES_ACTIVE=dev\" > /tmp/playprobie/.env",
               "echo \"DB_URL=${{ secrets.DEV_DB_URL }}\" >> /tmp/playprobie/.env",
@@ -116,7 +99,6 @@ jobs:
               "echo \"AWS_GAMELIFT_ROLE_ARN=${{ secrets.DEV_AWS_GAMELIFT_ROLE_ARN }}\" >> /tmp/playprobie/.env",
               "chmod 600 /tmp/playprobie/.env",
               "docker run -d --name playprobie-server-dev -p 8080:8080 --env-file /tmp/playprobie/.env ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:develop-latest",
-              "rm -f /tmp/playprobie/.env",
               "echo \"Waiting for application to start...\"",
               "sleep 30",
               "curl -f http://localhost:8080/actuator/health || exit 1",
@@ -128,24 +110,22 @@ jobs:
           
           echo "SSM Command ID: $COMMAND_ID"
           
-          # 명령 완료 대기 (최대 5분)
+          # ... (대기 및 상태 확인 로직은 동일하여 생략) ...
           echo "Waiting for SSM command to complete..."
           aws ssm wait command-executed \
             --command-id $COMMAND_ID \
             --instance-id ${{ secrets.DEV_EC2_INSTANCE_ID }} || true
-          
-          # 결과 확인
+            
           STATUS=$(aws ssm get-command-invocation \
             --command-id $COMMAND_ID \
             --instance-id ${{ secrets.DEV_EC2_INSTANCE_ID }} \
             --query 'Status' \
             --output text)
-          
+            
           echo "Command Status: $STATUS"
           
           if [ "$STATUS" != "Success" ]; then
             echo "::error::Deployment failed with status: $STATUS"
-            # 실패 로그 출력
             aws ssm get-command-invocation \
               --command-id $COMMAND_ID \
               --instance-id ${{ secrets.DEV_EC2_INSTANCE_ID }} \
