@@ -19,6 +19,7 @@ import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.SurveyStatus;
 import com.playprobie.api.domain.survey.domain.TestPurpose;
+import com.playprobie.api.domain.survey.domain.TestStage;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
@@ -62,6 +63,7 @@ public class SurveyService {
 		// Security check is done inside getGameEntity
 
 		TestPurpose testPurpose = parseTestPurpose(request.testPurpose());
+		TestStage testStage = parseTestStage(request.testStage());
 
 		Survey survey = Survey.builder()
 				.game(game)
@@ -69,6 +71,11 @@ public class SurveyService {
 				.testPurpose(testPurpose)
 				.startAt(request.startedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
 				.endAt(request.endedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
+				// 신규 필드 (feat/#47)
+				.testStage(testStage)
+				.themePriorities(request.themePriorities())
+				.themeDetails(request.themeDetails())
+				.versionNote(request.versionNote())
 				.build();
 
 		Survey savedSurvey = surveyRepository.save(survey);
@@ -203,11 +210,24 @@ public class SurveyService {
 	// ========== Private ==========
 
 	private TestPurpose parseTestPurpose(String code) {
+		if (code == null)
+			return null;
 		for (TestPurpose tp : TestPurpose.values()) {
 			if (tp.getCode().equals(code)) {
 				return tp;
 			}
 		}
 		throw new IllegalArgumentException("Invalid test purpose code: " + code);
+	}
+
+	private TestStage parseTestStage(String code) {
+		if (code == null)
+			return null;
+		for (TestStage ts : TestStage.values()) {
+			if (ts.getCode().equals(code)) {
+				return ts;
+			}
+		}
+		throw new IllegalArgumentException("Invalid test stage code: " + code);
 	}
 }

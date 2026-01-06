@@ -7,6 +7,7 @@ import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.global.domain.BaseTimeEntity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,6 +16,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -60,8 +62,28 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "status", nullable = false)
 	private SurveyStatus status = SurveyStatus.DRAFT;
 
+	// ===== 신규 필드 (feat/#47) =====
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "test_stage")
+	private TestStage testStage;
+
+	@Convert(converter = com.playprobie.api.global.converter.StringListConverter.class)
+	@Column(name = "theme_priorities", columnDefinition = "TEXT")
+	private java.util.List<String> themePriorities;
+
+	@Convert(converter = com.playprobie.api.global.converter.ThemeDetailsMapConverter.class)
+	@Column(name = "theme_details", columnDefinition = "TEXT")
+	private java.util.Map<String, java.util.List<String>> themeDetails;
+
+	@Lob
+	@Column(name = "version_note")
+	private String versionNote;
+
 	@Builder
-	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt) {
+	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt,
+			TestStage testStage, java.util.List<String> themePriorities,
+			java.util.Map<String, java.util.List<String>> themeDetails, String versionNote) {
 		this.game = Objects.requireNonNull(game, "Survey 생성 시 Game은 필수입니다");
 		this.name = Objects.requireNonNull(name, "Survey 생성 시 name은 필수입니다");
 		this.testPurpose = testPurpose;
@@ -69,6 +91,11 @@ public class Survey extends BaseTimeEntity {
 		this.endAt = endAt;
 		this.uuid = java.util.UUID.randomUUID();
 		this.status = SurveyStatus.DRAFT;
+		// 신규 필드
+		this.testStage = testStage;
+		this.themePriorities = themePriorities;
+		this.themeDetails = themeDetails;
+		this.versionNote = versionNote;
 	}
 
 	public void assignUrl(String surveyUrl) {
