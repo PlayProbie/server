@@ -20,6 +20,8 @@ import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.AiInteractionRequest;
+import com.playprobie.api.infra.ai.dto.request.AiSessionEndRequest;
+import com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateQuestionRequest;
 import com.playprobie.api.infra.ai.dto.request.QuestionAnalysisRequest;
@@ -206,6 +208,16 @@ public class FastApiClient implements AiClient {
 					action = "PASS_TO_NEXT";
 				}
 
+				// AI가 should_end=true를 반환하면 종료 멘트 요청
+				boolean shouldEnd = dataNode.path("should_end").asBoolean(false);
+				String endReason = dataNode.path("end_reason").asText(null);
+
+				if (shouldEnd) {
+					log.info("🛑 [SHOULD_END] AI recommends ending session. reason={}", endReason);
+					streamClosing(sessionId, endReason != null ? endReason : "FATIGUE");
+					return;
+				}
+
 				if ("PASS_TO_NEXT".equals(action)) {
 					log.info("➡️ [PASS_TO_NEXT] Proceeding to next question. sessionId={}", sessionId);
 					// 다음 고정 질문 발송
@@ -215,7 +227,7 @@ public class FastApiClient implements AiClient {
 					interviewService.getNextQuestion(sessionId, currentOrder)
 							.ifPresentOrElse(
 									nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-									() -> sendInterviewComplete(sessionId));
+									() -> streamClosing(sessionId, "ALL_DONE"));
 				} else if ("TAIL_QUESTION".equals(action)) {
 					// TAIL_QUESTION: 꼬리질문 생성됨, 클라이언트 답변 대기
 					log.info("⏳ [TAIL_QUESTION] Waiting for user answer. sessionId={}", sessionId);
@@ -247,12 +259,13 @@ public class FastApiClient implements AiClient {
 				// eventType, analysisPayload));
 				break;
 
-			case "token": // 꼬리 질문 생성 중
+			case "token": // 꼬리 질문 생성 중 (레거시 호환)
+			case "continue": // 토큰 스트리밍 진행 중 (신규 이벤트)
 				tailQuestionGenerated.set(true);
 				String content = dataNode.path("content").asText();
 				// AI 서버가 주는 turn_num 대신 계산된 nextTurnNum 사용
 				QuestionPayload questionPayload = QuestionPayload.of(null, "TAIL", content, nextTurnNum);
-				sseEmitterService.send(sessionId, eventType, questionPayload);
+				sseEmitterService.send(sessionId, "continue", questionPayload);
 				break;
 
 			case "generate_tail_complete": // 꼬리 질문 생성 완료 → DB 저장
@@ -378,8 +391,7 @@ public class FastApiClient implements AiClient {
 							error -> log.error("Analysis failed for survey: {}, question: {}, error: {}",
 									surveyId, fixedQuestionId, error.getMessage()),
 							() -> log.info("Analysis completed for survey: {}, question: {}",
-									surveyId, fixedQuestionId)
-					);
+									surveyId, fixedQuestionId));
 		} catch (Exception e) {
 			log.error("Failed to trigger analysis for survey: {}, question: {}", surveyId, fixedQuestionId, e);
 		}
@@ -399,7 +411,9 @@ public class FastApiClient implements AiClient {
 				.bodyValue(request)
 				.retrieve()
 				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
-				});	}
+				});
+	}
+
 	/**
 	 * 꼬리질문 횟수 제한 초과 시 호출
 	 * AI 호출 없이 바로 다음 고정 질문으로 이동
@@ -417,5 +431,137 @@ public class FastApiClient implements AiClient {
 				.ifPresentOrElse(
 						nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
 						() -> sendInterviewComplete(sessionId));
+	}
+
+	// ========== Session Opening/Closing Methods (Phase 2, 5) ==========
+
+	/**
+	 * AI 서버에 세션 시작(오프닝) 요청을 보내고 SSE 스트리밍 응답을 클라이언트로 전달합니다.
+	 * Phase 2: 인사말 + 오프닝 질문 생성
+	 */
+	public void streamOpening(String sessionId, Map<String, Object> gameInfo,
+			AiSessionStartRequest.TesterProfileDto testerProfile) {
+		AiSessionStartRequest request = AiSessionStartRequest.builder()
+				.sessionId(sessionId)
+				.gameInfo(gameInfo)
+				.testerProfile(testerProfile)
+				.build();
+
+		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
+				.uri("/surveys/start-session")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.TEXT_EVENT_STREAM)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+				});
+
+		eventStream.subscribe(
+				sse -> handleOpeningEvent(sessionId, sse.data()),
+				error -> {
+					log.error("Error in streamOpening: {}", error.getMessage());
+					sseEmitterService.send(sessionId, "error", "오프닝 생성 오류");
+				},
+				() -> log.info("Opening stream completed for sessionId: {}", sessionId));
+	}
+
+	/**
+	 * AI 서버에 세션 종료(클로징) 요청을 보내고 SSE 스트리밍 응답을 클라이언트로 전달합니다.
+	 * Phase 5: 마무리 멘트 생성 후 인터뷰 완료 처리
+	 */
+	public void streamClosing(String sessionId, String endReason) {
+		AiSessionEndRequest request = AiSessionEndRequest.builder()
+				.sessionId(sessionId)
+				.endReason(endReason)
+				.gameInfo(null)
+				.build();
+
+		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
+				.uri("/surveys/end-session")
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.TEXT_EVENT_STREAM)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+				});
+
+		eventStream.subscribe(
+				sse -> handleClosingEvent(sessionId, sse.data()),
+				error -> {
+					log.error("Error in streamClosing: {}", error.getMessage());
+					sendInterviewComplete(sessionId);
+				},
+				() -> log.info("Closing stream completed for sessionId: {}", sessionId));
+	}
+
+	private void handleOpeningEvent(String sessionId, String jsonStr) {
+		try {
+			JsonNode rootNode = objectMapper.readTree(jsonStr);
+			String eventType = rootNode.path("event").asText();
+			JsonNode dataNode = rootNode.path("data");
+
+			switch (eventType) {
+				case "start":
+					StatusPayload startPayload = StatusPayload.builder()
+							.status(dataNode.path("status").asText()).build();
+					sseEmitterService.send(sessionId, "start", startPayload);
+					break;
+
+				case "continue":
+					String content = dataNode.path("content").asText();
+					QuestionPayload questionPayload = QuestionPayload.of(null, "OPENING", content, 0);
+					sseEmitterService.send(sessionId, "continue", questionPayload);
+					break;
+
+				case "done":
+					String questionText = dataNode.path("question_text").asText();
+					QuestionPayload donePayload = QuestionPayload.of(null, "OPENING", questionText, 0);
+					sseEmitterService.send(sessionId, "done", donePayload);
+					break;
+
+				case "error":
+					String errMsg = dataNode.path("message").asText();
+					sseEmitterService.send(sessionId, "error", ErrorPayload.builder().message(errMsg).build());
+					break;
+			}
+		} catch (JsonProcessingException e) {
+			log.error("Failed to parse opening event: {}", e.getMessage());
+		}
+	}
+
+	private void handleClosingEvent(String sessionId, String jsonStr) {
+		try {
+			JsonNode rootNode = objectMapper.readTree(jsonStr);
+			String eventType = rootNode.path("event").asText();
+			JsonNode dataNode = rootNode.path("data");
+
+			switch (eventType) {
+				case "start":
+					StatusPayload startPayload = StatusPayload.builder()
+							.status(dataNode.path("status").asText()).build();
+					sseEmitterService.send(sessionId, "start", startPayload);
+					break;
+
+				case "continue":
+					String content = dataNode.path("content").asText();
+					QuestionPayload questionPayload = QuestionPayload.of(null, "CLOSING", content, 0);
+					sseEmitterService.send(sessionId, "continue", questionPayload);
+					break;
+
+				case "done":
+					// 마무리 멘트 전송 후 인터뷰 완료 처리
+					sendInterviewComplete(sessionId);
+					break;
+
+				case "error":
+					String errMsg = dataNode.path("message").asText();
+					sseEmitterService.send(sessionId, "error", ErrorPayload.builder().message(errMsg).build());
+					sendInterviewComplete(sessionId);
+					break;
+			}
+		} catch (JsonProcessingException e) {
+			log.error("Failed to parse closing event: {}", e.getMessage());
+			sendInterviewComplete(sessionId);
+		}
 	}
 }

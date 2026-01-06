@@ -19,7 +19,6 @@ import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.common.response.ApiResponse;
 import com.playprobie.api.infra.ai.impl.FastApiClient;
-import com.playprobie.api.infra.sse.dto.QuestionPayload;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
 import lombok.RequiredArgsConstructor;
@@ -51,15 +50,12 @@ public class InterviewApi {
 	public SseEmitter stream(@PathVariable UUID sessionUuid) {
 		SseEmitter emitter = sseEmitterService.connect(sessionUuid);
 
-		// SSE 연결 후 첫 질문 전송
+		// SSE 연결 후 AI 오프닝 요청 (Phase 2: 인사말 + 오프닝 질문)
 		String sessionId = sessionUuid.toString();
-		FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
-		QuestionPayload questionPayload = QuestionPayload.of(
-				firstQuestion.fixedQId(),
-				"FIXED",
-				firstQuestion.qContent(),
-				firstQuestion.qOrder());
-		sseEmitterService.send(sessionId, "question", questionPayload);
+
+		// AI 서버에 세션 시작 요청 (비동기 SSE 스트리밍)
+		// 게임 정보와 테스터 프로필은 InterviewService에서 조회하여 전달
+		fastApiClient.streamOpening(sessionId, null, null);
 
 		return emitter;
 	}
