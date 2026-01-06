@@ -22,32 +22,46 @@ public final class CookieUtils {
      * @param token         JWT 토큰
      * @param maxAgeSeconds 쿠키 만료 시간 (초)
      * @param isSecure      Secure 속성 (HTTPS 환경에서 true)
+     * @param domain        쿠키 도메인 (서브도메인 공유 시 .playprobie.shop 형태)
      * @return ResponseCookie
      */
-    public static ResponseCookie createAccessTokenCookie(String token, long maxAgeSeconds, boolean isSecure) {
-        return ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, token)
+    public static ResponseCookie createAccessTokenCookie(String token, long maxAgeSeconds, boolean isSecure,
+            String domain) {
+        var builder = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, token)
                 .httpOnly(true) // JavaScript에서 접근 불가 (XSS 방지)
                 .secure(isSecure) // HTTPS에서만 전송 (운영 환경)
                 .path("/") // 모든 경로에서 쿠키 전송
                 .maxAge(maxAgeSeconds) // 쿠키 만료 시간
-                .sameSite(isSecure ? "Lax" : "Strict") // HTTPS: Same-Site 허용, HTTP: CSRF 방지
-                .build();
+                .sameSite(isSecure ? "Lax" : "Strict"); // HTTPS: Same-Site 허용, HTTP: CSRF 방지
+
+        // 도메인이 설정된 경우에만 추가 (서브도메인 간 공유)
+        if (domain != null && !domain.isBlank()) {
+            builder.domain(domain);
+        }
+
+        return builder.build();
     }
 
     /**
      * Access Token 쿠키 삭제 (로그아웃 시 사용)
      *
      * @param isSecure Secure 속성
+     * @param domain   쿠키 도메인
      * @return ResponseCookie (maxAge=0으로 삭제)
      */
-    public static ResponseCookie deleteAccessTokenCookie(boolean isSecure) {
-        return ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, "")
+    public static ResponseCookie deleteAccessTokenCookie(boolean isSecure, String domain) {
+        var builder = ResponseCookie.from(ACCESS_TOKEN_COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(isSecure)
                 .path("/")
                 .maxAge(0) // 즉시 만료
-                .sameSite(isSecure ? "Lax" : "Strict")
-                .build();
+                .sameSite(isSecure ? "Lax" : "Strict");
+
+        if (domain != null && !domain.isBlank()) {
+            builder.domain(domain);
+        }
+
+        return builder.build();
     }
 
     /**
