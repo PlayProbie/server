@@ -24,10 +24,24 @@ public class GameController {
 
 	private final GameService gameService;
 
+	/**
+	 * 게임 생성
+	 * POST /games
+	 */
 	@PostMapping
 	public ResponseEntity<ApiResponse<GameResponse>> createGame(@Valid @RequestBody CreateGameRequest request) {
 		GameResponse response = gameService.createGame(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
+	}
+
+	/**
+	 * 게임 목록 조회
+	 * GET /games
+	 */
+	@GetMapping
+	public ResponseEntity<ApiResponse<java.util.List<GameResponse>>> getAllGames() {
+		java.util.List<GameResponse> response = gameService.getAllGames();
+		return ResponseEntity.ok(ApiResponse.of(response));
 	}
 
 	@GetMapping("/{gameId}")

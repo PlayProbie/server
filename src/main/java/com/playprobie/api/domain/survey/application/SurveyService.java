@@ -87,6 +87,17 @@ public class SurveyService {
 		return SurveyResponse.from(survey);
 	}
 
+	/**
+	 * 전체 설문 목록 조회
+	 * GET /surveys
+	 */
+	public List<SurveyResponse> getAllSurveys() {
+		List<Survey> surveys = surveyRepository.findAll();
+		return surveys.stream()
+				.map(SurveyResponse::from)
+				.toList();
+	}
+
 	public Survey getSurveyEntity(Long surveyId) {
 		return surveyRepository.findById(surveyId)
 				.orElseThrow(EntityNotFoundException::new);

@@ -45,6 +45,16 @@ public class SurveyApi {
 	}
 
 	/**
+	 * 설문 목록 조회
+	 * GET /surveys
+	 */
+	@GetMapping
+	public ResponseEntity<ApiResponse<List<SurveyResponse>>> getAllSurveys() {
+		List<SurveyResponse> response = surveyService.getAllSurveys();
+		return ResponseEntity.ok(ApiResponse.of(response));
+	}
+
+	/**
 	 * 설문 조회
 	 * GET /surveys/{surveyId}
 	 */
@@ -60,11 +70,11 @@ public class SurveyApi {
 	 */
 	@PostMapping("/ai-questions")
 	public ResponseEntity<ApiResponse<List<String>>> generateAiQuestions(
-		@Valid @RequestBody AiQuestionsRequest request) {
+			@Valid @RequestBody AiQuestionsRequest request) {
 		List<String> result = surveyService.generateAiQuestions(request);
 		return ResponseEntity
-			.status(HttpStatus.CREATED)
-			.body(ApiResponse.of(result));
+				.status(HttpStatus.CREATED)
+				.body(ApiResponse.of(result));
 	}
 
 	/**
@@ -73,15 +83,15 @@ public class SurveyApi {
 	 */
 	@PostMapping("/question-feedback")
 	public ResponseEntity<ApiResponse<QuestionFeedbackResponse>> getQuestionFeedback(
-		@Valid @RequestBody QuestionFeedbackRequest request) {
+			@Valid @RequestBody QuestionFeedbackRequest request) {
 		String question = request.questions().get(0);
 		String gameGenre = String.join(", ", request.gameGenre());
 		QuestionFeedbackResponse feedback = surveyService.getQuestionFeedback(
-			request.gameName(),
-			gameGenre,
-			request.gameContext(),
-			request.testPurpose(),
-			question);
+				request.gameName(),
+				gameGenre,
+				request.gameContext(),
+				request.testPurpose(),
+				question);
 		return ResponseEntity.ok(ApiResponse.of(feedback));
 	}
 
@@ -91,7 +101,7 @@ public class SurveyApi {
 	 */
 	@PostMapping("/fixed-questions")
 	public ResponseEntity<ApiResponse<FixedQuestionsCountResponse>> createFixedQuestions(
-		@Valid @RequestBody CreateFixedQuestionsRequest request) {
+			@Valid @RequestBody CreateFixedQuestionsRequest request) {
 		FixedQuestionsCountResponse response = surveyService.createFixedQuestions(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
 	}
@@ -102,7 +112,7 @@ public class SurveyApi {
 	 */
 	@GetMapping("/{surveyId}/questions")
 	public ResponseEntity<ApiResponse<List<FixedQuestionResponse>>> getConfirmedQuestions(
-		@PathVariable Long surveyId) {
+			@PathVariable Long surveyId) {
 		List<FixedQuestionResponse> questions = surveyService.getConfirmedQuestions(surveyId);
 		return ResponseEntity.ok(ApiResponse.of(questions));
 	}

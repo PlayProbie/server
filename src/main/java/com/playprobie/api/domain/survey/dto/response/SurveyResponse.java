@@ -33,7 +33,8 @@ public record SurveyResponse(
 						: null,
 				survey.getEndAt() != null ? survey.getEndAt().atZone(ZoneId.systemDefault()).toOffsetDateTime() : null,
 				survey.getTestPurpose() != null ? survey.getTestPurpose().getCode() : null,
-				survey.getCreatedAt().atZone(ZoneId.systemDefault()).toOffsetDateTime(),
+				survey.getCreatedAt() != null ? survey.getCreatedAt().atZone(ZoneId.systemDefault()).toOffsetDateTime()
+						: null,
 				// 신규 필드
 				survey.getTestStage() != null ? survey.getTestStage().getCode() : null,
 				survey.getThemePriorities(),
