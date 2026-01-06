@@ -43,6 +43,12 @@ public class GameBuild extends BaseTimeEntity {
     @Column(name = "total_size")
     private Long totalSize;
 
+    @Column(name = "os_type", length = 20)
+    private String osType;
+
+    @Column(name = "executable_path", length = 255)
+    private String executablePath;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private BuildStatus status;
@@ -59,10 +65,12 @@ public class GameBuild extends BaseTimeEntity {
         this.status = BuildStatus.PENDING;
     }
 
-    public void markAsUploaded(int totalFiles, long totalSize) {
+    public void markAsUploaded(int totalFiles, long totalSize, String osType, String executablePath) {
         this.status = BuildStatus.UPLOADED;
         this.totalFiles = totalFiles;
         this.totalSize = totalSize;
+        this.osType = osType;
+        this.executablePath = executablePath;
     }
 
     public String getS3Prefix() {

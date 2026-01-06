@@ -19,9 +19,9 @@ public class SurveyResultListResponse {
     @Getter
     @Builder
     public static class SessionItem {
-        private Long sessionId;
+        private java.util.UUID sessionUuid;
         private String surveyName;
-        private Long surveyId;
+        private java.util.UUID surveyUuid;
         private String testerId;
         private SessionStatus status;
         private String firstQuestion;

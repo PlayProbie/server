@@ -35,7 +35,6 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
@@ -90,28 +89,43 @@ public class GameBuildService {
     }
 
     /**
+     * 특정 게임의 모든 빌드를 조회합니다.
+     */
+    public List<GameBuildResponse> getBuildsByGameUuid(UUID gameUuid) {
+        return gameBuildRepository.findByGameUuidOrderByCreatedAtDesc(gameUuid)
+                .stream()
+                .map(GameBuildResponse::from)
+                .toList();
+    }
+
+    /**
      * 업로드 완료를 확인하고 빌드 상태를 변경합니다.
      */
     @Transactional
-    public GameBuildResponse completeUpload(
+    public GameBuild completeUpload(
             UUID gameUuid, UUID buildId, CompleteUploadRequest request) {
 
         GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
 
         if (gameBuild.getStatus() == BuildStatus.UPLOADED) {
-            return GameBuildResponse.from(gameBuild);
+            return gameBuild;
         }
 
         // Light Verification: 최소 1개 파일 존재 확인
         verifyAtLeastOneFileExists(gameBuild.getS3Prefix());
 
         // 클라이언트 값 신뢰 (GameLift가 최종 검증)
-        gameBuild.markAsUploaded(request.expectedFileCount(), request.expectedTotalSize());
+        gameBuild.markAsUploaded(
+                request.expectedFileCount(),
+                request.expectedTotalSize(),
+                request.osType(),
+                request.executablePath());
 
-        log.info("Upload completed: buildId={}, files={}, size={}",
-                buildId, request.expectedFileCount(), request.expectedTotalSize());
+        log.info("Upload completed: buildId={}, files={}, size={}, osType={}, executablePath={}",
+                buildId, request.expectedFileCount(), request.expectedTotalSize(),
+                request.osType(), request.executablePath());
 
-        return GameBuildResponse.from(gameBuild);
+        return gameBuild;
     }
 
     /**

@@ -56,6 +56,10 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "end_at")
 	private LocalDateTime endAt;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status", nullable = false)
+	private SurveyStatus status = SurveyStatus.DRAFT;
+
 	@Builder
 	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt) {
 		this.game = Objects.requireNonNull(game, "Survey 생성 시 Game은 필수입니다");
@@ -64,6 +68,7 @@ public class Survey extends BaseTimeEntity {
 		this.startAt = startAt;
 		this.endAt = endAt;
 		this.uuid = java.util.UUID.randomUUID();
+		this.status = SurveyStatus.DRAFT;
 	}
 
 	public void assignUrl(String surveyUrl) {
@@ -81,5 +86,35 @@ public class Survey extends BaseTimeEntity {
 	public void updateSchedule(LocalDateTime startAt, LocalDateTime endAt) {
 		this.startAt = startAt;
 		this.endAt = endAt;
+	}
+
+	/**
+	 * 설문 상태를 업데이트합니다.
+	 */
+	public void updateStatus(SurveyStatus status) {
+		if (status == SurveyStatus.ACTIVE) {
+			activate();
+		} else if (status == SurveyStatus.CLOSED) {
+			close();
+		} else {
+			this.status = status;
+		}
+	}
+
+	/**
+	 * 설문을 활성화합니다 (ACTIVE 상태로 변경).
+	 */
+	public void activate() {
+		if (this.status == SurveyStatus.CLOSED) {
+			throw new IllegalStateException("종료된 설문은 다시 활성화할 수 없습니다.");
+		}
+		this.status = SurveyStatus.ACTIVE;
+	}
+
+	/**
+	 * 설문을 종료합니다 (CLOSED 상태로 변경).
+	 */
+	public void close() {
+		this.status = SurveyStatus.CLOSED;
 	}
 }

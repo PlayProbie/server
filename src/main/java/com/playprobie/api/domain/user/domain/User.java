@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.playprobie.api.domain.workspace.domain.Workspace;
+import com.playprobie.api.domain.workspace.domain.WorkspaceMember;
 import com.playprobie.api.global.domain.BaseTimeEntity;
 
 import jakarta.persistence.CascadeType;
@@ -27,6 +27,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
+
+    @Column(name = "user_uuid", nullable = false, unique = true)
+    private java.util.UUID uuid = java.util.UUID.randomUUID();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,8 +58,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "status", nullable = false)
     private UserStatus status;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-    private List<Workspace> workspaces = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<WorkspaceMember> memberships = new ArrayList<>();
 
     @Builder
     public User(String email, String password, String name, String phone,
@@ -111,7 +114,7 @@ public class User extends BaseTimeEntity {
         return this.provider != null;
     }
 
-    public List<Workspace> getWorkspaces() {
-        return Collections.unmodifiableList(workspaces);
+    public List<WorkspaceMember> getMemberships() {
+        return Collections.unmodifiableList(memberships);
     }
 }

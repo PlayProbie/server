@@ -34,17 +34,17 @@ public class InterviewApi {
 	private final SseEmitterService sseEmitterService;
 	private final InterviewService interviewService;
 
-	@PostMapping("/interview/{surveyId}")
+	@PostMapping("/interview/{surveyUuid}")
 	public ResponseEntity<ApiResponse<InterviewCreateResponse>> createSession(
-		@PathVariable UUID surveyId) {
-		return ResponseEntity.status(201).body(ApiResponse.of(interviewService.createSession(surveyId)));
+			@PathVariable(name = "surveyUuid") java.util.UUID surveyUuid) {
+		return ResponseEntity.status(201).body(ApiResponse.of(interviewService.createSession(surveyUuid)));
 	}
 
-	@GetMapping("/interview/{surveyId}/{sessionUuid}")
+	@GetMapping("/interview/{surveyUuid}/{sessionUuid}")
 	public ResponseEntity<ApiResponse<InterviewHistoryResponse>> selectInterviewList(
-		@PathVariable Long surveyId,
-		@PathVariable UUID sessionUuid) {
-		return ResponseEntity.ok(ApiResponse.of(interviewService.getInterviewHistory(surveyId, sessionUuid)));
+			@PathVariable(name = "surveyUuid") java.util.UUID surveyUuid,
+			@PathVariable(name = "sessionUuid") java.util.UUID sessionUuid) {
+		return ResponseEntity.ok(ApiResponse.of(interviewService.getInterviewHistory(surveyUuid, sessionUuid)));
 	}
 
 	@GetMapping(value = "/interview/{sessionUuid}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -55,10 +55,10 @@ public class InterviewApi {
 		String sessionId = sessionUuid.toString();
 		FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
 		QuestionPayload questionPayload = QuestionPayload.of(
-			firstQuestion.fixedQId(),
-			"FIXED",
-			firstQuestion.qContent(),
-			firstQuestion.qOrder());
+				firstQuestion.fixedQId(),
+				"FIXED",
+				firstQuestion.qContent(),
+				firstQuestion.qOrder());
 		sseEmitterService.send(sessionId, "question", questionPayload);
 
 		return emitter;
@@ -66,8 +66,8 @@ public class InterviewApi {
 
 	@PostMapping("interview/{sessionUuid}/messages")
 	public ResponseEntity<ApiResponse<UserAnswerResponse>> receiveAnswer(
-		@PathVariable UUID sessionUuid,
-		@RequestBody UserAnswerRequest request) {
+			@PathVariable UUID sessionUuid,
+			@RequestBody UserAnswerRequest request) {
 		String sessionId = sessionUuid.toString();
 
 		// 클라이언트가 전송한 질문 ID로 질문 정보 조회

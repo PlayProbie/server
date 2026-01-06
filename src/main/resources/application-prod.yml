@@ -30,6 +30,7 @@ aws:
     bucket-name: ${S3_BUCKET_NAME:playprobie-prod-ap-northeast-1}
     role-arn: ${AWS_S3_ROLE_ARN:}
   gamelift:
+    region: ${AWS_GAMELIFT_REGION:ap-northeast-1}
     role-arn: ${AWS_GAMELIFT_ROLE_ARN:}
 
 # Application Settings

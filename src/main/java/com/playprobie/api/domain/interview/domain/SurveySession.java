@@ -82,6 +82,18 @@ public class SurveySession {
 	@Column(name = "ended_at")
 	private LocalDateTime endedAt;
 
+	/** AWS GameLift Streams Session ID */
+	@Column(name = "aws_session_id")
+	private String awsSessionId;
+
+	/** 스트리밍 연결 시각 */
+	@Column(name = "connected_at")
+	private LocalDateTime connectedAt;
+
+	/** 스트리밍 세션 종료 시각 */
+	@Column(name = "terminated_at")
+	private LocalDateTime terminatedAt;
+
 	@Builder
 	public SurveySession(Survey survey, TesterProfile testerProfile) {
 		this.survey = Objects.requireNonNull(survey, "SurveySession 생성 시 Survey는 필수입니다");
@@ -134,5 +146,29 @@ public class SurveySession {
 		if (this.survey == null || !this.survey.getId().equals(surveyId)) {
 			throw new EntityNotFoundException();
 		}
+	}
+
+	// ========== Streaming Session Methods ==========
+
+	/**
+	 * AWS GameLift 스트리밍 세션에 연결됨을 기록합니다.
+	 * 
+	 * @param awsSessionId AWS GameLift Streams Session ID
+	 */
+	public void connect(String awsSessionId) {
+		this.awsSessionId = awsSessionId;
+		this.status = SessionStatus.CONNECTED;
+		this.connectedAt = LocalDateTime.now();
+	}
+
+	/**
+	 * 스트리밍 세션을 종료합니다.
+	 */
+	public void terminate() {
+		if (this.status.isTerminated()) {
+			return; // 이미 종료됨
+		}
+		this.status = SessionStatus.TERMINATED;
+		this.terminatedAt = LocalDateTime.now();
 	}
 }
