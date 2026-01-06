@@ -6,13 +6,14 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.playprobie.api.domain.user.domain.User;
 
 /**
- * 로그인 응답 DTO (HttpOnly Cookie 방식)
+ * 로그인 응답 DTO (Bearer Token 방식)
  * <p>
- * access_token은 HttpOnly Cookie로 전송되므로 응답 body에 포함하지 않습니다.
+ * access_token을 응답 body에 포함하여 클라이언트가 Authorization 헤더로 사용합니다.
  * </p>
  */
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record LoginResponse(
+        String accessToken,
         String tokenType,
         Long expiresIn,
         UserInfo user) {
@@ -35,7 +36,7 @@ public record LoginResponse(
         }
     }
 
-    public static LoginResponse of(long expiresInSeconds, User user) {
-        return new LoginResponse("Bearer", expiresInSeconds, UserInfo.from(user));
+    public static LoginResponse of(String accessToken, long expiresInSeconds, User user) {
+        return new LoginResponse(accessToken, "Bearer", expiresInSeconds, UserInfo.from(user));
     }
 }
