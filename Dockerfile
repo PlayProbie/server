@@ -7,8 +7,11 @@ COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 
 # 2. 의존성 미리 다운로드 (레이어 캐싱 포인트)
-# --stacktrace 등을 추가하면 빌드 실패 시 원인 파악이 쉽습니다.
-RUN ./gradlew dependencies --no-daemon
+# --refresh-dependencies를 사용하여 강제로 새로 다운로드
+# Retry logic for transient network issues
+RUN ./gradlew dependencies --no-daemon --refresh-dependencies || \
+    (echo "Retrying dependency download..." && sleep 5 && ./gradlew dependencies --no-daemon) || \
+    (echo "Second retry..." && sleep 10 && ./gradlew dependencies --no-daemon)
 
 # 3. 소스 코드 복사 및 빌드
 COPY src ./src

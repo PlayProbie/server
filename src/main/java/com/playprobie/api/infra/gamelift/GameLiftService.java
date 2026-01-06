@@ -104,7 +104,7 @@ public class GameLiftService {
                 // ⚠️ SAFETY: Cost Optimization - Capacity는 항상 0으로 하드코딩
                 // 절대 이 값을 외부 입력으로 변경하지 마세요!
                 final int SAFE_ALWAYS_ON_CAPACITY = 0;
-                final int SAFE_ON_DEMAND_CAPACITY = 0;
+                final int SAFE_MAXIMUM_CAPACITY = 0;
 
                 CreateStreamGroupRequest request = CreateStreamGroupRequest.builder()
                                 .description(groupName)
@@ -113,7 +113,7 @@ public class GameLiftService {
                                                 .locationName(awsProperties.getGamelift().getRegion())
                                                 // 🚨 SAFETY: Cost Optimization
                                                 .alwaysOnCapacity(SAFE_ALWAYS_ON_CAPACITY)
-                                                .onDemandCapacity(SAFE_ON_DEMAND_CAPACITY)
+                                                .maximumCapacity(SAFE_MAXIMUM_CAPACITY)
                                                 .build())
                                 .build();
 
@@ -157,7 +157,7 @@ public class GameLiftService {
                                 .identifier(streamGroupId)
                                 .locationConfigurations(LocationConfiguration.builder()
                                                 .locationName(awsProperties.getGamelift().getRegion())
-                                                .onDemandCapacity(targetCapacity)
+                                                .maximumCapacity(targetCapacity)
                                                 .build())
                                 .build();
 

@@ -22,6 +22,11 @@ configurations {
 
 repositories {
 	mavenCentral()
+	// Fallback repository for Maven Central 403 issues
+	maven {
+		url "https://repo1.maven.org/maven2/"
+	}
+	google()
 }
 
 dependencies {
