@@ -73,11 +73,12 @@ public class User extends BaseTimeEntity {
     /**
      * 이메일/비밀번호 기반 회원 생성
      */
-    public static User createWithEmail(String email, String password, String name) {
+    public static User createWithEmail(String email, String password, String name, String phone) {
         return User.builder()
                 .email(email)
                 .password(password)
                 .name(name)
+                .phone(phone)
                 .build();
     }
 

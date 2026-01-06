@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.auth.dto.LoginRequest;
+import com.playprobie.api.domain.auth.dto.LoginResult;
 import com.playprobie.api.domain.auth.dto.SignupRequest;
 import com.playprobie.api.domain.auth.dto.SignupResponse;
-import com.playprobie.api.domain.auth.dto.TokenResponse;
 import com.playprobie.api.domain.auth.exception.EmailDuplicateException;
 import com.playprobie.api.domain.auth.exception.InvalidCredentialsException;
 import com.playprobie.api.domain.user.dao.UserRepository;
@@ -35,7 +35,7 @@ public class AuthService {
 
         // 비밀번호 암호화 및 사용자 생성
         String encodedPassword = passwordEncoder.encode(request.password());
-        User user = User.createWithEmail(request.email(), encodedPassword, request.name());
+        User user = User.createWithEmail(request.email(), encodedPassword, request.name(), request.phone());
 
         User savedUser = userRepository.save(user);
 
@@ -43,7 +43,7 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public TokenResponse login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) {
         // 사용자 조회
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(InvalidCredentialsException::new);
@@ -61,6 +61,6 @@ public class AuthService {
         // JWT 토큰 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
 
-        return TokenResponse.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds());
+        return LoginResult.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds(), user);
     }
 }
