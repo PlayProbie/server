@@ -1,37 +1,40 @@
-# Stage 1: Build Stage (JDK 사용)
+# Stage 1: Build Stage
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /build
 
-# 1. Gradle 래퍼와 설정 파일만 먼저 복사
+# 1. Gradle 래퍼와 설정 파일 복사
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 
-# 2. 의존성 미리 다운로드 (레이어 캐싱 포인트)
-# --refresh-dependencies를 사용하여 강제로 새로 다운로드
-# Retry logic for transient network issues
-RUN ./gradlew dependencies --no-daemon --refresh-dependencies || \
-    (echo "Retrying dependency download..." && sleep 5 && ./gradlew dependencies --no-daemon) || \
-    (echo "Second retry..." && sleep 10 && ./gradlew dependencies --no-daemon)
+# 2. 실행 권한 부여 (윈도우 환경 등 대비)
+RUN chmod +x gradlew
 
-# 3. 소스 코드 복사 및 빌드
+# 3. 의존성 다운로드 (캐싱 활용)
+# --refresh-dependencies 제거: 캐시 활용을 위해 필수
+# retry 로직은 유지하되, 네트워크가 정말 불안정한 환경이 아니라면 제거하는 것이 좋습니다.
+RUN ./gradlew dependencies --no-daemon || \
+    (echo "Retrying dependency download..." && sleep 5 && ./gradlew dependencies --no-daemon)
+
+# 4. 소스 코드 복사 및 빌드
 COPY src ./src
 RUN ./gradlew bootJar --no-daemon -x test
 
-# Stage 2: Run Stage (JRE 사용으로 경량화)
+# Stage 2: Run Stage
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# 보안을 위한 비관리자 유저 생성
+# 5. 타임존 데이터 설치 (Alpine 필수)
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Seoul
+
+# 6. 보안 계정 생성
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# 타임존 설정 (선택 사항)
-ENV TZ=Asia/Seoul
-
-# 빌드 결과물만 복사
-COPY --from=builder /build/build/libs/app.jar .
+# 7. 빌드 결과물 복사 (와일드카드로 유연하게 처리 후 app.jar로 이름 변경)
+COPY --from=builder /build/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-# JVM 메모리 옵션 등 추가 가능
+# Java 실행
 ENTRYPOINT ["java", "-jar", "-Duser.timezone=Asia/Seoul", "app.jar"]
