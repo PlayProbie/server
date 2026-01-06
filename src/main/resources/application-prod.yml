@@ -36,3 +36,8 @@ aws:
 app:
   cookie:
     secure: true  # HTTPS 환경에서 Secure Cookie 사용
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 1800000  # 30분 (ms)
+
