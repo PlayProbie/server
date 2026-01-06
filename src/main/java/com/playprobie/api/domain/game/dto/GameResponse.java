@@ -26,9 +26,10 @@ public record GameResponse(
                 @Schema(description = "생성 일시") @JsonProperty("created_at") LocalDateTime createdAt,
 
                 @Schema(description = "수정 일시") @JsonProperty("updated_at") LocalDateTime updatedAt) {
+
         public static GameResponse from(Game game) {
                 List<String> genreCodes = game.getGenres().stream()
-                                .map(GameGenre::getCode)
+                                .map(GameGenre::name)
                                 .toList();
 
                 UUID workspaceUuid = game.getWorkspace() != null ? game.getWorkspace().getUuid() : null;
