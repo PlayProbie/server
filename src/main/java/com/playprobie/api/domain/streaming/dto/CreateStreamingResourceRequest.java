@@ -16,9 +16,9 @@ import jakarta.validation.constraints.NotNull;
  * @param maxCapacity  서비스 시 목표 동시 접속자 수
  */
 public record CreateStreamingResourceRequest(
-        @NotNull(message = "빌드 ID는 필수입니다.") @JsonProperty("build_id") UUID buildId,
+                @NotNull(message = "빌드 ID는 필수입니다.") @JsonProperty("build_uuid") UUID buildId,
 
-        @NotBlank(message = "인스턴스 타입은 필수입니다.") @JsonProperty("instance_type") String instanceType,
+                @NotBlank(message = "인스턴스 타입은 필수입니다.") @JsonProperty("instance_type") String instanceType,
 
-        @NotNull(message = "최대 용량은 필수입니다.") @Min(value = 1, message = "최대 용량은 1 이상이어야 합니다.") @JsonProperty("max_capacity") Integer maxCapacity) {
+                @NotNull(message = "최대 용량은 필수입니다.") @Min(value = 1, message = "최대 용량은 1 이상이어야 합니다.") @JsonProperty("max_capacity") Integer maxCapacity) {
 }

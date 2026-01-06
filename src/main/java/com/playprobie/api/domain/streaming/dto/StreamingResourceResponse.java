@@ -9,7 +9,7 @@ import com.playprobie.api.domain.streaming.domain.StreamingResource;
  * 스트리밍 리소스 응답 DTO.
  */
 public record StreamingResourceResponse(
-        @JsonProperty("id") String id,
+        @JsonProperty("uuid") String id,
 
         @JsonProperty("status") String status,
 
