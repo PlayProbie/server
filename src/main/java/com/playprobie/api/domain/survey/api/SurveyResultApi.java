@@ -50,7 +50,7 @@ public class SurveyResultApi {
     @GetMapping("/{surveyUuid}/details/{sessionUuid}")
     @Operation(summary = "설문 응답 상세 조회", description = "특정 세션의 설문 응답 상세 내용을 조회합니다.")
     public ResponseEntity<ApiResponse<SurveyResultDetailResponse>> getResponseDetails(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID surveyUuid,
             @PathVariable java.util.UUID sessionUuid) {
         return ResponseEntity.ok(ApiResponse.of(surveyResultService.getResponseDetails(surveyUuid, sessionUuid, user)));

@@ -105,7 +105,7 @@ public class GameController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
 	public ResponseEntity<Void> deleteGame(
-			@AuthenticationPrincipal User user,
+			@AuthenticationPrincipal(expression = "user") User user,
 			@Parameter(description = "게임 UUID") @PathVariable UUID gameUuid) {
 		gameService.deleteGame(gameUuid, user);
 		return ResponseEntity.noContent().build();

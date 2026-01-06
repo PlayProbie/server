@@ -14,6 +14,7 @@ import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.model.StreamClass;
 import com.playprobie.api.domain.streaming.dao.StreamingResourceRepository;
 import com.playprobie.api.domain.streaming.domain.StreamingResource;
+import com.playprobie.api.domain.streaming.domain.StreamingResourceStatus;
 import com.playprobie.api.domain.streaming.dto.CreateStreamingResourceRequest;
 import com.playprobie.api.domain.streaming.dto.ResourceStatusResponse;
 import com.playprobie.api.domain.streaming.dto.SessionAvailabilityResponse;
@@ -274,23 +275,123 @@ public class StreamingResourceService {
          * @param surveyId Survey PK
          * @return 리소스 상태
          */
+        @Transactional
         public ResourceStatusResponse getResourceStatus(Long surveyId, User user) {
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
                 securityManager.validateReadAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
-                // AWS API 호출하여 인스턴스 준비 상태 확인
+                // AWS API 호출 및 상태 동기화 (Transitional State일 때만 수행)
                 boolean instancesReady = false;
-                if (resource.getAwsStreamGroupId() != null) {
-                        GetStreamGroupResponse awsResponse = gameLiftService.getStreamGroupStatus(
-                                        resource.getAwsStreamGroupId());
-                        instancesReady = awsResponse.status() == StreamGroupStatus.ACTIVE;
+                if (resource.getAwsStreamGroupId() != null && isTransitionalState(resource.getStatus())) {
+                        try {
+                                GetStreamGroupResponse awsResponse = gameLiftService.getStreamGroupStatus(
+                                                resource.getAwsStreamGroupId());
+
+                                StreamGroupStatus awsStatus = awsResponse.status();
+                                instancesReady = awsStatus == StreamGroupStatus.ACTIVE;
+
+                                // AWS 상태에 따라 DB 동기화
+                                synchronizeState(resource, awsStatus);
+
+                        } catch (Exception e) {
+                                log.warn("Failed to sync status with AWS for resourceId={}: {}", resource.getId(),
+                                                e.getMessage());
+                                // AWS 호출 실패 시 DB 상태 그대로 반환 (장애 전파 방지)
+                        }
+                } else {
+                        // Stable State라면 DB 정보 기반으로 ready 여부 판단
+                        // ACTIVE, READY, TESTING 상태라면 인스턴스가 준비된 것으로 간주 가능하나,
+                        // 정확히는 ACTIVE 상태일 때만 실제 접속 가능
+                        instancesReady = resource.getStatus() == StreamingResourceStatus.ACTIVE;
                 }
 
                 return ResourceStatusResponse.of(
                                 resource.getStatus().name(),
                                 resource.getCurrentCapacity(),
                                 instancesReady);
+        }
+
+        private boolean isTransitionalState(StreamingResourceStatus status) {
+                return status == StreamingResourceStatus.CREATING ||
+                                status == StreamingResourceStatus.PENDING ||
+                                status == StreamingResourceStatus.PROVISIONING ||
+                                status == StreamingResourceStatus.READY || // READY -> ACTIVE 가능성 (Start Test)
+                                status == StreamingResourceStatus.TESTING || // TESTING -> ACTIVE 가능성 (Activate)
+                                status == StreamingResourceStatus.SCALING;
+        }
+
+        // Throttling을 위한 마지막 업데이트 시간 저장소 (Key: ResourceID)
+        private final java.util.Map<Long, java.time.LocalDateTime> lastCapacityUpdateMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+        private void synchronizeState(StreamingResource resource, StreamGroupStatus awsStatus) {
+                if (awsStatus == StreamGroupStatus.ACTIVE) {
+
+                        // 1. Capacity 검증 (Capacity-Aware Logic)
+                        int desiredCapacity = resource.getMaxCapacity();
+                        int allocatedCapacity = 0;
+
+                        // Safe Collection Access
+                        try {
+                                GetStreamGroupResponse awsResponse = gameLiftService
+                                                .getStreamGroupStatus(resource.getAwsStreamGroupId());
+                                if (awsResponse.locationStates() != null && !awsResponse.locationStates().isEmpty()) {
+                                        // 기본 위치(첫 번째)의 할당 용량 확인
+                                        // 실제로는 특정 리전(location)을 찾아야 할 수도 있으나, 현재는 단일 리전 가정
+                                        allocatedCapacity = awsResponse.locationStates().get(0).allocatedCapacity();
+                                }
+                        } catch (Exception e) {
+                                log.warn("Failed to fetch location states for resourceId={}", resource.getId());
+                        }
+
+                        if (allocatedCapacity >= desiredCapacity) {
+                                // 2. 용량 확보됨 -> DB 상태를 ACTIVE로 동기화
+                                if (resource.getStatus() != StreamingResourceStatus.ACTIVE) {
+                                        resource.activate(resource.getMaxCapacity());
+                                        log.info("Resource verified as ACTIVE and READY (Capacity {}/{}) via sync logic. resourceId={}",
+                                                        allocatedCapacity, desiredCapacity, resource.getId());
+                                }
+                        } else {
+                                // 3. 용량 부족 (Mismatch) -> Self-Healing (재요청)
+                                log.warn("Capacity Mismatch detected! AWS Active but Allocated: {}, Desired: {}. resourceId={}",
+                                                allocatedCapacity, desiredCapacity, resource.getId());
+
+                                triggerSelfHealing(resource);
+                        }
+
+                } else if (awsStatus == StreamGroupStatus.ERROR) {
+                        if (resource.getStatus() != StreamingResourceStatus.ERROR) {
+                                resource.markError("AWS StreamGroup reported ERROR status");
+                                log.error("Resource verified as ERROR via sync logic. resourceId={}", resource.getId());
+                        }
+                }
+        }
+
+        /**
+         * 용량 설정을 재요청합니다 (Throttling 적용).
+         */
+        private void triggerSelfHealing(StreamingResource resource) {
+                long resourceId = resource.getId();
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                java.time.LocalDateTime lastUpdate = lastCapacityUpdateMap.get(resourceId);
+
+                // 쿨다운 체크 (60초)
+                if (lastUpdate != null && java.time.Duration.between(lastUpdate, now).getSeconds() < 60) {
+                        log.info("Self-healing skipped due to cooldown. resourceId={}", resourceId);
+                        return;
+                }
+
+                try {
+                        log.info("Triggering self-healing: Re-applying capacity configuration. resourceId={}",
+                                        resourceId);
+                        gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(),
+                                        resource.getMaxCapacity());
+
+                        // 업데이트 성공 시 타임스탬프 갱신
+                        lastCapacityUpdateMap.put(resourceId, now);
+                } catch (Exception e) {
+                        log.error("Self-healing failed for resourceId={}: {}", resourceId, e.getMessage());
+                }
         }
 
         public ResourceStatusResponse getResourceStatus(java.util.UUID surveyUuid, User user) {

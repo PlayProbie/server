@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
 import com.playprobie.api.domain.streaming.application.StreamingResourceService;
 import com.playprobie.api.domain.streaming.dto.SessionAvailabilityResponse;
 import com.playprobie.api.domain.streaming.dto.SessionStatusResponse;
@@ -20,8 +19,6 @@ import com.playprobie.api.domain.streaming.dto.SignalResponse;
 import com.playprobie.api.domain.streaming.dto.TerminateSessionRequest;
 import com.playprobie.api.domain.streaming.dto.TerminateSessionResponse;
 import com.playprobie.api.global.common.response.ApiResponse;
-import com.playprobie.api.global.error.ErrorCode;
-import com.playprobie.api.global.error.exception.BusinessException;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +42,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class TesterSessionController {
 
     private final StreamingResourceService streamingResourceService;
-    private final SurveySessionRepository surveySessionRepository;
 
     /**
      * 세션 가용성을 확인합니다.
