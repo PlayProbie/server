@@ -10,13 +10,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum GameGenre {
 
-    SHOOTER("슈팅", "shooter"),
-    STRATEGY("전략", "strategy"),
-    RPG("RPG", "rpg"),
-    SPORTS("스포츠", "sports"),
-    SIMULATION("시뮬레이션", "simulation"),
-    CASUAL("캐주얼", "casual");
+    SHOOTER("슈팅"),
+    STRATEGY("전략"),
+    RPG("RPG"),
+    SPORTS("스포츠"),
+    SIMULATION("시뮬레이션"),
+    CASUAL("캐주얼");
 
     private final String displayName;
-    private final String code;
 }

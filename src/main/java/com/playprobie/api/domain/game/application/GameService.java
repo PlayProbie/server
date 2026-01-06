@@ -107,7 +107,7 @@ public class GameService {
 
 	private GameGenre parseGenre(String code) {
 		for (GameGenre g : GameGenre.values()) {
-			if (g.getCode().equals(code)) {
+			if (g.name().equalsIgnoreCase(code)) {
 				return g;
 			}
 		}
