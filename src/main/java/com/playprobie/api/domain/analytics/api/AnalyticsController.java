@@ -13,9 +13,13 @@ import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/analytics")
 @RequiredArgsConstructor
+@Tag(name = "Analytics API", description = "설문 분석 결과 API")
 public class AnalyticsController {
 
 	private final AnalyticsService analyticsService;
@@ -25,6 +29,7 @@ public class AnalyticsController {
 	 * GET /api/analytics/{surveyId}
 	 */
 	@GetMapping(value = "/{surveyId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@Operation(summary = "설문 분석 결과 스트리밍", description = "AI 분석 결과를 SSE로 스트리밍합니다.")
 	public Flux<ServerSentEvent<QuestionResponseAnalysisWrapper>> getSurveyAnalysis(
 			@PathVariable Long surveyId) {
 

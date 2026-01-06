@@ -20,6 +20,9 @@ import com.playprobie.api.global.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 /**
  * 스트리밍 리소스 관리 Controller (Admin).
  * 
@@ -29,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/surveys/{surveyId}/streaming-resource")
 @RequiredArgsConstructor
+@Tag(name = "Streaming Resource API", description = "스트리밍 리소스 관리 API (관리자용)")
 public class StreamingResourceController {
 
     private final StreamingResourceService streamingResourceService;
@@ -44,6 +48,7 @@ public class StreamingResourceController {
      * @return 201 Created
      */
     @PostMapping
+    @Operation(summary = "스트리밍 리소스 할당", description = "GameLift 스트리밍 리소스를 할당합니다.")
     public ResponseEntity<ApiResponse<StreamingResourceResponse>> createResource(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID surveyId,
@@ -63,6 +68,7 @@ public class StreamingResourceController {
      * @return 200 OK
      */
     @GetMapping
+    @Operation(summary = "스트리밍 리소스 조회", description = "할당된 스트리밍 리소스 정보를 조회합니다.")
     public ResponseEntity<ApiResponse<StreamingResourceResponse>> getResource(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID surveyId) {
@@ -80,6 +86,7 @@ public class StreamingResourceController {
      * @return 204 No Content
      */
     @DeleteMapping
+    @Operation(summary = "스트리밍 리소스 해제", description = "GameLift 스트리밍 리소스를 해제합니다.")
     public ResponseEntity<Void> deleteResource(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID surveyId) {

@@ -20,11 +20,14 @@ import com.playprobie.api.global.common.response.ApiResponse;
 import com.playprobie.api.global.util.CookieUtils;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth API", description = "인증 관련 API (회원가입, 로그인, 로그아웃)")
 public class AuthApi {
 
     private final AuthService authService;
@@ -42,12 +45,14 @@ public class AuthApi {
     private String cookieDomain;
 
     @PostMapping("/signup")
+    @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
         SignupResponse response = authService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
     }
 
     @PostMapping("/login")
+    @Operation(summary = "로그인", description = "이메일/비밀번호로 로그인하고 Access Token 쿠키를 발급합니다.")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResult result = authService.login(request);
 
@@ -67,6 +72,7 @@ public class AuthApi {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "Access Token 쿠키를 삭제하여 로그아웃합니다.")
     public ResponseEntity<Void> logout() {
         // Access Token 쿠키 삭제
         ResponseCookie deleteCookie = CookieUtils.deleteAccessTokenCookie(secureCookie, cookieDomain);

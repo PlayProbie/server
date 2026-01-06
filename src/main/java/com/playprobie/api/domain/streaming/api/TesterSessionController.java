@@ -26,6 +26,9 @@ import com.playprobie.api.global.error.exception.BusinessException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 /**
  * 테스터 세션 Controller (User/Tester).
  * 
@@ -38,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/surveys/{surveyUuid}")
 @RequiredArgsConstructor
+@Tag(name = "Tester Session API", description = "테스터 세션 관리 API (WebRTC 시그널링, Heartbeat 등)")
 public class TesterSessionController {
 
     private final StreamingResourceService streamingResourceService;
@@ -53,6 +57,7 @@ public class TesterSessionController {
      * @return 200 OK
      */
     @GetMapping("/session")
+    @Operation(summary = "세션 가용성 확인", description = "세션 가용 여부를 확인합니다.")
     public ResponseEntity<ApiResponse<SessionAvailabilityResponse>> checkSession(@PathVariable UUID surveyUuid) {
         SessionAvailabilityResponse response = streamingResourceService.checkSessionAvailability(surveyUuid);
         return ResponseEntity.ok(ApiResponse.of(response));
@@ -69,6 +74,7 @@ public class TesterSessionController {
      * @return 200 OK
      */
     @PostMapping("/signal")
+    @Operation(summary = "WebRTC 시그널링", description = "WebRTC 시그널을 처리합니다.")
     public ResponseEntity<ApiResponse<SignalResponse>> signal(
             @PathVariable UUID surveyUuid,
             @Valid @RequestBody SignalRequest request) {
@@ -88,6 +94,7 @@ public class TesterSessionController {
      * @return 200 OK
      */
     @GetMapping("/session/status")
+    @Operation(summary = "세션 상태 확인 (Heartbeat)", description = "세션 활성 상태를 확인합니다.")
     public ResponseEntity<ApiResponse<SessionStatusResponse>> getSessionStatus(
             @PathVariable UUID surveyUuid,
             @RequestParam(name = "survey_session_uuid") UUID surveySessionUuid) {
@@ -109,6 +116,7 @@ public class TesterSessionController {
      * @return 200 OK
      */
     @PostMapping("/session/terminate")
+    @Operation(summary = "세션 종료", description = "세션을 종료합니다.")
     public ResponseEntity<ApiResponse<TerminateSessionResponse>> terminateSession(
             @PathVariable UUID surveyUuid,
             @Valid @RequestBody TerminateSessionRequest request) {

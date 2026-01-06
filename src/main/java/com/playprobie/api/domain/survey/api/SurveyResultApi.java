@@ -15,16 +15,21 @@ import com.playprobie.api.domain.survey.dto.SurveyResultListResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultSummaryResponse;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.ApiResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/surveys/results")
 @RequiredArgsConstructor
+@Tag(name = "Survey Result API", description = "설문 결과 조회 API")
 public class SurveyResultApi {
 
     private final SurveyResultService surveyResultService;
 
     @GetMapping("/{gameUuid}")
+    @Operation(summary = "설문 결과 요약 조회", description = "게임별 설문 결과 요약 통계를 조회합니다.")
     public ResponseEntity<ApiResponse<SurveyResultSummaryResponse>> getSummary(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID gameUuid,
@@ -33,6 +38,7 @@ public class SurveyResultApi {
     }
 
     @GetMapping("/{gameUuid}/listup")
+    @Operation(summary = "설문 응답 목록 조회", description = "설문 응답 목록을 커서 기반 페이징으로 조회합니다.")
     public ResponseEntity<ApiResponse<SurveyResultListResponse>> getResponseList(
             @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable java.util.UUID gameUuid,
@@ -42,6 +48,7 @@ public class SurveyResultApi {
     }
 
     @GetMapping("/{surveyUuid}/details/{sessionUuid}")
+    @Operation(summary = "설문 응답 상세 조회", description = "특정 세션의 설문 응답 상세 내용을 조회합니다.")
     public ResponseEntity<ApiResponse<SurveyResultDetailResponse>> getResponseDetails(
             @AuthenticationPrincipal User user,
             @PathVariable java.util.UUID surveyUuid,

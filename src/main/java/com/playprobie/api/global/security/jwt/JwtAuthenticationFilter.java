@@ -39,14 +39,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             Long userId = jwtTokenProvider.getUserIdFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserById(userId);
+            try {
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails,
-                    null, userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("Set Authentication for user: {}", userId);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("Set Authentication for user: {}", userId);
+            } catch (Exception e) {
+                log.error("Cannot set user authentication: {}", e.getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);
