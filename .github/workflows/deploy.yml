@@ -29,9 +29,15 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      # 테스트 + 빌드 수행 (테스트 실패 시 빌드 중단)
+      # 테스트 + 빌드 수행 (Maven Central 403 대응 재시도 로직 포함)
       - name: Build with Gradle
-        run: ./gradlew clean build
+        run: |
+          for i in 1 2 3; do
+            echo "Build attempt $i..."
+            ./gradlew clean build --stacktrace && break
+            echo "Build failed, retrying in 30 seconds..."
+            sleep 30
+          done
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
