@@ -59,6 +59,13 @@ public class GameService {
 				.toList();
 	}
 
+	public List<GameResponse> getGamesByUser(User user) {
+		List<Game> games = gameRepository.findByWorkspace_Members_User_Id(user.getId());
+		return games.stream()
+				.map(GameResponse::from)
+				.toList();
+	}
+
 	public GameResponse getGame(Long gameId, User user) {
 		Game game = getGameEntity(gameId, user);
 		return GameResponse.from(game);

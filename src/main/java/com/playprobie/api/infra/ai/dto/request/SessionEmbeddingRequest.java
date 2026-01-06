@@ -21,7 +21,9 @@ public record SessionEmbeddingRequest(
 
         @Schema(description = "QA 쌍 목록") @JsonProperty("qa_pairs") List<QaPair> qaPairs,
 
-        @Schema(description = "추가 메타데이터") @JsonProperty("metadata") Object metadata) {
+        @Schema(description = "추가 메타데이터") @JsonProperty("metadata") Object metadata,
+
+        @Schema(description = "분석 자동 트리거 여부", example = "true") @com.fasterxml.jackson.annotation.JsonIgnore Boolean autoTriggerAnalysis) {
 
     @Schema(description = "질문-답변 쌍")
     @Builder

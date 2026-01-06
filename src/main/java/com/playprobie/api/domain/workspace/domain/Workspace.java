@@ -56,7 +56,8 @@ public class Workspace extends BaseTimeEntity {
     private List<WorkspaceMember> members = new ArrayList<>();
 
     @Builder
-    public Workspace(String name, String profileImageUrl, String description) {
+    public Workspace(UUID uuid, String name, String profileImageUrl, String description) {
+        this.uuid = uuid;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
         this.description = description;

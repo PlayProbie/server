@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.domain.SessionStatus;
 
@@ -15,6 +17,7 @@ import lombok.Getter;
 @Schema(description = "설문 결과 상세 응답 DTO")
 @Getter
 @Builder
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class SurveyResultDetailResponse {
 
     @Schema(description = "세션 정보")
@@ -26,6 +29,7 @@ public class SurveyResultDetailResponse {
     @Schema(description = "세션 정보")
     @Getter
     @Builder
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class SessionInfo {
         @Schema(description = "세션 UUID", example = "550e8400-e29b-41d4-a716-446655440000")
         private UUID sessionUuid;
@@ -50,6 +54,7 @@ public class SurveyResultDetailResponse {
     @Schema(description = "고정 질문 그룹")
     @Getter
     @Builder
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class FixedQuestionGroup {
         @Schema(description = "고정 질문 내용", example = "게임 그래픽은 어떠셨나요?")
         private String fixedQuestion;
@@ -61,6 +66,7 @@ public class SurveyResultDetailResponse {
     @Schema(description = "응답 발췌 항목")
     @Getter
     @Builder
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class ExcerptItem {
         @Schema(description = "질문 유형 (FIXED, AI)", example = "FIXED")
         private QuestionType qType;

@@ -41,5 +41,6 @@ public final class SecurityConstants {
             "/interview/*/*",
             "/interview/*/stream",
             "/interview/*/messages",
+
     };
 }
