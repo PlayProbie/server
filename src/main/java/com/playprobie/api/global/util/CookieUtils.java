@@ -32,7 +32,7 @@ public final class CookieUtils {
                 .secure(isSecure) // HTTPS에서만 전송 (운영 환경)
                 .path("/") // 모든 경로에서 쿠키 전송
                 .maxAge(maxAgeSeconds) // 쿠키 만료 시간
-                .sameSite(isSecure ? "Lax" : "Strict"); // HTTPS: Same-Site 허용, HTTP: CSRF 방지
+                .sameSite(isSecure ? "None" : "Lax"); // HTTPS: Cross-Origin 지원, HTTP: Same-Site 허용
 
         // 도메인이 설정된 경우에만 추가 (서브도메인 간 공유)
         if (domain != null && !domain.isBlank()) {
@@ -55,7 +55,7 @@ public final class CookieUtils {
                 .secure(isSecure)
                 .path("/")
                 .maxAge(0) // 즉시 만료
-                .sameSite(isSecure ? "Lax" : "Strict");
+                .sameSite(isSecure ? "None" : "Lax"); // HTTPS: Cross-Origin 지원, HTTP: Same-Site 허용
 
         if (domain != null && !domain.isBlank()) {
             builder.domain(domain);
