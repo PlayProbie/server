@@ -30,7 +30,7 @@ public final class CookieUtils {
                 .secure(isSecure) // HTTPS에서만 전송 (운영 환경)
                 .path("/") // 모든 경로에서 쿠키 전송
                 .maxAge(maxAgeSeconds) // 쿠키 만료 시간
-                .sameSite("Strict") // CSRF 방지
+                .sameSite(isSecure ? "Lax" : "Strict") // HTTPS: Same-Site 허용, HTTP: CSRF 방지
                 .build();
     }
 
@@ -46,7 +46,7 @@ public final class CookieUtils {
                 .secure(isSecure)
                 .path("/")
                 .maxAge(0) // 즉시 만료
-                .sameSite("Strict")
+                .sameSite(isSecure ? "Lax" : "Strict")
                 .build();
     }
 
