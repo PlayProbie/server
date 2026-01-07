@@ -34,7 +34,9 @@ USER spring:spring
 # 7. 빌드 결과물 복사 (와일드카드로 유연하게 처리 후 app.jar로 이름 변경)
 COPY --from=builder /build/build/libs/*.jar app.jar
 
+ENV SPRING_PROFILES_ACTIVE=local
+
 EXPOSE 8080
 
 # Java 실행
-ENTRYPOINT ["java", "-jar", "-Duser.timezone=Asia/Seoul", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE} -Duser.timezone=Asia/Seoul -jar app.jar"]
