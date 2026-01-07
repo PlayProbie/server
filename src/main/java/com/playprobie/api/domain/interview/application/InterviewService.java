@@ -209,7 +209,7 @@ public class InterviewService {
 			.build();
 
 		InterviewLog savedLog = interviewLogRepository.save(interviewLog); // DB 저장
-		https: // github.com/PlayProbie/server/pull/45/conflict?name=src%252Fmain%252Fjava%252Fcom%252Fplayprobie%252Fapi%252Finfra%252Fai%252Fimpl%252FFastApiClient.java&ancestor_oid=775560630a8c8041163727014d0434d641cc5865&base_oid=627e0bd3fed0277f6ba44aa43741ae9c257c977b&head_oid=d711818ea0cd435114b59d88bb66c71c5083ed68
+
 		return UserAnswerResponse.of(
 			savedLog.getTurnNum(),
 			String.valueOf(savedLog.getType()),

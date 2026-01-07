@@ -44,9 +44,6 @@ public class SurveyController {
 
 	private final SurveyService surveyService;
 
-	/**
-	 * 설문 목록 조회
-	 */
 	@GetMapping
 	@Operation(summary = "설문 목록 조회", description = "게임별 또는 전체 설문 목록을 조회합니다.")
 	public ResponseEntity<CommonResponse<List<SurveyResponse>>> getSurveys(
@@ -58,9 +55,6 @@ public class SurveyController {
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
-	/**
-	 * 설문 생성
-	 */
 	@PostMapping
 	@Operation(summary = "설문 생성", description = "새로운 설문을 생성합니다.")
 	public ResponseEntity<CommonResponse<SurveyResponse>> createSurvey(
@@ -72,9 +66,6 @@ public class SurveyController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
 	}
 
-	/**
-	 * 설문 조회
-	 */
 	@GetMapping("/{surveyUuid}")
 	@Operation(summary = "설문 조회", description = "설문 상세 정보를 조회합니다.")
 	public ResponseEntity<CommonResponse<SurveyResponse>> getSurvey(
@@ -86,9 +77,6 @@ public class SurveyController {
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
-	/**
-	 * AI 질문 자동 생성
-	 */
 	@PostMapping("/ai-questions")
 	@Operation(summary = "AI 질문 생성", description = "AI를 통해 추천 질문 목록을 생성합니다.")
 	public ResponseEntity<CommonResponse<List<String>>> generateAiQuestions(
@@ -98,9 +86,6 @@ public class SurveyController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(result));
 	}
 
-	/**
-	 * 질문 피드백
-	 */
 	@PostMapping("/question-feedback")
 	@Operation(summary = "질문 피드백", description = "작성된 질문에 대한 AI 피드백 및 대안을 제공합니다.")
 	public ResponseEntity<CommonResponse<QuestionFeedbackResponse>> getQuestionFeedback(
@@ -117,9 +102,6 @@ public class SurveyController {
 		return ResponseEntity.ok(CommonResponse.of(feedback));
 	}
 
-	/**
-	 * 고정 질문 저장
-	 */
 	@PostMapping("/fixed-questions")
 	@Operation(summary = "고정 질문 저장", description = "확정된 질문들을 설문에 저장합니다.")
 	public ResponseEntity<CommonResponse<FixedQuestionsCountResponse>> createFixedQuestions(
@@ -131,9 +113,6 @@ public class SurveyController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
 	}
 
-	/**
-	 * 확정 질문 목록 조회
-	 */
 	@GetMapping("/{surveyUuid}/questions")
 	@Operation(summary = "확정 질문 목록 조회")
 	public ResponseEntity<CommonResponse<List<FixedQuestionResponse>>> getConfirmedQuestions(
@@ -145,9 +124,6 @@ public class SurveyController {
 		return ResponseEntity.ok(CommonResponse.of(questions));
 	}
 
-	/**
-	 * 설문 상태 업데이트 (ACTIVE / CLOSED)
-	 */
 	@PatchMapping("/{surveyUuid}/status")
 	@Operation(summary = "설문 상태 업데이트", description = "설문을 활성화(Scale-out)하거나 종료(Cleanup)합니다.")
 	public ResponseEntity<CommonResponse<UpdateSurveyStatusResponse>> updateSurveyStatus(

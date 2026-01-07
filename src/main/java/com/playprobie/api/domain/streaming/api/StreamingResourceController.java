@@ -23,12 +23,6 @@ import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-/**
- * 스트리밍 리소스 관리 Controller (Admin).
- *
- * <p>
- * 리소스 할당, 조회, 해제 기능을 제공합니다.
- */
 @RestController
 @RequestMapping("/surveys/{surveyId}/streaming-resource")
 @RequiredArgsConstructor
@@ -37,16 +31,6 @@ public class StreamingResourceController {
 
 	private final StreamingResourceService streamingResourceService;
 
-	/**
-	 * 스트리밍 리소스를 할당합니다 (비동기).
-	 *
-	 * <p>
-	 * POST /surveys/{surveyId}/streaming-resource
-	 *
-	 * @param surveyId Survey PK
-	 * @param request  할당 요청
-	 * @return 202 Accepted (Location 헤더에 상태 조회 URL 포함)
-	 */
 	@PostMapping
 	@Operation(summary = "스트리밍 리소스 할당 (비동기)", description = "GameLift 스트리밍 리소스를 할당합니다. " +
 		"리소스 생성은 비동기로 진행되며, 응답 코드 202 Accepted와 함께 " +
@@ -69,15 +53,6 @@ public class StreamingResourceController {
 			.body(CommonResponse.of(response));
 	}
 
-	/**
-	 * 스트리밍 리소스를 조회합니다.
-	 *
-	 * <p>
-	 * GET /surveys/{surveyId}/streaming-resource
-	 *
-	 * @param surveyId Survey PK
-	 * @return 200 OK
-	 */
 	@GetMapping
 	@Operation(summary = "스트리밍 리소스 조회", description = "할당된 스트리밍 리소스 정보를 조회합니다.")
 	public ResponseEntity<CommonResponse<StreamingResourceResponse>> getResource(
@@ -89,15 +64,6 @@ public class StreamingResourceController {
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
-	/**
-	 * 스트리밍 리소스를 해제합니다.
-	 *
-	 * <p>
-	 * DELETE /surveys/{surveyId}/streaming-resource
-	 *
-	 * @param surveyId Survey PK
-	 * @return 204 No Content
-	 */
 	@DeleteMapping
 	@Operation(summary = "스트리밍 리소스 해제", description = "GameLift 스트리밍 리소스를 해제합니다.")
 	public ResponseEntity<Void> deleteResource(

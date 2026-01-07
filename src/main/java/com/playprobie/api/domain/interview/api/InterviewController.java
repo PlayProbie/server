@@ -21,11 +21,10 @@ import com.playprobie.api.global.common.response.CommonResponse;
 import com.playprobie.api.infra.ai.impl.FastApiClient;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -74,7 +73,7 @@ public class InterviewController {
 		return emitter;
 	}
 
-	@PostMapping("interview/{sessionUuid}/messages")
+	@PostMapping("/interview/{sessionUuid}/messages")
 	@Operation(summary = "사용자 응답 전송", description = "사용자의 응답을 전송하고 AI 후속 질문을 스트리밍합니다.")
 	public ResponseEntity<CommonResponse<UserAnswerResponse>> receiveAnswer(
 		@PathVariable

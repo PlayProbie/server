@@ -6,10 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.streaming.dao.StreamingResourceRepository;
 import com.playprobie.api.domain.streaming.domain.StreamingResource;
+import com.playprobie.api.global.error.ErrorCode;
+import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.config.AwsProperties;
 import com.playprobie.api.infra.gamelift.GameLiftService;
-import com.playprobie.api.global.error.exception.BusinessException;
-import com.playprobie.api.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

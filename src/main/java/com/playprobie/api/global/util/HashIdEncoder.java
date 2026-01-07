@@ -5,7 +5,6 @@ package com.playprobie.api.global.util;
  * - ID를 예측 불가능한 코드로 변환
  * - salt를 사용하여 같은 ID도 다르게 보이도록
  */
-//TODO: 검증
 public class HashIdEncoder {
 
 	private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

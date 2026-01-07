@@ -15,8 +15,8 @@ import com.playprobie.api.domain.game.dto.UpdateGameRequest;
 import com.playprobie.api.domain.game.exception.GameNotFoundException;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
-import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.domain.workspace.application.WorkspaceService;
+import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.global.error.exception.InvalidValueException;
 
 import lombok.RequiredArgsConstructor;

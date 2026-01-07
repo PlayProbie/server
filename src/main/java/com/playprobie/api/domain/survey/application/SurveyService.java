@@ -96,10 +96,7 @@ public class SurveyService {
 				.map(SurveyResponse::forList)
 				.toList();
 		}
-		// TODO: Handle global listing security? Currently unsafe/legacy.
-		// For now, we allow it but in strict mode we should block or filter.
-		// Returning empty list or throwing error might be better if IDOR is strict.
-		// given the context, let's keep it but ideally this path should be admin only.
+
 		return surveyRepository.findAll()
 			.stream()
 			.map(SurveyResponse::forList)

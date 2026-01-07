@@ -15,14 +15,14 @@ import io.swagger.v3.oas.models.servers.Server;
 @Configuration
 public class SwaggerConfig {
 
-	private static final String COOKIE_AUTH_NAME = "cookieAuth";
+	private static final String BEARER_AUTH_NAME = "bearerAuth";
 
 	@Bean
 	public OpenAPI openAPI() {
 		return new OpenAPI()
 			.servers(servers())
 			.components(components())
-			.addSecurityItem(new SecurityRequirement().addList(COOKIE_AUTH_NAME))
+			.addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH_NAME))
 			.info(apiInfo());
 	}
 
@@ -39,14 +39,14 @@ public class SwaggerConfig {
 	}
 
 	private Components components() {
-		SecurityScheme cookieAuthScheme = new SecurityScheme()
-			.type(SecurityScheme.Type.APIKEY)
-			.in(SecurityScheme.In.COOKIE)
-			.name("access_token")
-			.description("Access token stored in cookie");
+		SecurityScheme bearerAuthScheme = new SecurityScheme()
+			.type(SecurityScheme.Type.HTTP)
+			.scheme("bearer")
+			.bearerFormat("JWT")
+			.description("JWT Bearer Token (Login API에서 발급받은 access_token)");
 
 		return new Components()
-			.addSecuritySchemes(COOKIE_AUTH_NAME, cookieAuthScheme);
+			.addSecuritySchemes(BEARER_AUTH_NAME, bearerAuthScheme);
 	}
 
 	private Info apiInfo() {

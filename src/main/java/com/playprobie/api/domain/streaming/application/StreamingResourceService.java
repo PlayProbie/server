@@ -28,11 +28,11 @@ import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.SurveyStatus;
 import com.playprobie.api.domain.survey.exception.SurveyNotFoundException;
+import com.playprobie.api.domain.user.domain.User;
+import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.gamelift.GameLiftService;
-import com.playprobie.api.domain.user.domain.User;
-import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -439,7 +439,6 @@ public class StreamingResourceService {
 			return SessionAvailabilityResponse.unavailable(surveyUuid, survey.getGame().getName());
 		}
 
-		// TODO: 실제 Capacity 대비 활성 세션 수 비교하여 가용성 판단
 		return SessionAvailabilityResponse.available(surveyUuid, survey.getGame().getName());
 	}
 
