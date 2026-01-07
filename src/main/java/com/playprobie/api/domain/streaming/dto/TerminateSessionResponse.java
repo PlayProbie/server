@@ -2,15 +2,13 @@ package com.playprobie.api.domain.streaming.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * 세션 종료 응답 DTO.
- */
-public record TerminateSessionResponse(
-        @JsonProperty("success") boolean success) {
+import io.swagger.v3.oas.annotations.media.Schema;
 
-    /**
-     * 성공 응답을 생성합니다.
-     */
+@Schema(description = "세션 종료 응답 DTO")
+public record TerminateSessionResponse(
+
+        @Schema(description = "종료 성공 여부", example = "true") @JsonProperty("success") boolean success) {
+
     public static TerminateSessionResponse ok() {
         return new TerminateSessionResponse(true);
     }

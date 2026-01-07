@@ -14,6 +14,7 @@ import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.model.StreamClass;
 import com.playprobie.api.domain.streaming.dao.StreamingResourceRepository;
 import com.playprobie.api.domain.streaming.domain.StreamingResource;
+import com.playprobie.api.domain.streaming.domain.StreamingResourceStatus;
 import com.playprobie.api.domain.streaming.dto.CreateStreamingResourceRequest;
 import com.playprobie.api.domain.streaming.dto.ResourceStatusResponse;
 import com.playprobie.api.domain.streaming.dto.SessionAvailabilityResponse;
@@ -30,14 +31,11 @@ import com.playprobie.api.domain.survey.exception.SurveyNotFoundException;
 import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.gamelift.GameLiftService;
-import com.playprobie.api.infra.config.AwsProperties;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.gameliftstreams.model.CreateApplicationResponse;
-import software.amazon.awssdk.services.gameliftstreams.model.CreateStreamGroupResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.GetStreamGroupResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.StartStreamSessionResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.StreamGroupStatus;
@@ -59,8 +57,8 @@ public class StreamingResourceService {
         private final GameBuildRepository gameBuildRepository;
         private final SurveySessionRepository surveySessionRepository;
         private final GameLiftService gameLiftService;
-        private final AwsProperties awsProperties;
         private final WorkspaceSecurityManager securityManager;
+        private final StreamingProvisioner streamingProvisioner;
 
         // ========== Admin: Resource Management ==========
 
@@ -69,7 +67,7 @@ public class StreamingResourceService {
          * 
          * @param surveyId Survey PK
          * @param request  할당 요청
-         * @return 생성된 리소스 정보
+         * @return 생성된 리소스 정보 (상태: CREATING)
          */
         @Transactional
         public StreamingResourceResponse createResource(java.util.UUID surveyUuid,
@@ -85,17 +83,8 @@ public class StreamingResourceService {
 
                 Long surveyId = survey.getId();
 
-                // 2. 기존 리소스 존재 여부 확인
-                if (streamingResourceRepository.existsBySurveyId(surveyId)) {
-                        throw new StreamingResourceAlreadyExistsException();
-                }
-
-                // Call legacy logic or continue implementation. Since this is a refactor, I
-                // will reuse the logic by getting the Survey entity first.
-                // But to avoid code duplication, I should ideally extract the core logic.
-                // For now, I will implement the UUID version fully or delegate if possible.
-                // However, the original creation logic relies on `surveyRepository.findById`.
-                // Using the retrieved `survey` entity covers the requirement.
+                // 2. 중복 생성 방지
+                validateResourceDuplication(surveyId);
 
                 // 3. GameBuild 조회
                 GameBuild build = gameBuildRepository.findByUuid(request.buildId())
@@ -106,42 +95,31 @@ public class StreamingResourceService {
                         throw new StreamClassIncompatibleException(request.instanceType(), build.getOsType());
                 }
 
-                // 5. StreamingResource 생성 (PENDING 상태)
+                // 5. StreamingResource 생성 (CREATING 상태)
                 StreamingResource resource = StreamingResource.builder()
                                 .survey(survey)
                                 .build(build)
                                 .instanceType(request.instanceType())
                                 .maxCapacity(request.maxCapacity())
                                 .build();
+
                 streamingResourceRepository.save(resource);
 
-                // 6. AWS Application 생성
-                String s3Uri = String.format("s3://%s/%s", awsProperties.getS3().getBucketName(), build.getS3Prefix());
-                CreateApplicationResponse appResponse = gameLiftService.createApplication(
-                                survey.getName() + "-app",
-                                s3Uri,
-                                build.getExecutablePath(),
-                                build.getOsType());
+                // 6. 비동기 프로비저닝 시작
+                streamingProvisioner.provisionResourceAsync(resource.getId());
 
-                resource.assignApplication(appResponse.arn());
-                streamingResourceRepository.save(resource);
-
-                // 7. AWS StreamGroup 생성
-                CreateStreamGroupResponse groupResponse = gameLiftService.createStreamGroup(
-                                survey.getName() + "-group",
-                                request.instanceType());
-
-                // 8. Application을 StreamGroup에 연결 (상태 안정화 대기)
-                waitForStreamGroupStable(groupResponse.arn());
-                gameLiftService.associateApplication(groupResponse.arn(), appResponse.arn());
-
-                resource.assignStreamGroup(groupResponse.arn());
-                streamingResourceRepository.save(resource);
-
-                log.info("Streaming resource created: resourceId={}, appArn={}, groupArn={}",
-                                resource.getId(), appResponse.arn(), groupResponse.arn());
+                log.info("Streaming resource creation initiated: resourceId={}, status={}",
+                                resource.getId(), resource.getStatus());
 
                 return StreamingResourceResponse.from(resource);
+        }
+
+        private void validateResourceDuplication(Long surveyId) {
+                streamingResourceRepository.findBySurveyId(surveyId).ifPresent(resource -> {
+                        if (!resource.getStatus().isTerminatedOrCleaning()) {
+                                throw new StreamingResourceAlreadyExistsException();
+                        }
+                });
         }
 
         /**
@@ -158,12 +136,26 @@ public class StreamingResourceService {
         }
 
         /**
-         * 스트리밍 리소스를 UUID로 조회합니다.
+         * 스트리밍 리소스를 UUID로 조회합니다 (JIT 동기화 포함).
          */
+        @Transactional
         public StreamingResourceResponse getResourceByUuid(UUID uuid, User user) {
                 StreamingResource resource = streamingResourceRepository.findBySurveyUuid(uuid)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
                 securityManager.validateReadAccess(resource.getSurvey().getGame().getWorkspace(), user);
+
+                // JIT 상태 동기화 (Transitional State일 때만 수행)
+                if (resource.getAwsStreamGroupId() != null && isTransitionalState(resource.getStatus())) {
+                        try {
+                                GetStreamGroupResponse awsResponse = gameLiftService.getStreamGroupStatus(
+                                                resource.getAwsStreamGroupId());
+                                synchronizeState(resource, awsResponse.status());
+                        } catch (Exception e) {
+                                log.warn("Failed to sync status with AWS for resourceId={}: {}", resource.getId(),
+                                                e.getMessage());
+                        }
+                }
+
                 return StreamingResourceResponse.from(resource);
         }
 
@@ -176,10 +168,6 @@ public class StreamingResourceService {
         public void deleteResource(java.util.UUID surveyUuid, User user) {
                 Survey survey = surveyRepository.findByUuid(surveyUuid)
                                 .orElseThrow(SurveyNotFoundException::new);
-                // Security Check inside deleteResource(Long, User) or here?
-                // Better here to avoid fetch in overload if possible, but overload does fetch
-                // too.
-                // Let's pass user to overload.
                 deleteResource(survey.getId(), user);
         }
 
@@ -301,23 +289,123 @@ public class StreamingResourceService {
          * @param surveyId Survey PK
          * @return 리소스 상태
          */
+        @Transactional
         public ResourceStatusResponse getResourceStatus(Long surveyId, User user) {
                 StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
                 securityManager.validateReadAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
-                // AWS API 호출하여 인스턴스 준비 상태 확인
+                // AWS API 호출 및 상태 동기화 (Transitional State일 때만 수행)
                 boolean instancesReady = false;
-                if (resource.getAwsStreamGroupId() != null) {
-                        GetStreamGroupResponse awsResponse = gameLiftService.getStreamGroupStatus(
-                                        resource.getAwsStreamGroupId());
-                        instancesReady = awsResponse.status() == StreamGroupStatus.ACTIVE;
+                if (resource.getAwsStreamGroupId() != null && isTransitionalState(resource.getStatus())) {
+                        try {
+                                GetStreamGroupResponse awsResponse = gameLiftService.getStreamGroupStatus(
+                                                resource.getAwsStreamGroupId());
+
+                                StreamGroupStatus awsStatus = awsResponse.status();
+                                instancesReady = awsStatus == StreamGroupStatus.ACTIVE;
+
+                                // AWS 상태에 따라 DB 동기화
+                                synchronizeState(resource, awsStatus);
+
+                        } catch (Exception e) {
+                                log.warn("Failed to sync status with AWS for resourceId={}: {}", resource.getId(),
+                                                e.getMessage());
+                                // AWS 호출 실패 시 DB 상태 그대로 반환 (장애 전파 방지)
+                        }
+                } else {
+                        // Stable State라면 DB 정보 기반으로 ready 여부 판단
+                        // ACTIVE, READY, TESTING 상태라면 인스턴스가 준비된 것으로 간주 가능하나,
+                        // 정확히는 ACTIVE 상태일 때만 실제 접속 가능
+                        instancesReady = resource.getStatus() == StreamingResourceStatus.ACTIVE;
                 }
 
                 return ResourceStatusResponse.of(
                                 resource.getStatus().name(),
                                 resource.getCurrentCapacity(),
                                 instancesReady);
+        }
+
+        private boolean isTransitionalState(StreamingResourceStatus status) {
+                return status == StreamingResourceStatus.CREATING ||
+                                status == StreamingResourceStatus.PENDING ||
+                                status == StreamingResourceStatus.PROVISIONING ||
+                                status == StreamingResourceStatus.READY || // READY -> ACTIVE 가능성 (Start Test)
+                                status == StreamingResourceStatus.TESTING || // TESTING -> ACTIVE 가능성 (Activate)
+                                status == StreamingResourceStatus.SCALING;
+        }
+
+        // Throttling을 위한 마지막 업데이트 시간 저장소 (Key: ResourceID)
+        private final java.util.Map<Long, java.time.LocalDateTime> lastCapacityUpdateMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+        private void synchronizeState(StreamingResource resource, StreamGroupStatus awsStatus) {
+                if (awsStatus == StreamGroupStatus.ACTIVE) {
+
+                        // 1. Capacity 검증 (Capacity-Aware Logic)
+                        int desiredCapacity = resource.getMaxCapacity();
+                        int allocatedCapacity = 0;
+
+                        // Safe Collection Access
+                        try {
+                                GetStreamGroupResponse awsResponse = gameLiftService
+                                                .getStreamGroupStatus(resource.getAwsStreamGroupId());
+                                if (awsResponse.locationStates() != null && !awsResponse.locationStates().isEmpty()) {
+                                        // 기본 위치(첫 번째)의 할당 용량 확인
+                                        // 실제로는 특정 리전(location)을 찾아야 할 수도 있으나, 현재는 단일 리전 가정
+                                        allocatedCapacity = awsResponse.locationStates().get(0).allocatedCapacity();
+                                }
+                        } catch (Exception e) {
+                                log.warn("Failed to fetch location states for resourceId={}", resource.getId());
+                        }
+
+                        if (allocatedCapacity >= desiredCapacity) {
+                                // 2. 용량 확보됨 -> DB 상태를 ACTIVE로 동기화
+                                if (resource.getStatus() != StreamingResourceStatus.ACTIVE) {
+                                        resource.activate(resource.getMaxCapacity());
+                                        log.info("Resource verified as ACTIVE and READY (Capacity {}/{}) via sync logic. resourceId={}",
+                                                        allocatedCapacity, desiredCapacity, resource.getId());
+                                }
+                        } else {
+                                // 3. 용량 부족 (Mismatch) -> Self-Healing (재요청)
+                                log.warn("Capacity Mismatch detected! AWS Active but Allocated: {}, Desired: {}. resourceId={}",
+                                                allocatedCapacity, desiredCapacity, resource.getId());
+
+                                triggerSelfHealing(resource);
+                        }
+
+                } else if (awsStatus == StreamGroupStatus.ERROR) {
+                        if (resource.getStatus() != StreamingResourceStatus.ERROR) {
+                                resource.markError("AWS StreamGroup reported ERROR status");
+                                log.error("Resource verified as ERROR via sync logic. resourceId={}", resource.getId());
+                        }
+                }
+        }
+
+        /**
+         * 용량 설정을 재요청합니다 (Throttling 적용).
+         */
+        private void triggerSelfHealing(StreamingResource resource) {
+                long resourceId = resource.getId();
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                java.time.LocalDateTime lastUpdate = lastCapacityUpdateMap.get(resourceId);
+
+                // 쿨다운 체크 (60초)
+                if (lastUpdate != null && java.time.Duration.between(lastUpdate, now).getSeconds() < 60) {
+                        log.info("Self-healing skipped due to cooldown. resourceId={}", resourceId);
+                        return;
+                }
+
+                try {
+                        log.info("Triggering self-healing: Re-applying capacity configuration. resourceId={}",
+                                        resourceId);
+                        gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(),
+                                        resource.getMaxCapacity());
+
+                        // 업데이트 성공 시 타임스탬프 갱신
+                        lastCapacityUpdateMap.put(resourceId, now);
+                } catch (Exception e) {
+                        log.error("Self-healing failed for resourceId={}: {}", resourceId, e.getMessage());
+                }
         }
 
         public ResourceStatusResponse getResourceStatus(java.util.UUID surveyUuid, User user) {
@@ -445,29 +533,5 @@ public class StreamingResourceService {
                 return surveySessionRepository.findByUuid(surveySessionUuid)
                                 .map(session -> session.getStatus() == SessionStatus.CONNECTED)
                                 .orElse(false);
-        }
-
-        /**
-         * StreamGroup이 안정적인 상태(ACTIVATING이 아님)가 될 때까지 대기합니다.
-         */
-        private void waitForStreamGroupStable(String streamGroupId) {
-                int maxAttempts = 60;
-                for (int i = 0; i < maxAttempts; i++) {
-                        GetStreamGroupResponse response = gameLiftService.getStreamGroupStatus(streamGroupId);
-                        StreamGroupStatus status = response.status();
-                        log.info("Waiting for StreamGroup stable: status={}, attempt={}", status, i + 1);
-
-                        if (status != StreamGroupStatus.ACTIVATING) {
-                                return;
-                        }
-
-                        try {
-                                Thread.sleep(1000); // 1초 대기
-                        } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-                        }
-                }
-                log.warn("StreamGroup stability wait timed out: {}", streamGroupId);
         }
 }

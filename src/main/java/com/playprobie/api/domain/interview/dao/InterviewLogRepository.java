@@ -33,4 +33,15 @@ public interface InterviewLogRepository extends JpaRepository<InterviewLog, Long
 
         // 특정 고정 질문에 대한 총 답변 개수 (NULL 제외)
         int countByFixedQuestionIdAndAnswerTextIsNotNull(Long fixedQuestionId);
+
+        // 특정 세션 + 고정질문의 모든 로그 조회 (대표 답변 조회용)
+        List<InterviewLog> findBySessionIdAndFixedQuestionIdOrderByTurnNumAsc(Long sessionId, Long fixedQuestionId);
+
+        // UUID 버전 (Analytics 대표 답변 조회용)
+        @org.springframework.data.jpa.repository.Query("SELECT il FROM InterviewLog il " +
+                        "WHERE il.session.uuid = :sessionUuid AND il.fixedQuestionId = :fixedQuestionId " +
+                        "ORDER BY il.turnNum ASC")
+        List<InterviewLog> findBySessionUuidAndFixedQuestionIdOrderByTurnNumAsc(
+                        @org.springframework.data.repository.query.Param("sessionUuid") UUID sessionUuid,
+                        @org.springframework.data.repository.query.Param("fixedQuestionId") Long fixedQuestionId);
 }

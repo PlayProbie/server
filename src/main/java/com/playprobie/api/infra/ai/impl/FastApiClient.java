@@ -30,7 +30,6 @@ import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
 import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
-import com.playprobie.api.infra.sse.dto.payload.AnalysisPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
 import com.playprobie.api.infra.sse.dto.payload.StatusPayload;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
@@ -157,9 +156,7 @@ public class FastApiClient implements AiClient {
 					sseEmitterService.send(sessionId, "error", "AI 서버 통신 오류");
 					sseEmitterService.complete(sessionId);
 				},
-				() -> {// complete callback function
-					log.info("AI Stream completed for sessionId: {}", sessionId);
-				});
+				() -> log.info("AI Stream completed for sessionId: {}", sessionId));
 	}
 
 	private void parseAndHandleEvent(String sessionId, Long fixedQId, int nextTurnNum, String jsonStr,
@@ -252,11 +249,6 @@ public class FastApiClient implements AiClient {
 
 				nextAction.set(actionResult);
 				log.info("Analysis result - action: {}, analysis: {}", actionResult, analysis);
-
-				AnalysisPayload analysisPayload = AnalysisPayload.builder().action(actionResult).analysis(analysis)
-						.build();
-				// sseEmitterService.send(sessionId, eventType, SseResponse.of(sessionId,
-				// eventType, analysisPayload));
 				break;
 
 			case "token": // 꼬리 질문 생성 중 (레거시 호환)
@@ -347,10 +339,11 @@ public class FastApiClient implements AiClient {
 							.surveyId(surveyId)
 							.fixedQuestionId(fixedQuestionId)
 							.qaPairs(qaPairs)
+							.autoTriggerAnalysis(true)
 							.build();
 
 					// Embedding 요청 후 analysis 자동 트리거
-					embedSessionData(request, surveyId, fixedQuestionId);
+					embedSessionData(request, surveyId, fixedQuestionId).subscribe();
 				}
 			});
 		} catch (Exception e) {
@@ -359,42 +352,97 @@ public class FastApiClient implements AiClient {
 	}
 
 	@Override
-	public void embedSessionData(SessionEmbeddingRequest request) {
-		embedSessionData(request, request.surveyId(), request.fixedQuestionId());
+	public Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request) {
+		return embedSessionData(request, request.surveyId(), request.fixedQuestionId());
 	}
 
-	private void embedSessionData(SessionEmbeddingRequest request, Long surveyId, Long fixedQuestionId) {
-		aiWebClient.post()
+	private Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request, Long surveyId,
+			Long fixedQuestionId) {
+		log.debug("📡 Embedding 요청 준비: session={}, fixedQId={}", request.sessionId(), fixedQuestionId);
+		return aiWebClient.post()
 				.uri("/embeddings")
 				.contentType(MediaType.APPLICATION_JSON)
 				.bodyValue(request)
 				.retrieve()
+				.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+						response -> response.bodyToMono(String.class)
+								.flatMap(body -> {
+									log.error("❌ AI 서버 에러 응답: status={}, body={}", response.statusCode(), body);
+									return reactor.core.publisher.Mono.error(
+											new RuntimeException(
+													"AI Server Error: " + response.statusCode() + " - " + body));
+								}))
 				.bodyToMono(SessionEmbeddingResponse.class)
-				.subscribe(
+				.timeout(java.time.Duration.ofSeconds(30))
+				.doOnSubscribe(s -> log.info("📤 Embedding HTTP 요청 전송: session={}, fixedQId={}",
+						request.sessionId(), fixedQuestionId))
+				.doOnNext(result -> log.info("📥 Embedding 응답 수신: session={}, fixedQId={}",
+						request.sessionId(), fixedQuestionId))
+				.doOnSuccess(
 						result -> {
-							log.info("Embedding success for session: {}, fixedQId: {}, embeddingId: {}",
+							log.info("✅ Embedding success for session: {}, fixedQId: {}, embeddingId: {}",
 									request.sessionId(), fixedQuestionId, result.embeddingId());
-							// Embedding 완료 후 자동으로 analysis 트리거
-							triggerAnalysis(surveyId, fixedQuestionId);
-						},
-						error -> log.error("Embedding failed for session: {}, fixedQId: {}, error: {}",
-								request.sessionId(), fixedQuestionId, error.getMessage()));
+							// Embedding 완료 후 자동으로 analysis 트리거 (플래그 확인)
+							if (request.autoTriggerAnalysis() == null || request.autoTriggerAnalysis()) {
+								triggerAnalysis(surveyId, fixedQuestionId);
+							} else {
+								log.info("⏭️ Question {} Auto-trigger analysis skipped", fixedQuestionId);
+							}
+						})
+				.doOnError(
+						error -> log.error("❌ Embedding failed for session: {}, fixedQId: {}, error: {}",
+								request.sessionId(), fixedQuestionId, error.getMessage(), error));
 	}
 
-	private void triggerAnalysis(Long surveyId, Long fixedQuestionId) {
+	@Override
+	public void triggerAnalysis(Long surveyId, Long fixedQuestionId) {
 		try {
-			log.info("Triggering analysis for survey: {}, question: {}", surveyId, fixedQuestionId);
+			log.info("🔍 Question {} 분석 시작...", fixedQuestionId);
 			// Analysis를 비동기로 시작 (결과는 DB에 저장됨)
 			streamQuestionAnalysis(surveyId, fixedQuestionId)
 					.subscribe(
-							sse -> log.debug("Analysis progress: {}", sse.event()),
-							error -> log.error("Analysis failed for survey: {}, question: {}, error: {}",
-									surveyId, fixedQuestionId, error.getMessage()),
-							() -> log.info("Analysis completed for survey: {}, question: {}",
-									surveyId, fixedQuestionId));
+							sse -> {
+								String event = sse.event();
+								String data = sse.data();
+
+								if ("progress".equals(event) && data != null) {
+									// JSON 데이터 파싱하여 의미있는 로그 출력
+									try {
+										JsonNode json = objectMapper.readTree(data);
+										String step = json.has("step") ? json.get("step").asText() : "unknown";
+										int progress = json.has("progress") ? json.get("progress").asInt() : 0;
+
+										String stepName = getStepName(step);
+										log.info("📊 Question {}: {} ({}%)", fixedQuestionId, stepName, progress);
+									} catch (Exception e) {
+										log.debug("Progress event: {}", data);
+									}
+								} else if ("error".equals(event)) {
+									log.error("❌ Question {} 분석 에러 이벤트: {}", fixedQuestionId, data);
+								} else if ("done".equals(event)) {
+									log.info("✅ Question {} 분석 완료!", fixedQuestionId);
+								} else {
+									log.debug("Unknown event for Question {}: {} - {}", fixedQuestionId, event, data);
+								}
+							},
+							error -> log.error("❌ Question {} 분석 실패: {}", fixedQuestionId, error.getMessage()),
+							() -> log.info("✅ Question {} 분석 스트림 종료", fixedQuestionId));
 		} catch (Exception e) {
 			log.error("Failed to trigger analysis for survey: {}, question: {}", surveyId, fixedQuestionId, e);
 		}
+	}
+
+	private String getStepName(String step) {
+		return switch (step) {
+			case "loading" -> "로딩 중";
+			case "loaded" -> "데이터 로드 완료";
+			case "reducing" -> "차원 축소 중";
+			case "clustering" -> "클러스터링 중";
+			case "extracting_keywords" -> "키워드 추출 중";
+			case "analyzing" -> "감정 분석 중";
+			case "finalizing" -> "최종 처리 중";
+			default -> step;
+		};
 	}
 
 	@Override

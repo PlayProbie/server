@@ -5,24 +5,19 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * 세션 가용성 응답 DTO.
- * 
- * <p>
- * 테스터가 플레이 화면에 진입했을 때 반환됩니다.
- */
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "세션 가용성 응답 DTO (테스터가 플레이 화면 진입 시 반환)")
 public record SessionAvailabilityResponse(
-        @JsonProperty("survey_uuid") UUID surveyUuid,
 
-        @JsonProperty("game_name") String gameName,
+        @Schema(description = "설문 UUID", example = "550e8400-e29b-41d4-a716-446655440000") @JsonProperty("survey_uuid") UUID surveyUuid,
 
-        @JsonProperty("is_available") Boolean isAvailable,
+        @Schema(description = "게임 이름", example = "My RPG Game") @JsonProperty("game_name") String gameName,
 
-        @JsonProperty("stream_settings") Map<String, Object> streamSettings) {
+        @Schema(description = "세션 가용 여부", example = "true") @JsonProperty("is_available") Boolean isAvailable,
 
-    /**
-     * 가용 상태 응답을 생성합니다.
-     */
+        @Schema(description = "스트림 설정 (해상도, FPS 등)") @JsonProperty("stream_settings") Map<String, Object> streamSettings) {
+
     public static SessionAvailabilityResponse available(UUID surveyUuid, String gameName) {
         return new SessionAvailabilityResponse(
                 surveyUuid,
@@ -31,9 +26,6 @@ public record SessionAvailabilityResponse(
                 Map.of("resolution", "1080p", "fps", 60));
     }
 
-    /**
-     * 불가용 상태 응답을 생성합니다.
-     */
     public static SessionAvailabilityResponse unavailable(UUID surveyUuid, String gameName) {
         return new SessionAvailabilityResponse(
                 surveyUuid,

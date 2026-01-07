@@ -50,7 +50,7 @@ public class Game extends BaseTimeEntity {
 	@Builder
 	public Game(Workspace workspace, String name, List<GameGenre> genres, String context) {
 		this.uuid = java.util.UUID.randomUUID();
-    this.workspace = workspace;
+		this.workspace = workspace;
 		this.name = name;
 		this.genresJson = convertGenresToJson(genres);
 		this.context = context;
@@ -65,7 +65,7 @@ public class Game extends BaseTimeEntity {
 		for (String code : cleaned.split(",")) {
 			String trimmed = code.trim();
 			for (GameGenre g : GameGenre.values()) {
-				if (g.getCode().equals(trimmed)) {
+				if (g.name().equalsIgnoreCase(trimmed)) {
 					result.add(g);
 					break;
 				}
@@ -80,7 +80,7 @@ public class Game extends BaseTimeEntity {
 		}
 		StringBuilder sb = new StringBuilder("[");
 		for (int i = 0; i < genres.size(); i++) {
-			sb.append("\"").append(genres.get(i).getCode()).append("\"");
+			sb.append("\"").append(genres.get(i).name()).append("\"");
 			if (i < genres.size() - 1) {
 				sb.append(",");
 			}

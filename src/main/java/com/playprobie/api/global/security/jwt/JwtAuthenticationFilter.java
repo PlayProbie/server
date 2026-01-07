@@ -11,7 +11,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.playprobie.api.global.security.CustomUserDetailsService;
-import com.playprobie.api.global.util.CookieUtils;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -39,40 +38,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             Long userId = jwtTokenProvider.getUserIdFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserById(userId);
+            try {
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails,
-                    null, userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("Set Authentication for user: {}", userId);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("Set Authentication for user: {}", userId);
+            } catch (Exception e) {
+                log.error("Cannot set user authentication: {}", e.getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);
     }
 
     /**
-     * 요청에서 JWT 토큰 추출
-     * <p>
-     * 우선순위:
-     * 1. HttpOnly Cookie (access_token)
-     * 2. Authorization Header (Bearer token) - 하위 호환성 유지
-     * </p>
+     * 요청에서 JWT 토큰 추출 (Authorization Header만 사용)
      */
     private String resolveToken(HttpServletRequest request) {
-        // 1. Cookie에서 토큰 확인 (HttpOnly Cookie 방식)
-        String cookieToken = CookieUtils.getCookieValue(request, CookieUtils.ACCESS_TOKEN_COOKIE_NAME);
-        if (StringUtils.hasText(cookieToken)) {
-            return cookieToken;
-        }
-
-        // 2. Authorization Header에서 토큰 확인 (하위 호환성)
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(BEARER_PREFIX.length());
         }
-
         return null;
     }
 }

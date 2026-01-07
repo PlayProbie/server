@@ -16,6 +16,9 @@ import com.playprobie.api.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 /**
  * 관리자 테스트 Controller (Admin).
  * 
@@ -25,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/surveys/{surveyId}/streaming-resource")
 @RequiredArgsConstructor
+@Tag(name = "Admin Test API", description = "관리자 테스트 API (스트리밍 실행/중지)")
 public class AdminTestController {
 
     private final StreamingResourceService streamingResourceService;
@@ -39,6 +43,7 @@ public class AdminTestController {
      * @return 200 OK
      */
     @PostMapping("/start-test")
+    @Operation(summary = "관리자 테스트 시작", description = "스트리밍 Capacity를 0 → 1로 설정하여 테스트를 시작합니다.")
     public ResponseEntity<ApiResponse<TestActionResponse>> startTest(@PathVariable java.util.UUID surveyId,
             @AuthenticationPrincipal(expression = "user") User user) {
         TestActionResponse response = streamingResourceService.startTest(surveyId, user);
@@ -55,6 +60,7 @@ public class AdminTestController {
      * @return 200 OK
      */
     @PostMapping("/stop-test")
+    @Operation(summary = "관리자 테스트 종료", description = "스트리밍 Capacity를 1 → 0으로 설정하여 테스트를 종료합니다.")
     public ResponseEntity<ApiResponse<TestActionResponse>> stopTest(@PathVariable java.util.UUID surveyId,
             @AuthenticationPrincipal(expression = "user") User user) {
         TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
@@ -71,6 +77,7 @@ public class AdminTestController {
      * @return 200 OK
      */
     @GetMapping("/status")
+    @Operation(summary = "리소스 상태 조회", description = "GameLift 리소스 상태를 보링합니다.")
     public ResponseEntity<ApiResponse<ResourceStatusResponse>> getStatus(@PathVariable java.util.UUID surveyId,
             @AuthenticationPrincipal(expression = "user") User user) {
         ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);

@@ -9,23 +9,21 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum GameGenre {
-
-    ACTION("액션", "action"),
-    ADVENTURE("어드벤처", "adventure"),
-    SIMULATION("시뮬레이션", "simulation"),
-    PUZZLE("퍼즐", "puzzle"),
-    STRATEGY("전략", "strategy"),
-    RPG("RPG", "rpg"),
-    ARCADE("아케이드", "arcade"),
-    HORROR("호러", "horror"),
-    SHOOTER("슈팅", "shooter"),
-    VISUAL_NOVEL("비주얼 노벨", "visual_novel"),
-    ROGUELIKE("로그라이크", "roguelike"),
-    SPORTS("스포츠", "sports"),
-    RHYTHM("리듬", "rhythm"),
-    FIGHTING("대전", "fighting"),
-    CASUAL("캐주얼", "casual");
+    ACTION("액션"),
+    ADVENTURE("어드벤처"),
+    SIMULATION("시뮬레이션"),
+    PUZZLE("퍼즐"),
+    STRATEGY("전략"),
+    RPG("RPG"),
+    ARCADE("아케이드"),
+    HORROR("호러"),
+    SHOOTER("슈팅"),
+    VISUAL_NOVEL("비주얼 노벨"),
+    ROGUELIKE("로그라이크"),
+    SPORTS("스포츠"),
+    RHYTHM("리듬"),
+    FIGHTING("대전"),
+    CASUAL("캐주얼");
 
     private final String displayName;
-    private final String code;
 }

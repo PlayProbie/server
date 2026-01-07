@@ -64,7 +64,7 @@ public class StreamingResource extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
-    private StreamingResourceStatus status = StreamingResourceStatus.PENDING;
+    private StreamingResourceStatus status = StreamingResourceStatus.CREATING;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "survey_id", nullable = false, unique = true)
@@ -81,7 +81,7 @@ public class StreamingResource extends BaseTimeEntity {
         this.instanceType = Objects.requireNonNull(instanceType, "StreamingResource 생성 시 instanceType은 필수입니다");
         this.maxCapacity = Objects.requireNonNull(maxCapacity, "StreamingResource 생성 시 maxCapacity는 필수입니다");
         this.osType = build.getOsType();
-        this.status = StreamingResourceStatus.PENDING;
+        this.status = StreamingResourceStatus.CREATING;
         this.currentCapacity = 0;
     }
 
@@ -156,6 +156,14 @@ public class StreamingResource extends BaseTimeEntity {
     public void terminate() {
         this.status = StreamingResourceStatus.TERMINATED;
         this.currentCapacity = 0;
+    }
+
+    @Column(name = "error_message")
+    private String errorMessage;
+
+    public void markError(String errorMessage) {
+        this.status = StreamingResourceStatus.ERROR;
+        this.errorMessage = errorMessage;
     }
 
     /**

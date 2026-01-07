@@ -139,7 +139,7 @@ public class SurveyApi {
 	@PatchMapping("/{surveyUuid}/status")
 	@Operation(summary = "설문 상태 업데이트", description = "설문을 활성화(Scale-out)하거나 종료(Cleanup)합니다.")
 	public ResponseEntity<ApiResponse<UpdateSurveyStatusResponse>> updateSurveyStatus(
-			@AuthenticationPrincipal User user,
+			@AuthenticationPrincipal(expression = "user") User user,
 			@PathVariable(name = "surveyUuid") UUID surveyUuid,
 			@Valid @RequestBody UpdateSurveyStatusRequest request) {
 		UpdateSurveyStatusResponse response = surveyService.updateSurveyStatus(surveyUuid, request, user);

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceService;
 import com.playprobie.api.domain.workspace.dto.CreateWorkspaceRequest;
 import com.playprobie.api.domain.workspace.dto.UpdateWorkspaceRequest;
@@ -21,7 +22,7 @@ import com.playprobie.api.domain.workspace.dto.WorkspaceResponse;
 import com.playprobie.api.global.common.response.ApiResponse;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.playprobie.api.global.security.CustomUserDetails;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -44,8 +45,8 @@ public class WorkspaceController {
         })
         public ResponseEntity<ApiResponse<WorkspaceResponse>> createWorkspace(
                         @Valid @RequestBody CreateWorkspaceRequest request,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                WorkspaceResponse response = workspaceService.createWorkspace(request, userDetails.getUser());
+                        @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
+                WorkspaceResponse response = workspaceService.createWorkspace(request, user);
                 return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
         }
 
@@ -55,8 +56,8 @@ public class WorkspaceController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
         })
         public ResponseEntity<ApiResponse<List<WorkspaceResponse>>> getWorkspaces(
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                List<WorkspaceResponse> responses = workspaceService.getWorkspaces(userDetails.getUser());
+                        @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
+                List<WorkspaceResponse> responses = workspaceService.getWorkspaces(user);
                 return ResponseEntity.ok(ApiResponse.of(responses));
         }
 
@@ -81,10 +82,10 @@ public class WorkspaceController {
         public ResponseEntity<ApiResponse<WorkspaceResponse>> updateWorkspace(
                         @Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid,
                         @Valid @RequestBody UpdateWorkspaceRequest request,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+                        @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
                 // Owner check is now done in Service
                 WorkspaceResponse response = workspaceService.updateWorkspace(workspaceUuid, request,
-                                userDetails.getUser());
+                                user);
                 return ResponseEntity.ok(ApiResponse.of(response));
         }
 
@@ -96,9 +97,9 @@ public class WorkspaceController {
         })
         public ResponseEntity<Void> deleteWorkspace(
                         @Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+                        @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
                 // Owner check is now done in Service
-                workspaceService.deleteWorkspace(workspaceUuid, userDetails.getUser());
+                workspaceService.deleteWorkspace(workspaceUuid, user);
                 return ResponseEntity.noContent().build();
         }
 }

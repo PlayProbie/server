@@ -3,27 +3,22 @@ package com.playprobie.api.domain.streaming.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * 테스트 시작/종료 응답 DTO.
- */
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "테스트 시작/종료 응답 DTO")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record TestActionResponse(
-        @JsonProperty("status") String status,
 
-        @JsonProperty("current_capacity") Integer currentCapacity,
+        @Schema(description = "리소스 상태", example = "ACTIVE") @JsonProperty("status") String status,
 
-        @JsonProperty("message") String message) {
+        @Schema(description = "현재 용량", example = "5") @JsonProperty("current_capacity") Integer currentCapacity,
 
-    /**
-     * 테스트 시작 응답을 생성합니다.
-     */
+        @Schema(description = "응답 메시지", example = "인스턴스 준비 중입니다.") @JsonProperty("message") String message) {
+
     public static TestActionResponse startTest(String status, Integer currentCapacity) {
         return new TestActionResponse(status, currentCapacity, "인스턴스 준비 중입니다.");
     }
 
-    /**
-     * 테스트 종료 응답을 생성합니다.
-     */
     public static TestActionResponse stopTest(String status, Integer currentCapacity) {
         return new TestActionResponse(status, currentCapacity, null);
     }

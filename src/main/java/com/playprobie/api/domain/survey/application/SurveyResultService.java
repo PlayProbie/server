@@ -1,5 +1,6 @@
 package com.playprobie.api.domain.survey.application;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -89,7 +90,10 @@ public class SurveyResultService {
                                                                 : null)
                                                 .status(session.getStatus())
                                                 .firstQuestion(firstQuestionMap.get(session.getSurvey().getId()))
-                                                .endedAt(session.getEndedAt())
+                                                .endedAt(session.getEndedAt() != null
+                                                                ? session.getEndedAt().atZone(ZoneId.of("Asia/Seoul"))
+                                                                                .toOffsetDateTime()
+                                                                : null)
                                                 .build())
                                 .toList();
 
@@ -140,7 +144,10 @@ public class SurveyResultService {
                                 .testerId(session.getTesterProfile() != null ? session.getTesterProfile().getTesterId()
                                                 : null)
                                 .status(session.getStatus())
-                                .endedAt(session.getEndedAt())
+                                .endedAt(session.getEndedAt() != null
+                                                ? session.getEndedAt().atZone(ZoneId.of("Asia/Seoul"))
+                                                                .toOffsetDateTime()
+                                                : null)
                                 .build();
         }
 
