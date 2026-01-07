@@ -2,9 +2,9 @@ package com.playprobie.api.domain.survey.dto.response;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,9 +25,6 @@ public record SurveyResponse(
 
 	@Schema(description = "설문 상태 (DRAFT, ACTIVE, CLOSED)", example = "ACTIVE") @JsonProperty("status")
 	String status,
-
-	@Schema(description = "설문 URL", example = "https://playprobie.com/surveys/abc123") @JsonProperty("survey_url")
-	String surveyUrl,
 
 	@Schema(description = "설문 시작 시간", example = "2024-01-01T09:00:00+09:00", type = "string") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul") @JsonProperty("started_at")
 	OffsetDateTime startedAt,
@@ -58,7 +55,6 @@ public record SurveyResponse(
 			survey.getUuid(),
 			survey.getName(),
 			survey.getStatus().name(),
-			survey.getSurveyUrl(),
 			survey.getStartAt() != null ? survey.getStartAt().atZone(ZoneId.of("Asia/Seoul")).toOffsetDateTime()
 				: null,
 			survey.getEndAt() != null ? survey.getEndAt().atZone(ZoneId.of("Asia/Seoul")).toOffsetDateTime() : null,
@@ -76,7 +72,6 @@ public record SurveyResponse(
 			survey.getUuid(),
 			survey.getName(),
 			survey.getStatus().name(),
-			null,
 			null,
 			null,
 			null,

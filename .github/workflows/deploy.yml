@@ -83,7 +83,6 @@ jobs:
                 -e DB_URL=${{ secrets.DEV_DB_URL }} \\
                 -e DB_USERNAME=${{ secrets.DEV_DB_USERNAME }} \\
                 -e DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }} \\
-                -e PLAYPROBIE_BASE_URL=${{ secrets.DEV_PLAYPROBIE_BASE_URL }} \\
                 -e CORS_ALLOWED_ORIGINS=${{ secrets.DEV_CORS_ALLOWED_ORIGINS }} \\
                 -e AWS_REGION=${{ secrets.DEV_AWS_REGION }} \\
                 -e AWS_ACCESS_KEY=${{ secrets.DEV_AWS_ACCESS_KEY_ID }} \\

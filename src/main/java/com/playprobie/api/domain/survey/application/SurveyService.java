@@ -30,7 +30,6 @@ import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
 import com.playprobie.api.domain.survey.dto.response.UpdateSurveyStatusResponse;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
-import com.playprobie.api.global.config.properties.AppProperties;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
@@ -51,7 +50,6 @@ public class SurveyService {
 	private final StreamingResourceService streamingResourceService;
 	private final AiClient aiClient;
 	private final WorkspaceSecurityManager securityManager;
-	private final AppProperties appProperties;
 
 	// ========== Survey CRUD ==========
 
@@ -77,11 +75,6 @@ public class SurveyService {
 			.build();
 
 		Survey savedSurvey = surveyRepository.save(survey);
-
-		// URL 생성 (UUID 사용)
-		String surveyUrl = appProperties.baseUrl() + "/surveys/session/" + savedSurvey.getUuid();
-		savedSurvey.assignUrl(surveyUrl);
-
 		return SurveyResponse.from(savedSurvey);
 	}
 
