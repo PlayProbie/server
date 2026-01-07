@@ -9,10 +9,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.playprobie.api.domain.game.domain.Game;
 
 public interface GameRepository extends JpaRepository<Game, Long> {
-    Optional<Game> findByUuid(UUID uuid);
+	Optional<Game> findByUuid(UUID uuid);
 
-    List<Game> findByWorkspaceUuid(UUID workspaceUuid);
+	List<Game> findByWorkspaceUuid(UUID workspaceUuid);
 
-    @org.springframework.data.jpa.repository.Query("SELECT g FROM Game g JOIN g.workspace w JOIN w.members m WHERE m.user.id = :userId")
-    List<Game> findByWorkspace_Members_User_Id(@org.springframework.data.repository.query.Param("userId") Long userId);
+	@org.springframework.data.jpa.repository.Query("SELECT g FROM Game g JOIN g.workspace w JOIN w.members m WHERE m.user.id = :userId")
+	List<Game> findByWorkspace_Members_User_Id(@org.springframework.data.repository.query.Param("userId")
+	Long userId);
 }

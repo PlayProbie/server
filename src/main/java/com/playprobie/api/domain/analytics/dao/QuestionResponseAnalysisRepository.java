@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 
 public interface QuestionResponseAnalysisRepository
-        extends JpaRepository<QuestionResponseAnalysis, Long> {
+	extends JpaRepository<QuestionResponseAnalysis, Long> {
 
-    Optional<QuestionResponseAnalysis> findByFixedQuestionId(Long fixedQuestionId);
+	Optional<QuestionResponseAnalysis> findByFixedQuestionId(Long fixedQuestionId);
 
-    List<QuestionResponseAnalysis> findAllBySurveyId(Long surveyId);
+	List<QuestionResponseAnalysis> findAllBySurveyId(Long surveyId);
 }

@@ -16,10 +16,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class CommonResponse<T> {
 
-    @Schema(description = "API 응답 데이터")
-    private final T result;
+	@Schema(description = "API 응답 데이터")
+	private final T result;
 
-    public static <T> CommonResponse<T> of(T result) {
-        return new CommonResponse<>(result);
-    }
+	public static <T> CommonResponse<T> of(T result) {
+		return new CommonResponse<>(result);
+	}
 }

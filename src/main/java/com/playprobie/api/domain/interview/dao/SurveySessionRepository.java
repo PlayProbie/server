@@ -14,25 +14,29 @@ import com.playprobie.api.domain.interview.domain.SurveySession;
 
 public interface SurveySessionRepository extends JpaRepository<SurveySession, Long> {
 
-    Optional<SurveySession> findByUuid(UUID uuid);
+	Optional<SurveySession> findByUuid(UUID uuid);
 
-    @Query("""
-            SELECT COUNT(ss) FROM SurveySession ss
-            JOIN ss.survey s
-            WHERE s.game.id = :gameId AND ss.status = :status
-            """)
-    long countByGameIdAndStatus(@Param("gameId") Long gameId,
-            @Param("status") SessionStatus status);
+	@Query("""
+		SELECT COUNT(ss) FROM SurveySession ss
+		JOIN ss.survey s
+		WHERE s.game.id = :gameId AND ss.status = :status
+		""")
+	long countByGameIdAndStatus(@Param("gameId")
+	Long gameId,
+		@Param("status")
+		SessionStatus status);
 
-    @Query("""
-            SELECT ss FROM SurveySession ss
-            JOIN FETCH ss.survey s
-            WHERE s.game.id = :gameId
-            AND (:cursor IS NULL OR ss.id < :cursor)
-            ORDER BY ss.id DESC
-            """)
-    List<SurveySession> findByGameIdWithCursor(
-            @Param("gameId") Long gameId,
-            @Param("cursor") Long cursor,
-            Pageable pageable);
+	@Query("""
+		SELECT ss FROM SurveySession ss
+		JOIN FETCH ss.survey s
+		WHERE s.game.id = :gameId
+		AND (:cursor IS NULL OR ss.id < :cursor)
+		ORDER BY ss.id DESC
+		""")
+	List<SurveySession> findByGameIdWithCursor(
+		@Param("gameId")
+		Long gameId,
+		@Param("cursor")
+		Long cursor,
+		Pageable pageable);
 }

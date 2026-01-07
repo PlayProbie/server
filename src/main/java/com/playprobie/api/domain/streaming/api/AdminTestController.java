@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 관리자 테스트 Controller (Admin).
- * 
+ *
  * <p>
  * 테스트 시작/종료 및 상태 조회 기능을 제공합니다.
  */
@@ -31,56 +31,62 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Admin Test API", description = "관리자 테스트 API (스트리밍 실행/중지)")
 public class AdminTestController {
 
-    private final StreamingResourceService streamingResourceService;
+	private final StreamingResourceService streamingResourceService;
 
-    /**
-     * 관리자 테스트를 시작합니다 (Capacity 0 → 1).
-     * 
-     * <p>
-     * POST /surveys/{surveyId}/streaming-resource/start-test
-     * 
-     * @param surveyId Survey PK
-     * @return 200 OK
-     */
-    @PostMapping("/start-test")
-    @Operation(summary = "관리자 테스트 시작", description = "스트리밍 Capacity를 0 → 1로 설정하여 테스트를 시작합니다.")
-    public ResponseEntity<CommonResponse<TestActionResponse>> startTest(@PathVariable java.util.UUID surveyId,
-            @AuthenticationPrincipal(expression = "user") User user) {
-        TestActionResponse response = streamingResourceService.startTest(surveyId, user);
-        return ResponseEntity.ok(CommonResponse.of(response));
-    }
+	/**
+	 * 관리자 테스트를 시작합니다 (Capacity 0 → 1).
+	 *
+	 * <p>
+	 * POST /surveys/{surveyId}/streaming-resource/start-test
+	 *
+	 * @param surveyId Survey PK
+	 * @return 200 OK
+	 */
+	@PostMapping("/start-test")
+	@Operation(summary = "관리자 테스트 시작", description = "스트리밍 Capacity를 0 → 1로 설정하여 테스트를 시작합니다.")
+	public ResponseEntity<CommonResponse<TestActionResponse>> startTest(@PathVariable
+	java.util.UUID surveyId,
+		@AuthenticationPrincipal(expression = "user")
+		User user) {
+		TestActionResponse response = streamingResourceService.startTest(surveyId, user);
+		return ResponseEntity.ok(CommonResponse.of(response));
+	}
 
-    /**
-     * 관리자 테스트를 종료합니다 (Capacity 1 → 0).
-     * 
-     * <p>
-     * POST /surveys/{surveyId}/streaming-resource/stop-test
-     * 
-     * @param surveyId Survey PK
-     * @return 200 OK
-     */
-    @PostMapping("/stop-test")
-    @Operation(summary = "관리자 테스트 종료", description = "스트리밍 Capacity를 1 → 0으로 설정하여 테스트를 종료합니다.")
-    public ResponseEntity<CommonResponse<TestActionResponse>> stopTest(@PathVariable java.util.UUID surveyId,
-            @AuthenticationPrincipal(expression = "user") User user) {
-        TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
-        return ResponseEntity.ok(CommonResponse.of(response));
-    }
+	/**
+	 * 관리자 테스트를 종료합니다 (Capacity 1 → 0).
+	 *
+	 * <p>
+	 * POST /surveys/{surveyId}/streaming-resource/stop-test
+	 *
+	 * @param surveyId Survey PK
+	 * @return 200 OK
+	 */
+	@PostMapping("/stop-test")
+	@Operation(summary = "관리자 테스트 종료", description = "스트리밍 Capacity를 1 → 0으로 설정하여 테스트를 종료합니다.")
+	public ResponseEntity<CommonResponse<TestActionResponse>> stopTest(@PathVariable
+	java.util.UUID surveyId,
+		@AuthenticationPrincipal(expression = "user")
+		User user) {
+		TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
+		return ResponseEntity.ok(CommonResponse.of(response));
+	}
 
-    /**
-     * 리소스 상태를 조회합니다 (Polling).
-     * 
-     * <p>
-     * GET /surveys/{surveyId}/streaming-resource/status
-     * 
-     * @param surveyId Survey PK
-     * @return 200 OK
-     */
-    @GetMapping("/status")
-    @Operation(summary = "리소스 상태 조회", description = "GameLift 리소스 상태를 보링합니다.")
-    public ResponseEntity<CommonResponse<ResourceStatusResponse>> getStatus(@PathVariable java.util.UUID surveyId,
-            @AuthenticationPrincipal(expression = "user") User user) {
-        ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);
-        return ResponseEntity.ok(CommonResponse.of(response));
-    }
+	/**
+	 * 리소스 상태를 조회합니다 (Polling).
+	 *
+	 * <p>
+	 * GET /surveys/{surveyId}/streaming-resource/status
+	 *
+	 * @param surveyId Survey PK
+	 * @return 200 OK
+	 */
+	@GetMapping("/status")
+	@Operation(summary = "리소스 상태 조회", description = "GameLift 리소스 상태를 보링합니다.")
+	public ResponseEntity<CommonResponse<ResourceStatusResponse>> getStatus(@PathVariable
+	java.util.UUID surveyId,
+		@AuthenticationPrincipal(expression = "user")
+		User user) {
+		ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);
+		return ResponseEntity.ok(CommonResponse.of(response));
+	}
 }

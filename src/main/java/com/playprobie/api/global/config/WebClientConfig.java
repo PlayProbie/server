@@ -21,15 +21,15 @@ public class WebClientConfig {
 	@Bean
 	public WebClient aiWebClient() {
 		HttpClient httpClient = HttpClient.create()
-				.option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 30000) // 30초 연결 타임아웃
-				.responseTimeout(java.time.Duration.ofSeconds(300)); // 5분 응답 타임아웃
+			.option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 30000) // 30초 연결 타임아웃
+			.responseTimeout(java.time.Duration.ofSeconds(300)); // 5분 응답 타임아웃
 
 		return WebClient.builder()
-				.baseUrl(aiServerURl)
-				.clientConnector(new ReactorClientHttpConnector(httpClient))
-				.filter(logRequest())
-				.filter(logResponse())
-				.build();
+			.baseUrl(aiServerURl)
+			.clientConnector(new ReactorClientHttpConnector(httpClient))
+			.filter(logRequest())
+			.filter(logResponse())
+			.build();
 	}
 
 	private ExchangeFilterFunction logRequest() {

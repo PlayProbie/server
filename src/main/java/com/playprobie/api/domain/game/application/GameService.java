@@ -35,15 +35,15 @@ public class GameService {
 		securityManager.validateWriteAccess(workspace, user);
 
 		List<GameGenre> genres = request.gameGenre().stream()
-				.map(this::parseGenre)
-				.toList();
+			.map(this::parseGenre)
+			.toList();
 
 		Game game = Game.builder()
-				.workspace(workspace)
-				.name(request.gameName())
-				.genres(genres)
-				.context(request.gameContext())
-				.build();
+			.workspace(workspace)
+			.name(request.gameName())
+			.genres(genres)
+			.context(request.gameContext())
+			.build();
 
 		Game savedGame = gameRepository.save(game);
 		return GameResponse.from(savedGame);
@@ -55,15 +55,15 @@ public class GameService {
 
 		List<Game> games = gameRepository.findByWorkspaceUuid(workspaceUuid);
 		return games.stream()
-				.map(GameResponse::from)
-				.toList();
+			.map(GameResponse::from)
+			.toList();
 	}
 
 	public List<GameResponse> getGamesByUser(User user) {
 		List<Game> games = gameRepository.findByWorkspace_Members_User_Id(user.getId());
 		return games.stream()
-				.map(GameResponse::from)
-				.toList();
+			.map(GameResponse::from)
+			.toList();
 	}
 
 	public GameResponse getGame(Long gameId, User user) {
@@ -73,14 +73,14 @@ public class GameService {
 
 	public Game getGameEntity(Long gameId, User user) {
 		Game game = gameRepository.findById(gameId)
-				.orElseThrow(GameNotFoundException::new);
+			.orElseThrow(GameNotFoundException::new);
 		securityManager.validateReadAccess(game.getWorkspace(), user);
 		return game;
 	}
 
 	public Game getGameEntity(UUID gameUuid, User user) {
 		Game game = gameRepository.findByUuid(gameUuid)
-				.orElseThrow(GameNotFoundException::new);
+			.orElseThrow(GameNotFoundException::new);
 		securityManager.validateReadAccess(game.getWorkspace(), user);
 		return game;
 	}
@@ -93,12 +93,12 @@ public class GameService {
 	@Transactional
 	public GameResponse updateGame(UUID gameUuid, UpdateGameRequest request, User user) {
 		Game game = gameRepository.findByUuid(gameUuid)
-				.orElseThrow(GameNotFoundException::new);
+			.orElseThrow(GameNotFoundException::new);
 		securityManager.validateWriteAccess(game.getWorkspace(), user);
 
 		List<GameGenre> genres = request.gameGenre().stream()
-				.map(this::parseGenre)
-				.toList();
+			.map(this::parseGenre)
+			.toList();
 
 		game.update(request.gameName(), genres, request.gameContext());
 		return GameResponse.from(game);
@@ -107,7 +107,7 @@ public class GameService {
 	@Transactional
 	public void deleteGame(UUID gameUuid, User user) {
 		Game game = gameRepository.findByUuid(gameUuid)
-				.orElseThrow(GameNotFoundException::new);
+			.orElseThrow(GameNotFoundException::new);
 		securityManager.validateWriteAccess(game.getWorkspace(), user);
 		gameRepository.delete(game);
 	}

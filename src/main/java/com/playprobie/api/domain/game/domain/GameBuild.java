@@ -26,55 +26,55 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GameBuild extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "build_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "build_id")
+	private Long id;
 
-    @Column(name = "build_uuid", nullable = false, unique = true, columnDefinition = "CHAR(36)")
-    private UUID uuid;
+	@Column(name = "build_uuid", nullable = false, unique = true, columnDefinition = "CHAR(36)")
+	private UUID uuid;
 
-    @Column(name = "version", nullable = false, length = 50)
-    private String version;
+	@Column(name = "version", nullable = false, length = 50)
+	private String version;
 
-    @Column(name = "total_files")
-    private Integer totalFiles;
+	@Column(name = "total_files")
+	private Integer totalFiles;
 
-    @Column(name = "total_size")
-    private Long totalSize;
+	@Column(name = "total_size")
+	private Long totalSize;
 
-    @Column(name = "os_type", length = 20)
-    private String osType;
+	@Column(name = "os_type", length = 20)
+	private String osType;
 
-    @Column(name = "executable_path", length = 255)
-    private String executablePath;
+	@Column(name = "executable_path", length = 255)
+	private String executablePath;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private BuildStatus status;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status", nullable = false)
+	private BuildStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "game_id", nullable = false)
-    private Game game;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "game_id", nullable = false)
+	private Game game;
 
-    @Builder
-    private GameBuild(Game game, UUID uuid, String version) {
-        this.game = game;
-        this.uuid = uuid;
-        this.version = version;
-        this.status = BuildStatus.PENDING;
-    }
+	@Builder
+	private GameBuild(Game game, UUID uuid, String version) {
+		this.game = game;
+		this.uuid = uuid;
+		this.version = version;
+		this.status = BuildStatus.PENDING;
+	}
 
-    public void markAsUploaded(int totalFiles, long totalSize, String osType, String executablePath) {
-        this.status = BuildStatus.UPLOADED;
-        this.totalFiles = totalFiles;
-        this.totalSize = totalSize;
-        this.osType = osType;
-        this.executablePath = executablePath;
-    }
+	public void markAsUploaded(int totalFiles, long totalSize, String osType, String executablePath) {
+		this.status = BuildStatus.UPLOADED;
+		this.totalFiles = totalFiles;
+		this.totalSize = totalSize;
+		this.osType = osType;
+		this.executablePath = executablePath;
+	}
 
-    public String getS3Prefix() {
-        return String.format("%s/%s/", this.game.getUuid(), this.uuid);
-    }
+	public String getS3Prefix() {
+		return String.format("%s/%s/", this.game.getUuid(), this.uuid);
+	}
 
 }

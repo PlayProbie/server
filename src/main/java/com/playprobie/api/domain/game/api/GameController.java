@@ -41,14 +41,17 @@ public class GameController {
 	@PostMapping("/workspaces/{workspaceUuid}/games")
 	@Operation(summary = "게임 생성", description = "특정 워크스페이스 하위에 새 게임을 생성합니다.")
 	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
 	public ResponseEntity<CommonResponse<GameResponse>> createGame(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid,
-			@Valid @RequestBody CreateGameRequest request) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@Parameter(description = "워크스페이스 UUID") @PathVariable
+		UUID workspaceUuid,
+		@Valid @RequestBody
+		CreateGameRequest request) {
 		Workspace workspace = workspaceService.getWorkspaceEntity(workspaceUuid);
 		GameResponse response = gameService.createGame(workspace, request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
@@ -57,13 +60,15 @@ public class GameController {
 	@GetMapping("/workspaces/{workspaceUuid}/games")
 	@Operation(summary = "워크스페이스 게임 목록 조회", description = "특정 워크스페이스에 속한 모든 게임 목록을 조회합니다.")
 	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
 	public ResponseEntity<CommonResponse<List<GameResponse>>> getGamesByWorkspace(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@Parameter(description = "워크스페이스 UUID") @PathVariable
+		UUID workspaceUuid) {
 		List<GameResponse> responses = gameService.getGamesByWorkspace(workspaceUuid, user);
 		return ResponseEntity.ok(CommonResponse.of(responses));
 	}
@@ -71,11 +76,12 @@ public class GameController {
 	@GetMapping("/games")
 	@Operation(summary = "내 게임 목록 조회", description = "로그인된 사용자가 접근 가능한 모든 게임 목록을 조회합니다.")
 	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
 	public ResponseEntity<CommonResponse<List<GameResponse>>> getGamesByUser(
-			@AuthenticationPrincipal(expression = "user") User user) {
+		@AuthenticationPrincipal(expression = "user")
+		User user) {
 		List<GameResponse> responses = gameService.getGamesByUser(user);
 		return ResponseEntity.ok(CommonResponse.of(responses));
 	}
@@ -83,13 +89,15 @@ public class GameController {
 	@GetMapping("/games/{gameUuid}")
 	@Operation(summary = "게임 상세 조회", description = "게임 상세 정보를 조회합니다.")
 	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
 	public ResponseEntity<CommonResponse<GameResponse>> getGame(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@Parameter(description = "게임 UUID") @PathVariable UUID gameUuid) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@Parameter(description = "게임 UUID") @PathVariable
+		UUID gameUuid) {
 		GameResponse response = gameService.getGameByUuid(gameUuid, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
@@ -97,14 +105,17 @@ public class GameController {
 	@PutMapping("/games/{gameUuid}")
 	@Operation(summary = "게임 수정", description = "게임 정보를 수정합니다.")
 	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
 	public ResponseEntity<CommonResponse<GameResponse>> updateGame(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@Parameter(description = "게임 UUID") @PathVariable UUID gameUuid,
-			@Valid @RequestBody UpdateGameRequest request) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@Parameter(description = "게임 UUID") @PathVariable
+		UUID gameUuid,
+		@Valid @RequestBody
+		UpdateGameRequest request) {
 		GameResponse response = gameService.updateGame(gameUuid, request, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
@@ -112,13 +123,15 @@ public class GameController {
 	@DeleteMapping("/games/{gameUuid}")
 	@Operation(summary = "게임 삭제", description = "게임과 관련된 모든 빌드, 설문을 삭제합니다.")
 	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
+		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
 	public ResponseEntity<Void> deleteGame(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@Parameter(description = "게임 UUID") @PathVariable UUID gameUuid) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@Parameter(description = "게임 UUID") @PathVariable
+		UUID gameUuid) {
 		gameService.deleteGame(gameUuid, user);
 		return ResponseEntity.noContent().build();
 	}

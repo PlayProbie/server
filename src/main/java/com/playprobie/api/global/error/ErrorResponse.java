@@ -51,25 +51,28 @@ public class ErrorResponse {
 	}
 
 	public static ErrorResponse of(
-			final org.springframework.web.method.annotation.MethodArgumentTypeMismatchException e) {
+		final org.springframework.web.method.annotation.MethodArgumentTypeMismatchException e) {
 		String value = e.getValue() == null ? "" : e.getValue().toString();
 		List<FieldError> errors = List.of(
-				new FieldError(e.getName(), value, e.getErrorCode()));
+			new FieldError(e.getName(), value, e.getErrorCode()));
 		return new ErrorResponse(ErrorCode.INVALID_TYPE_VALUE, errors);
 	}
 
 	@Schema(description = "필드 에러 상세")
 	public record FieldError(
-			@Schema(description = "필드명", example = "email") String field,
-			@Schema(description = "거부된 값", example = "invalid-email") String value,
-			@Schema(description = "에러 사유", example = "올바른 이메일 형식이 아닙니다.") String reason) {
+		@Schema(description = "필드명", example = "email")
+		String field,
+		@Schema(description = "거부된 값", example = "invalid-email")
+		String value,
+		@Schema(description = "에러 사유", example = "올바른 이메일 형식이 아닙니다.")
+		String reason) {
 		public static List<FieldError> of(final BindingResult bindingResult) {
 			return bindingResult.getFieldErrors().stream()
-					.map(error -> new FieldError(
-							error.getField(),
-							error.getRejectedValue() == null ? "" : error.getRejectedValue().toString(),
-							error.getDefaultMessage()))
-					.collect(Collectors.toList());
+				.map(error -> new FieldError(
+					error.getField(),
+					error.getRejectedValue() == null ? "" : error.getRejectedValue().toString(),
+					error.getDefaultMessage()))
+				.collect(Collectors.toList());
 		}
 	}
 }

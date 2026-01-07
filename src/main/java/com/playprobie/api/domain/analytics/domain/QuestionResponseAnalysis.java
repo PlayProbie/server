@@ -40,13 +40,13 @@ public class QuestionResponseAnalysis {
 	private AnalysisStatus status = AnalysisStatus.PENDING;
 
 	public enum AnalysisStatus {
-		PENDING,     // 대기 중 (아직 분석 시작 안함)
+		PENDING, // 대기 중 (아직 분석 시작 안함)
 		IN_PROGRESS, // 분석 진행 중
-		COMPLETED    // 분석 완료
+		COMPLETED // 분석 완료
 	}
 
 	public QuestionResponseAnalysis(Long fixedQuestionId, Long surveyId, String resultJson,
-			Integer processedAnswerCount) {
+		Integer processedAnswerCount) {
 		this.fixedQuestionId = Objects.requireNonNull(fixedQuestionId, "fixedQuestionId는 필수입니다");
 		this.surveyId = Objects.requireNonNull(surveyId, "surveyId는 필수입니다");
 		this.resultJson = resultJson;

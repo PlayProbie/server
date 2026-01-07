@@ -10,11 +10,11 @@ import lombok.Builder;
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record QuestionResponseAnalysisWrapper(
-        Long fixedQuestionId,
-        String resultJson) {
+	Long fixedQuestionId,
+	String resultJson) {
 
-    public QuestionResponseAnalysisWrapper {
-        Objects.requireNonNull(fixedQuestionId, "fixedQuestionId는 필수입니다");
-        Objects.requireNonNull(resultJson, "resultJson은 필수입니다");
-    }
+	public QuestionResponseAnalysisWrapper {
+		Objects.requireNonNull(fixedQuestionId, "fixedQuestionId는 필수입니다");
+		Objects.requireNonNull(resultJson, "resultJson은 필수입니다");
+	}
 }

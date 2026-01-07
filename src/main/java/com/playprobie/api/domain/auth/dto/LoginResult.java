@@ -10,11 +10,11 @@ import com.playprobie.api.domain.user.domain.User;
  * </p>
  */
 public record LoginResult(
-        String accessToken,
-        long expiresInSeconds,
-        User user) {
+	String accessToken,
+	long expiresInSeconds,
+	User user) {
 
-    public static LoginResult of(String accessToken, long expiresInSeconds, User user) {
-        return new LoginResult(accessToken, expiresInSeconds, user);
-    }
+	public static LoginResult of(String accessToken, long expiresInSeconds, User user) {
+		return new LoginResult(accessToken, expiresInSeconds, user);
+	}
 }

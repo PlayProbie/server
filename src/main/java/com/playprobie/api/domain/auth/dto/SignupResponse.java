@@ -9,13 +9,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record SignupResponse(
 
-        @Schema(description = "생성된 사용자 ID", example = "1") Long userId,
+	@Schema(description = "생성된 사용자 ID", example = "1")
+	Long userId,
 
-        @Schema(description = "이메일 주소", example = "user@example.com") String email,
+	@Schema(description = "이메일 주소", example = "user@example.com")
+	String email,
 
-        @Schema(description = "사용자 이름", example = "홍길동") String name) {
+	@Schema(description = "사용자 이름", example = "홍길동")
+	String name) {
 
-    public static SignupResponse of(Long userId, String email, String name) {
-        return new SignupResponse(userId, email, name);
-    }
+	public static SignupResponse of(Long userId, String email, String name) {
+		return new SignupResponse(userId, email, name);
+	}
 }

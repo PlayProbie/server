@@ -12,13 +12,13 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
 
-    private String secret;
-    private long accessTokenExpiration; // milliseconds
+	private String secret;
+	private long accessTokenExpiration; // milliseconds
 
-    /**
-     * Access Token 만료 시간 (초 단위)
-     */
-    public long getAccessTokenExpirationSeconds() {
-        return accessTokenExpiration / 1000;
-    }
+	/**
+	 * Access Token 만료 시간 (초 단위)
+	 */
+	public long getAccessTokenExpirationSeconds() {
+		return accessTokenExpiration / 1000;
+	}
 }

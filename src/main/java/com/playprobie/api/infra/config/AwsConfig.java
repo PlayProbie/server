@@ -17,54 +17,54 @@ import software.amazon.awssdk.services.sts.StsClient;
 @RequiredArgsConstructor
 public class AwsConfig {
 
-    private final AwsProperties awsProperties;
+	private final AwsProperties awsProperties;
 
-    @Bean
-    public AwsCredentialsProvider awsCredentialsProvider() {
-        return StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(
-                        awsProperties.getAccessKey(),
-                        awsProperties.getSecretKey()));
-    }
+	@Bean
+	public AwsCredentialsProvider awsCredentialsProvider() {
+		return StaticCredentialsProvider.create(
+			AwsBasicCredentials.create(
+				awsProperties.getAccessKey(),
+				awsProperties.getSecretKey()));
+	}
 
-    @Bean
-    public S3Client s3Client(AwsCredentialsProvider credentialsProvider) {
-        return S3Client.builder()
-                .region(Region.of(awsProperties.getS3().getRegion()))
-                .credentialsProvider(credentialsProvider)
-                .build();
-    }
+	@Bean
+	public S3Client s3Client(AwsCredentialsProvider credentialsProvider) {
+		return S3Client.builder()
+			.region(Region.of(awsProperties.getS3().getRegion()))
+			.credentialsProvider(credentialsProvider)
+			.build();
+	}
 
-    @Bean(destroyMethod = "close")
-    public S3Presigner s3Presigner(AwsCredentialsProvider credentialsProvider) {
-        return S3Presigner.builder()
-                .region(Region.of(awsProperties.getS3().getRegion()))
-                .credentialsProvider(credentialsProvider)
-                .build();
-    }
+	@Bean(destroyMethod = "close")
+	public S3Presigner s3Presigner(AwsCredentialsProvider credentialsProvider) {
+		return S3Presigner.builder()
+			.region(Region.of(awsProperties.getS3().getRegion()))
+			.credentialsProvider(credentialsProvider)
+			.build();
+	}
 
-    @Bean
-    public GameLiftClient gameLiftClient(AwsCredentialsProvider credentialsProvider) {
-        return GameLiftClient.builder()
-                .region(Region.of(awsProperties.getRegion()))
-                .credentialsProvider(credentialsProvider)
-                .build();
-    }
+	@Bean
+	public GameLiftClient gameLiftClient(AwsCredentialsProvider credentialsProvider) {
+		return GameLiftClient.builder()
+			.region(Region.of(awsProperties.getRegion()))
+			.credentialsProvider(credentialsProvider)
+			.build();
+	}
 
-    @Bean
-    public StsClient stsClient(AwsCredentialsProvider credentialsProvider) {
-        return StsClient.builder()
-                .region(Region.of(awsProperties.getRegion()))
-                .credentialsProvider(credentialsProvider)
-                .build();
-    }
+	@Bean
+	public StsClient stsClient(AwsCredentialsProvider credentialsProvider) {
+		return StsClient.builder()
+			.region(Region.of(awsProperties.getRegion()))
+			.credentialsProvider(credentialsProvider)
+			.build();
+	}
 
-    @Bean
-    public software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient gameLiftStreamsClient(
-            AwsCredentialsProvider credentialsProvider) {
-        return software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient.builder()
-                .region(Region.of(awsProperties.getGamelift().getRegion()))
-                .credentialsProvider(credentialsProvider)
-                .build();
-    }
+	@Bean
+	public software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient gameLiftStreamsClient(
+		AwsCredentialsProvider credentialsProvider) {
+		return software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient.builder()
+			.region(Region.of(awsProperties.getGamelift().getRegion()))
+			.credentialsProvider(credentialsProvider)
+			.build();
+	}
 }

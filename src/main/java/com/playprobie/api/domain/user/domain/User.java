@@ -28,93 +28,93 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
-    @Column(name = "user_uuid", nullable = false, unique = true)
-    private java.util.UUID uuid = java.util.UUID.randomUUID();
+	@Column(name = "user_uuid", nullable = false, unique = true)
+	private java.util.UUID uuid = java.util.UUID.randomUUID();
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "user_id")
+	private Long id;
 
-    @Column(name = "email", nullable = false, unique = true)
-    private String email;
+	@Column(name = "email", nullable = false, unique = true)
+	private String email;
 
-    @Column(name = "password")
-    private String password;
+	@Column(name = "password")
+	private String password;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+	@Column(name = "name", nullable = false)
+	private String name;
 
-    @Column(name = "phone")
-    private String phone;
+	@Column(name = "phone")
+	private String phone;
 
-    @Column(name = "provider")
-    private String provider;
+	@Column(name = "provider")
+	private String provider;
 
-    @Column(name = "provider_id")
-    private String providerId;
+	@Column(name = "provider_id")
+	private String providerId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private UserStatus status;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status", nullable = false)
+	private UserStatus status;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<WorkspaceMember> memberships = new ArrayList<>();
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+	private List<WorkspaceMember> memberships = new ArrayList<>();
 
-    @Builder
-    public User(String email, String password, String name, String phone,
-            String provider, String providerId) {
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.phone = phone;
-        this.provider = provider;
-        this.providerId = providerId;
-        this.status = UserStatus.ACTIVE;
-    }
+	@Builder
+	public User(String email, String password, String name, String phone,
+		String provider, String providerId) {
+		this.email = email;
+		this.password = password;
+		this.name = name;
+		this.phone = phone;
+		this.provider = provider;
+		this.providerId = providerId;
+		this.status = UserStatus.ACTIVE;
+	}
 
-    /**
-     * 이메일/비밀번호 기반 회원 생성
-     */
-    public static User createWithEmail(String email, String password, String name, String phone) {
-        return User.builder()
-                .email(email)
-                .password(password)
-                .name(name)
-                .phone(phone)
-                .build();
-    }
+	/**
+	 * 이메일/비밀번호 기반 회원 생성
+	 */
+	public static User createWithEmail(String email, String password, String name, String phone) {
+		return User.builder()
+			.email(email)
+			.password(password)
+			.name(name)
+			.phone(phone)
+			.build();
+	}
 
-    /**
-     * OAuth 기반 회원 생성
-     */
-    public static User createWithOAuth(String email, String name, String provider, String providerId) {
-        return User.builder()
-                .email(email)
-                .name(name)
-                .provider(provider)
-                .providerId(providerId)
-                .build();
-    }
+	/**
+	 * OAuth 기반 회원 생성
+	 */
+	public static User createWithOAuth(String email, String name, String provider, String providerId) {
+		return User.builder()
+			.email(email)
+			.name(name)
+			.provider(provider)
+			.providerId(providerId)
+			.build();
+	}
 
-    public void updateProfile(String name, String phone) {
-        this.name = name;
-        this.phone = phone;
-    }
+	public void updateProfile(String name, String phone) {
+		this.name = name;
+		this.phone = phone;
+	}
 
-    public void suspend() {
-        this.status = UserStatus.SUSPENDED;
-    }
+	public void suspend() {
+		this.status = UserStatus.SUSPENDED;
+	}
 
-    public void activate() {
-        this.status = UserStatus.ACTIVE;
-    }
+	public void activate() {
+		this.status = UserStatus.ACTIVE;
+	}
 
-    public boolean isOAuthUser() {
-        return this.provider != null;
-    }
+	public boolean isOAuthUser() {
+		return this.provider != null;
+	}
 
-    public List<WorkspaceMember> getMemberships() {
-        return Collections.unmodifiableList(memberships);
-    }
+	public List<WorkspaceMember> getMemberships() {
+		return Collections.unmodifiableList(memberships);
+	}
 }

@@ -16,36 +16,36 @@ import lombok.Setter;
 @Setter
 public class AwsProperties {
 
-    @NotBlank(message = "AWS region is required")
-    private String region;
+	@NotBlank(message = "AWS region is required")
+	private String region;
 
-    @NotBlank(message = "AWS access key is required")
-    private String accessKey;
+	@NotBlank(message = "AWS access key is required")
+	private String accessKey;
 
-    @NotBlank(message = "AWS secret key is required")
-    private String secretKey;
+	@NotBlank(message = "AWS secret key is required")
+	private String secretKey;
 
-    @Valid
-    private S3Properties s3 = new S3Properties();
+	@Valid
+	private S3Properties s3 = new S3Properties();
 
-    @Valid
-    private GameLiftProperties gamelift = new GameLiftProperties();
+	@Valid
+	private GameLiftProperties gamelift = new GameLiftProperties();
 
-    @Getter
-    @Setter
-    public static class S3Properties {
-        @NotBlank(message = "S3 region is required")
-        private String region;
-        @NotBlank(message = "S3 bucket name is required")
-        private String bucketName;
-        private String roleArn;
-    }
+	@Getter
+	@Setter
+	public static class S3Properties {
+		@NotBlank(message = "S3 region is required")
+		private String region;
+		@NotBlank(message = "S3 bucket name is required")
+		private String bucketName;
+		private String roleArn;
+	}
 
-    @Getter
-    @Setter
-    public static class GameLiftProperties {
-        @NotBlank(message = "GameLift region is required")
-        private String region;
-        private String roleArn;
-    }
+	@Getter
+	@Setter
+	public static class GameLiftProperties {
+		@NotBlank(message = "GameLift region is required")
+		private String region;
+		private String roleArn;
+	}
 }

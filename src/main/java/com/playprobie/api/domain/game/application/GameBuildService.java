@@ -46,216 +46,216 @@ import software.amazon.awssdk.services.sts.model.StsException;
 @Slf4j
 public class GameBuildService {
 
-    private final GameBuildRepository gameBuildRepository;
-    private final GameRepository gameRepository;
-    private final StsClient stsClient;
-    private final S3Client s3Client;
-    private final AwsProperties awsProperties;
+	private final GameBuildRepository gameBuildRepository;
+	private final GameRepository gameRepository;
+	private final StsClient stsClient;
+	private final S3Client s3Client;
+	private final AwsProperties awsProperties;
 
-    /**
-     * 새 게임 빌드를 생성하고 임시 자격 증명을 발급합니다.
-     */
-    @Transactional
-    public CreateGameBuildResponse createBuild(UUID gameUuid, CreateGameBuildRequest request) {
-        Game game = gameRepository.findByUuid(gameUuid)
-                .orElseThrow(GameNotFoundException::new);
+	/**
+	 * 새 게임 빌드를 생성하고 임시 자격 증명을 발급합니다.
+	 */
+	@Transactional
+	public CreateGameBuildResponse createBuild(UUID gameUuid, CreateGameBuildRequest request) {
+		Game game = gameRepository.findByUuid(gameUuid)
+			.orElseThrow(GameNotFoundException::new);
 
-        UUID buildUuid = UUID.randomUUID();
+		UUID buildUuid = UUID.randomUUID();
 
-        GameBuild gameBuild = GameBuild.builder()
-                .game(game)
-                .uuid(buildUuid)
-                .version(request.version())
-                .build();
+		GameBuild gameBuild = GameBuild.builder()
+			.game(game)
+			.uuid(buildUuid)
+			.version(request.version())
+			.build();
 
-        gameBuildRepository.save(gameBuild);
+		gameBuildRepository.save(gameBuild);
 
-        String s3Prefix = gameBuild.getS3Prefix();
+		String s3Prefix = gameBuild.getS3Prefix();
 
-        // STS AssumeRole & Policy Injection
-        Credentials creds = getTemporaryCredentials(s3Prefix);
+		// STS AssumeRole & Policy Injection
+		Credentials creds = getTemporaryCredentials(s3Prefix);
 
-        log.info("Game build created and credentials generated: buildId={}, s3Prefix={}", buildUuid, s3Prefix);
+		log.info("Game build created and credentials generated: buildId={}, s3Prefix={}", buildUuid, s3Prefix);
 
-        return new CreateGameBuildResponse(
-                buildUuid,
-                request.version(),
-                s3Prefix,
-                new CreateGameBuildResponse.AwsCredentials(
-                        creds.accessKeyId(),
-                        creds.secretAccessKey(),
-                        creds.sessionToken(),
-                        creds.expiration().toEpochMilli()));
-    }
+		return new CreateGameBuildResponse(
+			buildUuid,
+			request.version(),
+			s3Prefix,
+			new CreateGameBuildResponse.AwsCredentials(
+				creds.accessKeyId(),
+				creds.secretAccessKey(),
+				creds.sessionToken(),
+				creds.expiration().toEpochMilli()));
+	}
 
-    /**
-     * 특정 게임의 모든 빌드를 조회합니다.
-     */
-    public List<GameBuildResponse> getBuildsByGameUuid(UUID gameUuid) {
-        return gameBuildRepository.findByGameUuidOrderByCreatedAtDesc(gameUuid)
-                .stream()
-                .map(GameBuildResponse::from)
-                .toList();
-    }
+	/**
+	 * 특정 게임의 모든 빌드를 조회합니다.
+	 */
+	public List<GameBuildResponse> getBuildsByGameUuid(UUID gameUuid) {
+		return gameBuildRepository.findByGameUuidOrderByCreatedAtDesc(gameUuid)
+			.stream()
+			.map(GameBuildResponse::from)
+			.toList();
+	}
 
-    /**
-     * 업로드 완료를 확인하고 빌드 상태를 변경합니다.
-     */
-    @Transactional
-    public GameBuild completeUpload(
-            UUID gameUuid, UUID buildId, CompleteUploadRequest request) {
+	/**
+	 * 업로드 완료를 확인하고 빌드 상태를 변경합니다.
+	 */
+	@Transactional
+	public GameBuild completeUpload(
+		UUID gameUuid, UUID buildId, CompleteUploadRequest request) {
 
-        GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
+		GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
 
-        if (gameBuild.getStatus() == BuildStatus.UPLOADED) {
-            return gameBuild;
-        }
+		if (gameBuild.getStatus() == BuildStatus.UPLOADED) {
+			return gameBuild;
+		}
 
-        // Light Verification: 최소 1개 파일 존재 확인
-        verifyAtLeastOneFileExists(gameBuild.getS3Prefix());
+		// Light Verification: 최소 1개 파일 존재 확인
+		verifyAtLeastOneFileExists(gameBuild.getS3Prefix());
 
-        // 클라이언트 값 신뢰 (GameLift가 최종 검증)
-        gameBuild.markAsUploaded(
-                request.expectedFileCount(),
-                request.expectedTotalSize(),
-                request.osType(),
-                request.executablePath());
+		// 클라이언트 값 신뢰 (GameLift가 최종 검증)
+		gameBuild.markAsUploaded(
+			request.expectedFileCount(),
+			request.expectedTotalSize(),
+			request.osType(),
+			request.executablePath());
 
-        log.info("Upload completed: buildId={}, files={}, size={}, osType={}, executablePath={}",
-                buildId, request.expectedFileCount(), request.expectedTotalSize(),
-                request.osType(), request.executablePath());
+		log.info("Upload completed: buildId={}, files={}, size={}, osType={}, executablePath={}",
+			buildId, request.expectedFileCount(), request.expectedTotalSize(),
+			request.osType(), request.executablePath());
 
-        return gameBuild;
-    }
+		return gameBuild;
+	}
 
-    /**
-     * 빌드 삭제 - S3 파일 일괄 삭제
-     */
-    @Transactional
-    public void deleteBuild(UUID gameUuid, UUID buildId) {
-        GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
+	/**
+	 * 빌드 삭제 - S3 파일 일괄 삭제
+	 */
+	@Transactional
+	public void deleteBuild(UUID gameUuid, UUID buildId) {
+		GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
 
-        // S3에서 prefix 하위 모든 파일 삭제
-        deleteS3Objects(gameBuild.getS3Prefix());
+		// S3에서 prefix 하위 모든 파일 삭제
+		deleteS3Objects(gameBuild.getS3Prefix());
 
-        // DB에서 빌드 삭제
-        gameBuildRepository.delete(gameBuild);
+		// DB에서 빌드 삭제
+		gameBuildRepository.delete(gameBuild);
 
-        log.info("Build deleted: buildId={}, s3Prefix={}", buildId, gameBuild.getS3Prefix());
-    }
+		log.info("Build deleted: buildId={}, s3Prefix={}", buildId, gameBuild.getS3Prefix());
+	}
 
-    private Credentials getTemporaryCredentials(String s3Prefix) {
-        try {
-            // [Security] Session Policy: 오직 이 Prefix에만 PutObject 허용
-            String policy = buildSessionPolicy(s3Prefix);
+	private Credentials getTemporaryCredentials(String s3Prefix) {
+		try {
+			// [Security] Session Policy: 오직 이 Prefix에만 PutObject 허용
+			String policy = buildSessionPolicy(s3Prefix);
 
-            AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
-                    .roleArn(awsProperties.getS3().getRoleArn())
-                    .roleSessionName("GameUpload-" + UUID.randomUUID())
-                    .policy(policy)
-                    .durationSeconds(3600) // 1시간
-                    .build();
+			AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
+				.roleArn(awsProperties.getS3().getRoleArn())
+				.roleSessionName("GameUpload-" + UUID.randomUUID())
+				.policy(policy)
+				.durationSeconds(3600) // 1시간
+				.build();
 
-            AssumeRoleResponse response = stsClient.assumeRole(assumeRoleRequest);
-            return response.credentials();
-        } catch (StsException e) {
-            log.error("STS AssumeRole failed: {}", e.getMessage(), e);
-            throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
-        } catch (Exception e) {
-            log.error("Unexpected error during STS AssumeRole: {}", e.getMessage(), e);
-            throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
-        }
-    }
+			AssumeRoleResponse response = stsClient.assumeRole(assumeRoleRequest);
+			return response.credentials();
+		} catch (StsException e) {
+			log.error("STS AssumeRole failed: {}", e.getMessage(), e);
+			throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
+		} catch (Exception e) {
+			log.error("Unexpected error during STS AssumeRole: {}", e.getMessage(), e);
+			throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
+		}
+	}
 
-    private String buildSessionPolicy(String s3Prefix) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            ObjectNode policy = mapper.createObjectNode();
-            policy.put("Version", "2012-10-17");
+	private String buildSessionPolicy(String s3Prefix) {
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectNode policy = mapper.createObjectNode();
+			policy.put("Version", "2012-10-17");
 
-            ArrayNode statements = policy.putArray("Statement");
-            ObjectNode statement = statements.addObject();
-            statement.put("Effect", "Allow");
-            statement.put("Action", "s3:PutObject");
-            statement.put("Resource", String.format("arn:aws:s3:::%s/%s*",
-                    awsProperties.getS3().getBucketName(), s3Prefix));
+			ArrayNode statements = policy.putArray("Statement");
+			ObjectNode statement = statements.addObject();
+			statement.put("Effect", "Allow");
+			statement.put("Action", "s3:PutObject");
+			statement.put("Resource", String.format("arn:aws:s3:::%s/%s*",
+				awsProperties.getS3().getBucketName(), s3Prefix));
 
-            return mapper.writeValueAsString(policy);
-        } catch (Exception e) {
-            log.error("Failed to build session policy: {}", e.getMessage(), e);
-            throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
-        }
-    }
+			return mapper.writeValueAsString(policy);
+		} catch (Exception e) {
+			log.error("Failed to build session policy: {}", e.getMessage(), e);
+			throw new BusinessException(ErrorCode.STS_CLIENT_ERROR);
+		}
+	}
 
-    private void deleteS3Objects(String prefix) {
-        try {
-            String continuationToken = null;
-            do {
-                ListObjectsV2Request.Builder listReqBuilder = ListObjectsV2Request.builder()
-                        .bucket(awsProperties.getS3().getBucketName())
-                        .prefix(prefix);
+	private void deleteS3Objects(String prefix) {
+		try {
+			String continuationToken = null;
+			do {
+				ListObjectsV2Request.Builder listReqBuilder = ListObjectsV2Request.builder()
+					.bucket(awsProperties.getS3().getBucketName())
+					.prefix(prefix);
 
-                if (continuationToken != null) {
-                    listReqBuilder.continuationToken(continuationToken);
-                }
+				if (continuationToken != null) {
+					listReqBuilder.continuationToken(continuationToken);
+				}
 
-                ListObjectsV2Response listResponse = s3Client.listObjectsV2(listReqBuilder.build());
+				ListObjectsV2Response listResponse = s3Client.listObjectsV2(listReqBuilder.build());
 
-                if (listResponse.hasContents()) {
-                    List<ObjectIdentifier> objectIds = listResponse.contents().stream()
-                            .map(obj -> ObjectIdentifier.builder().key(obj.key()).build())
-                            .toList();
+				if (listResponse.hasContents()) {
+					List<ObjectIdentifier> objectIds = listResponse.contents().stream()
+						.map(obj -> ObjectIdentifier.builder().key(obj.key()).build())
+						.toList();
 
-                    DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
-                            .bucket(awsProperties.getS3().getBucketName())
-                            .delete(Delete.builder().objects(objectIds).build())
-                            .build();
+					DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+						.bucket(awsProperties.getS3().getBucketName())
+						.delete(Delete.builder().objects(objectIds).build())
+						.build();
 
-                    s3Client.deleteObjects(deleteRequest);
-                    log.info("S3 objects deleted: count={}", objectIds.size());
-                }
+					s3Client.deleteObjects(deleteRequest);
+					log.info("S3 objects deleted: count={}", objectIds.size());
+				}
 
-                continuationToken = listResponse.isTruncated() ? listResponse.nextContinuationToken() : null;
-            } while (continuationToken != null);
+				continuationToken = listResponse.isTruncated() ? listResponse.nextContinuationToken() : null;
+			} while (continuationToken != null);
 
-        } catch (S3Exception e) {
-            log.error("S3 delete failed: {}", e.getMessage(), e);
-            throw new S3AccessException();
-        }
-    }
+		} catch (S3Exception e) {
+			log.error("S3 delete failed: {}", e.getMessage(), e);
+			throw new S3AccessException();
+		}
+	}
 
-    private void verifyAtLeastOneFileExists(String prefix) {
-        try {
-            ListObjectsV2Request request = ListObjectsV2Request.builder()
-                    .bucket(awsProperties.getS3().getBucketName())
-                    .prefix(prefix)
-                    .maxKeys(1) // 1개만 확인
-                    .build();
+	private void verifyAtLeastOneFileExists(String prefix) {
+		try {
+			ListObjectsV2Request request = ListObjectsV2Request.builder()
+				.bucket(awsProperties.getS3().getBucketName())
+				.prefix(prefix)
+				.maxKeys(1) // 1개만 확인
+				.build();
 
-            ListObjectsV2Response response = s3Client.listObjectsV2(request);
+			ListObjectsV2Response response = s3Client.listObjectsV2(request);
 
-            if (!response.hasContents() || response.contents().isEmpty()) {
-                log.warn("No files found in S3 prefix: {}", prefix);
-                throw new BusinessException(ErrorCode.S3_FILE_NOT_FOUND);
-            }
+			if (!response.hasContents() || response.contents().isEmpty()) {
+				log.warn("No files found in S3 prefix: {}", prefix);
+				throw new BusinessException(ErrorCode.S3_FILE_NOT_FOUND);
+			}
 
-            log.debug("At least one file exists in prefix: {}", prefix);
+			log.debug("At least one file exists in prefix: {}", prefix);
 
-        } catch (S3Exception e) {
-            log.error("S3 list failed: {}", e.getMessage(), e);
-            throw new S3AccessException();
-        }
-    }
+		} catch (S3Exception e) {
+			log.error("S3 list failed: {}", e.getMessage(), e);
+			throw new S3AccessException();
+		}
+	}
 
-    private GameBuild getVerifiedBuild(UUID gameUuid, UUID buildId) {
-        GameBuild gameBuild = gameBuildRepository.findByUuid(buildId)
-                .orElseThrow(GameBuildNotFoundException::new);
+	private GameBuild getVerifiedBuild(UUID gameUuid, UUID buildId) {
+		GameBuild gameBuild = gameBuildRepository.findByUuid(buildId)
+			.orElseThrow(GameBuildNotFoundException::new);
 
-        if (!gameBuild.getGame().getUuid().equals(gameUuid)) {
-            throw new GameBuildNotFoundException();
-        }
+		if (!gameBuild.getGame().getUuid().equals(gameUuid)) {
+			throw new GameBuildNotFoundException();
+		}
 
-        return gameBuild;
-    }
+		return gameBuild;
+	}
 
 }

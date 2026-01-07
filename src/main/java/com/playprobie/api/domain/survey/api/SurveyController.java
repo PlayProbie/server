@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/surveys")
 @RequiredArgsConstructor
 @Tag(name = "Survey", description = "설문 관리 API")
-public class SurveyApi {
+public class SurveyController {
 
 	private final SurveyService surveyService;
 
@@ -50,8 +50,10 @@ public class SurveyApi {
 	@GetMapping
 	@Operation(summary = "설문 목록 조회", description = "게임별 또는 전체 설문 목록을 조회합니다.")
 	public ResponseEntity<CommonResponse<List<SurveyResponse>>> getSurveys(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@RequestParam(name = "game_uuid", required = false) UUID gameUuid) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@RequestParam(name = "game_uuid", required = false)
+		UUID gameUuid) {
 		List<SurveyResponse> response = surveyService.getSurveys(gameUuid, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
@@ -62,8 +64,10 @@ public class SurveyApi {
 	@PostMapping
 	@Operation(summary = "설문 생성", description = "새로운 설문을 생성합니다.")
 	public ResponseEntity<CommonResponse<SurveyResponse>> createSurvey(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@Valid @RequestBody CreateSurveyRequest request) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@Valid @RequestBody
+		CreateSurveyRequest request) {
 		SurveyResponse response = surveyService.createSurvey(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
 	}
@@ -74,8 +78,10 @@ public class SurveyApi {
 	@GetMapping("/{surveyUuid}")
 	@Operation(summary = "설문 조회", description = "설문 상세 정보를 조회합니다.")
 	public ResponseEntity<CommonResponse<SurveyResponse>> getSurvey(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@PathVariable(name = "surveyUuid") UUID surveyUuid) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@PathVariable(name = "surveyUuid")
+		UUID surveyUuid) {
 		SurveyResponse response = surveyService.getSurveyByUuid(surveyUuid, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
@@ -86,7 +92,8 @@ public class SurveyApi {
 	@PostMapping("/ai-questions")
 	@Operation(summary = "AI 질문 생성", description = "AI를 통해 추천 질문 목록을 생성합니다.")
 	public ResponseEntity<CommonResponse<List<String>>> generateAiQuestions(
-			@Valid @RequestBody AiQuestionsRequest request) {
+		@Valid @RequestBody
+		AiQuestionsRequest request) {
 		List<String> result = surveyService.generateAiQuestions(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(result));
 	}
@@ -97,15 +104,16 @@ public class SurveyApi {
 	@PostMapping("/question-feedback")
 	@Operation(summary = "질문 피드백", description = "작성된 질문에 대한 AI 피드백 및 대안을 제공합니다.")
 	public ResponseEntity<CommonResponse<QuestionFeedbackResponse>> getQuestionFeedback(
-			@Valid @RequestBody QuestionFeedbackRequest request) {
+		@Valid @RequestBody
+		QuestionFeedbackRequest request) {
 		String question = request.questions().get(0);
 		String gameGenre = String.join(", ", request.gameGenre());
 		QuestionFeedbackResponse feedback = surveyService.getQuestionFeedback(
-				request.gameName(),
-				gameGenre,
-				request.gameContext(),
-				request.testPurpose(),
-				question);
+			request.gameName(),
+			gameGenre,
+			request.gameContext(),
+			request.testPurpose(),
+			question);
 		return ResponseEntity.ok(CommonResponse.of(feedback));
 	}
 
@@ -115,8 +123,10 @@ public class SurveyApi {
 	@PostMapping("/fixed-questions")
 	@Operation(summary = "고정 질문 저장", description = "확정된 질문들을 설문에 저장합니다.")
 	public ResponseEntity<CommonResponse<FixedQuestionsCountResponse>> createFixedQuestions(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@Valid @RequestBody CreateFixedQuestionsRequest request) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@Valid @RequestBody
+		CreateFixedQuestionsRequest request) {
 		FixedQuestionsCountResponse response = surveyService.createFixedQuestions(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
 	}
@@ -127,8 +137,10 @@ public class SurveyApi {
 	@GetMapping("/{surveyUuid}/questions")
 	@Operation(summary = "확정 질문 목록 조회")
 	public ResponseEntity<CommonResponse<List<FixedQuestionResponse>>> getConfirmedQuestions(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@PathVariable(name = "surveyUuid") UUID surveyUuid) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@PathVariable(name = "surveyUuid")
+		UUID surveyUuid) {
 		List<FixedQuestionResponse> questions = surveyService.getConfirmedQuestions(surveyUuid, user);
 		return ResponseEntity.ok(CommonResponse.of(questions));
 	}
@@ -139,9 +151,12 @@ public class SurveyApi {
 	@PatchMapping("/{surveyUuid}/status")
 	@Operation(summary = "설문 상태 업데이트", description = "설문을 활성화(Scale-out)하거나 종료(Cleanup)합니다.")
 	public ResponseEntity<CommonResponse<UpdateSurveyStatusResponse>> updateSurveyStatus(
-			@AuthenticationPrincipal(expression = "user") User user,
-			@PathVariable(name = "surveyUuid") UUID surveyUuid,
-			@Valid @RequestBody UpdateSurveyStatusRequest request) {
+		@AuthenticationPrincipal(expression = "user")
+		User user,
+		@PathVariable(name = "surveyUuid")
+		UUID surveyUuid,
+		@Valid @RequestBody
+		UpdateSurveyStatusRequest request) {
 		UpdateSurveyStatusResponse response = surveyService.updateSurveyStatus(surveyUuid, request, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}

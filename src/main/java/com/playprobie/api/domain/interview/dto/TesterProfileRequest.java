@@ -14,16 +14,16 @@ import lombok.AllArgsConstructor;
 @Builder
 public class TesterProfileRequest {
 
-    @JsonProperty("age_group")
-    private String ageGroup;
+	@JsonProperty("age_group")
+	private String ageGroup;
 
-    @JsonProperty("gender")
-    private String gender;
+	@JsonProperty("gender")
+	private String gender;
 
-    @JsonProperty("prefer_genre")
-    private String preferGenre;
+	@JsonProperty("prefer_genre")
+	private String preferGenre;
 
-    public TesterProfile toEntity() {
-        return TesterProfile.createAnonymous(ageGroup, gender, preferGenre);
-    }
+	public TesterProfile toEntity() {
+		return TesterProfile.createAnonymous(ageGroup, gender, preferGenre);
+	}
 }

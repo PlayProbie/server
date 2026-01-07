@@ -21,46 +21,46 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final JwtProperties jwtProperties;
+	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final JwtProperties jwtProperties;
 
-    @Transactional
-    public SignupResponse signup(SignupRequest request) {
-        // 이메일 중복 검사
-        if (userRepository.existsByEmail(request.email())) {
-            throw new EmailDuplicateException(request.email());
-        }
+	@Transactional
+	public SignupResponse signup(SignupRequest request) {
+		// 이메일 중복 검사
+		if (userRepository.existsByEmail(request.email())) {
+			throw new EmailDuplicateException(request.email());
+		}
 
-        // 비밀번호 암호화 및 사용자 생성
-        String encodedPassword = passwordEncoder.encode(request.password());
-        User user = User.createWithEmail(request.email(), encodedPassword, request.name(), request.phone());
+		// 비밀번호 암호화 및 사용자 생성
+		String encodedPassword = passwordEncoder.encode(request.password());
+		User user = User.createWithEmail(request.email(), encodedPassword, request.name(), request.phone());
 
-        User savedUser = userRepository.save(user);
+		User savedUser = userRepository.save(user);
 
-        return SignupResponse.of(savedUser.getId(), savedUser.getEmail(), savedUser.getName());
-    }
+		return SignupResponse.of(savedUser.getId(), savedUser.getEmail(), savedUser.getName());
+	}
 
-    @Transactional(readOnly = true)
-    public LoginResult login(LoginRequest request) {
-        // 사용자 조회
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(InvalidCredentialsException::new);
+	@Transactional(readOnly = true)
+	public LoginResult login(LoginRequest request) {
+		// 사용자 조회
+		User user = userRepository.findByEmail(request.email())
+			.orElseThrow(InvalidCredentialsException::new);
 
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new InvalidCredentialsException();
-        }
+		// 비밀번호 검증
+		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+			throw new InvalidCredentialsException();
+		}
 
-        // 계정 상태 확인
-        if (!user.getStatus().isActive()) {
-            throw new InvalidCredentialsException();
-        }
+		// 계정 상태 확인
+		if (!user.getStatus().isActive()) {
+			throw new InvalidCredentialsException();
+		}
 
-        // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
+		// JWT 토큰 생성
+		String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
 
-        return LoginResult.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds(), user);
-    }
+		return LoginResult.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds(), user);
+	}
 }

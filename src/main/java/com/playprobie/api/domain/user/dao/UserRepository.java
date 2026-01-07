@@ -8,11 +8,11 @@ import com.playprobie.api.domain.user.domain.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByEmail(String email);
+	Optional<User> findByEmail(String email);
 
-    boolean existsByEmail(String email);
+	boolean existsByEmail(String email);
 
-    Optional<User> findByProviderAndProviderId(String provider, String providerId);
+	Optional<User> findByProviderAndProviderId(String provider, String providerId);
 
-    java.util.Optional<User> findByUuid(java.util.UUID uuid);
+	java.util.Optional<User> findByUuid(java.util.UUID uuid);
 }

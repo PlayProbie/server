@@ -20,33 +20,33 @@ import reactor.core.publisher.Mono;
  */
 public interface AiClient {
 
-        /**
-         * 고정 질문 초안 생성
-         * POST /fixed-questions/draft
-         * 
-         * @return 생성된 질문 목록 (최대 5개)
-         */
-        List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose);
+	/**
+	 * 고정 질문 초안 생성
+	 * POST /fixed-questions/draft
+	 *
+	 * @return 생성된 질문 목록 (최대 5개)
+	 */
+	List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose);
 
-        /**
-         * 질문 피드백 기반 대안 생성
-         * POST /fixed-questions/feedback
-         *
-         * @return 대안 질문 목록 (3개), feedback
-         */
-        GenerateFeedbackResponse getQuestionFeedback(GenerateFeedbackRequest request);
+	/**
+	 * 질문 피드백 기반 대안 생성
+	 * POST /fixed-questions/feedback
+	 *
+	 * @return 대안 질문 목록 (3개), feedback
+	 */
+	GenerateFeedbackResponse getQuestionFeedback(GenerateFeedbackRequest request);
 
-        /**
-         * streaming 대화 토큰 전달
-         */
-        void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
+	/**
+	 * streaming 대화 토큰 전달
+	 */
+	void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
 
-        // 세션 완료 시 임베딩 요청 (비동기)
-        Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request);
+	// 세션 완료 시 임베딩 요청 (비동기)
+	Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request);
 
-        // 질문 분석 수동 트리거 (Mock 데이터 등에서 사용)
-        void triggerAnalysis(Long surveyId, Long fixedQuestionId);
+	// 질문 분석 수동 트리거 (Mock 데이터 등에서 사용)
+	void triggerAnalysis(Long surveyId, Long fixedQuestionId);
 
-        // 질문 분석 요청 (SSE 스트리밍)
-        Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId);
+	// 질문 분석 요청 (SSE 스트리밍)
+	Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId);
 }
