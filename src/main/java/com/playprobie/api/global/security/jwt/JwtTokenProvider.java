@@ -6,6 +6,8 @@ import javax.crypto.SecretKey;
 
 import org.springframework.stereotype.Component;
 
+import com.playprobie.api.global.config.properties.JwtProperties;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -25,7 +27,7 @@ public class JwtTokenProvider {
 
 	public JwtTokenProvider(JwtProperties jwtProperties) {
 		this.jwtProperties = jwtProperties;
-		this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.getSecret()));
+		this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.secret()));
 	}
 
 	/**
@@ -33,7 +35,7 @@ public class JwtTokenProvider {
 	 */
 	public String generateAccessToken(Long userId, String email) {
 		Date now = new Date();
-		Date expiry = new Date(now.getTime() + jwtProperties.getAccessTokenExpiration());
+		Date expiry = new Date(now.getTime() + jwtProperties.accessTokenExpiration());
 
 		return Jwts.builder()
 			.subject(userId.toString())

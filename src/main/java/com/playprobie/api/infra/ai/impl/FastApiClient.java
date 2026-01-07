@@ -18,6 +18,8 @@ import com.playprobie.api.domain.interview.application.InterviewService;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
+import com.playprobie.api.global.config.properties.AiProperties;
+import com.playprobie.api.global.constants.AiConstants;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.AiInteractionRequest;
 import com.playprobie.api.infra.ai.dto.request.AiSessionEndRequest;
@@ -44,16 +46,11 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class FastApiClient implements AiClient {
 
-	/**
-	 * 고정 질문당 최대 꼬리질문 횟수
-	 * 이 횟수를 초과하면 AI 응답과 관계없이 다음 고정 질문으로 진행
-	 */
-	private static final int MAX_TAIL_QUESTION_COUNT = 2;
-
 	private final WebClient aiWebClient;
 	private final SseEmitterService sseEmitterService;
 	private final ObjectMapper objectMapper;
 	private final InterviewService interviewService;
+	private final AiProperties aiProperties;
 
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose) {
@@ -112,11 +109,12 @@ public class FastApiClient implements AiClient {
 		int currentTailCount = userAnswerRequest.getTurnNum() - 1;
 
 		// 디버그 로그: 현재 꼬리질문 횟수와 최대 허용 횟수 출력
+		int maxTailQuestions = aiProperties.interview().maxTailQuestions();
 		log.info("📊 [TAIL COUNT] sessionId={}, fixedQId={}, currentTailCount={}, max={}",
-			sessionId, fixedQId, currentTailCount, MAX_TAIL_QUESTION_COUNT);
+			sessionId, fixedQId, currentTailCount, maxTailQuestions);
 
 		// 꼬리질문 횟수 제한 체크 - 초과 시 AI 호출 없이 바로 다음 질문으로 이동
-		if (currentTailCount >= MAX_TAIL_QUESTION_COUNT) {
+		if (currentTailCount >= maxTailQuestions) {
 			log.info("🛑 [TAIL LIMIT EXCEEDED] Skipping AI call, proceeding to next question. sessionId={}", sessionId);
 			// AI 호출 없이 바로 다음 고정 질문으로 이동
 			handleTailLimitExceeded(sessionId, fixedQId);
@@ -152,7 +150,7 @@ public class FastApiClient implements AiClient {
 			},
 			error -> {
 				log.error("Error connecting to AI Server: {}", error.getMessage());
-				sseEmitterService.send(sessionId, "error", "AI 서버 통신 오류");
+				sseEmitterService.send(sessionId, AiConstants.EVENT_ERROR, "AI 서버 통신 오류");
 				sseEmitterService.complete(sessionId);
 			},
 			() -> log.info("AI Stream completed for sessionId: {}", sessionId));
@@ -180,41 +178,40 @@ public class FastApiClient implements AiClient {
 		AtomicReference<String> nextAction,
 		AtomicBoolean tailQuestionGenerated) {
 		switch (eventType) {
-			case "start": // 스트리밍 처리 시작
+			case AiConstants.EVENT_START: // 스트리밍 처리 시작
 				StatusPayload startPayload = StatusPayload.builder().status(dataNode.path("status").asText()).build();
-				sseEmitterService.send(sessionId, "start", startPayload);
+				sseEmitterService.send(sessionId, AiConstants.EVENT_START, startPayload);
 				break;
 
-			case "done": // 모든 처리 완료
+			case AiConstants.EVENT_DONE: // 모든 처리 완료
 				log.info("✅ [DONE EVENT] sessionId={}, action={}, tailQuestionGenerated={}",
 					sessionId, nextAction.get(), tailQuestionGenerated.get());
 
 				// done 이벤트를 클라이언트로 전송
 				StatusPayload donePayload = StatusPayload.builder().status("completed").build();
-				sseEmitterService.send(sessionId, "done", donePayload);
+				sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 
 				String action = nextAction.get();
 				log.info("🔍 [ACTION CHECK] sessionId={}, rawAction={}", sessionId, action);
 
 				// [Robustness] 꼬리질문 action이지만 실제 생성된 내용이 없으면 PASS_TO_NEXT로 변경
-				if ("TAIL_QUESTION".equals(action) && !tailQuestionGenerated.get()) {
+				if (AiConstants.ACTION_TAIL_QUESTION.equals(action) && !tailQuestionGenerated.get()) {
 					log.warn(
 						"AI requested TAIL_QUESTION but generated no content. Falling back to PASS_TO_NEXT. sessionId={}",
 						sessionId);
-					action = "PASS_TO_NEXT";
+					action = AiConstants.ACTION_PASS_TO_NEXT;
 				}
-
 				// AI가 should_end=true를 반환하면 종료 멘트 요청
 				boolean shouldEnd = dataNode.path("should_end").asBoolean(false);
 				String endReason = dataNode.path("end_reason").asText(null);
 
 				if (shouldEnd) {
 					log.info("🛑 [SHOULD_END] AI recommends ending session. reason={}", endReason);
-					streamClosing(sessionId, endReason != null ? endReason : "FATIGUE");
+					streamClosing(sessionId, endReason != null ? endReason : AiConstants.REASON_FATIGUE);
 					return;
 				}
 
-				if ("PASS_TO_NEXT".equals(action)) {
+				if (AiConstants.ACTION_PASS_TO_NEXT.equals(action)) {
 					log.info("➡️ [PASS_TO_NEXT] Proceeding to next question. sessionId={}", sessionId);
 					// 다음 고정 질문 발송
 					FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
@@ -223,8 +220,8 @@ public class FastApiClient implements AiClient {
 					interviewService.getNextQuestion(sessionId, currentOrder)
 						.ifPresentOrElse(
 							nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-							() -> streamClosing(sessionId, "ALL_DONE"));
-				} else if ("TAIL_QUESTION".equals(action)) {
+							() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE));
+				} else if (AiConstants.ACTION_TAIL_QUESTION.equals(action)) {
 					// TAIL_QUESTION: 꼬리질문 생성됨, 클라이언트 답변 대기
 					log.info("⏳ [TAIL_QUESTION] Waiting for user answer. sessionId={}", sessionId);
 				} else {
@@ -233,16 +230,16 @@ public class FastApiClient implements AiClient {
 				}
 				break;
 
-			case "question": // 고정 질문 전송
+			case AiConstants.EVENT_QUESTION: // 고정 질문 전송
 				Long eventFixedQId = dataNode.path("fixed_q_id").asLong();
 				String qType = dataNode.path("q_type").asText();
 				String questionText = dataNode.path("question_text").asText();
 				int turnNum = dataNode.path("turn_num").asInt();
 				QuestionPayload fixedQuestionPayload = QuestionPayload.of(eventFixedQId, qType, questionText, turnNum);
-				sseEmitterService.send(sessionId, "question", fixedQuestionPayload);
+				sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, fixedQuestionPayload);
 				break;
 
-			case "analyze_answer": // 답변 분석 완료 -> Action 저장
+			case AiConstants.EVENT_ANALYZE_ANSWER: // 답변 분석 완료 -> Action 저장
 				String actionResult = dataNode.path("action").asText();
 				String analysis = dataNode.path("analysis").asText();
 
@@ -250,16 +247,16 @@ public class FastApiClient implements AiClient {
 				log.info("Analysis result - action: {}, analysis: {}", actionResult, analysis);
 				break;
 
-			case "token": // 꼬리 질문 생성 중 (레거시 호환)
-			case "continue": // 토큰 스트리밍 진행 중 (신규 이벤트)
+			case AiConstants.EVENT_TOKEN: // 꼬리 질문 생성 중 (레거시 호환)
+			case AiConstants.EVENT_CONTINUE: // 토큰 스트리밍 진행 중 (신규 이벤트)
 				tailQuestionGenerated.set(true);
 				String content = dataNode.path("content").asText();
 				// AI 서버가 주는 turn_num 대신 계산된 nextTurnNum 사용
 				QuestionPayload questionPayload = QuestionPayload.of(null, "TAIL", content, nextTurnNum);
-				sseEmitterService.send(sessionId, "continue", questionPayload);
+				sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 				break;
 
-			case "generate_tail_complete": // 꼬리 질문 생성 완료 → DB 저장
+			case AiConstants.EVENT_GENERATE_TAIL_COMPLETE: // 꼬리 질문 생성 완료 → DB 저장
 				tailQuestionGenerated.set(true);
 				String tailQuestionText = dataNode.path("message").asText();
 				int tailQuestionCount = dataNode.path("tail_question_count").asInt();
@@ -269,13 +266,13 @@ public class FastApiClient implements AiClient {
 					tailQuestionCount);
 				break;
 
-			case "interview_complete": // 인터뷰 종료
+			case AiConstants.EVENT_INTERVIEW_COMPLETE: // 인터뷰 종료
 				StatusPayload completePayload = StatusPayload.builder().status("completed").build();
-				sseEmitterService.send(sessionId, "interview_complete", completePayload);
+				sseEmitterService.send(sessionId, AiConstants.EVENT_INTERVIEW_COMPLETE, completePayload);
 				sseEmitterService.complete(sessionId);
 				break;
 
-			case "error": // 예외 발생
+			case AiConstants.EVENT_ERROR: // 예외 발생
 				String errMessage = dataNode.path("message").asText();
 				ErrorPayload errorPayload = ErrorPayload.builder().message(errMessage).build();
 				sseEmitterService.send(sessionId, eventType, errorPayload);
@@ -289,10 +286,10 @@ public class FastApiClient implements AiClient {
 	private void sendNextQuestion(String sessionId, FixedQuestionResponse nextQuestion) {
 		QuestionPayload questionPayload = QuestionPayload.of(
 			nextQuestion.fixedQId(),
-			"FIXED",
+			AiConstants.ACTION_FIXED,
 			nextQuestion.qContent(),
 			1);
-		sseEmitterService.send(sessionId, "question", questionPayload);
+		sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, questionPayload);
 	}
 
 	private void sendInterviewComplete(String sessionId) {
@@ -303,7 +300,7 @@ public class FastApiClient implements AiClient {
 		triggerSessionEmbedding(sessionId);
 
 		StatusPayload completePayload = StatusPayload.builder().status("completed").build();
-		sseEmitterService.send(sessionId, "interview_complete", completePayload);
+		sseEmitterService.send(sessionId, AiConstants.EVENT_INTERVIEW_COMPLETE, completePayload);
 
 		// 클라이언트가 이벤트를 수신할 시간을 확보하기 위해 잠시 대기
 		try {
@@ -404,7 +401,7 @@ public class FastApiClient implements AiClient {
 						String event = sse.event();
 						String data = sse.data();
 
-						if ("progress".equals(event) && data != null) {
+						if (AiConstants.EVENT_PROGRESS.equals(event) && data != null) {
 							// JSON 데이터 파싱하여 의미있는 로그 출력
 							try {
 								JsonNode json = objectMapper.readTree(data);
@@ -416,9 +413,9 @@ public class FastApiClient implements AiClient {
 							} catch (Exception e) {
 								log.debug("Progress event: {}", data);
 							}
-						} else if ("error".equals(event)) {
+						} else if (AiConstants.EVENT_ERROR.equals(event)) {
 							log.error("❌ Question {} 분석 에러 이벤트: {}", fixedQuestionId, data);
-						} else if ("done".equals(event)) {
+						} else if (AiConstants.EVENT_DONE.equals(event)) {
 							log.info("✅ Question {} 분석 완료!", fixedQuestionId);
 						} else {
 							log.debug("Unknown event for Question {}: {} - {}", fixedQuestionId, event, data);
@@ -467,7 +464,7 @@ public class FastApiClient implements AiClient {
 	private void handleTailLimitExceeded(String sessionId, Long fixedQId) {
 		// done 이벤트를 클라이언트로 전송
 		StatusPayload donePayload = StatusPayload.builder().status("tail_limit_exceeded").build();
-		sseEmitterService.send(sessionId, "done", donePayload);
+		sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 
 		// 다음 고정 질문 발송
 		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
@@ -505,7 +502,7 @@ public class FastApiClient implements AiClient {
 			sse -> handleOpeningEvent(sessionId, sse.data()),
 			error -> {
 				log.error("Error in streamOpening: {}", error.getMessage());
-				sseEmitterService.send(sessionId, "error", "오프닝 생성 오류");
+				sseEmitterService.send(sessionId, AiConstants.EVENT_ERROR, "오프닝 생성 오류");
 			},
 			() -> log.info("Opening stream completed for sessionId: {}", sessionId));
 	}
@@ -545,27 +542,28 @@ public class FastApiClient implements AiClient {
 			JsonNode dataNode = rootNode.path("data");
 
 			switch (eventType) {
-				case "start":
+				case AiConstants.EVENT_START:
 					StatusPayload startPayload = StatusPayload.builder()
 						.status(dataNode.path("status").asText()).build();
-					sseEmitterService.send(sessionId, "start", startPayload);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_START, startPayload);
 					break;
 
-				case "continue":
+				case AiConstants.EVENT_CONTINUE:
 					String content = dataNode.path("content").asText();
-					QuestionPayload questionPayload = QuestionPayload.of(null, "OPENING", content, 0);
-					sseEmitterService.send(sessionId, "continue", questionPayload);
+					QuestionPayload questionPayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, content, 0);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 					break;
 
-				case "done":
+				case AiConstants.EVENT_DONE:
 					String questionText = dataNode.path("question_text").asText();
-					QuestionPayload donePayload = QuestionPayload.of(null, "OPENING", questionText, 0);
-					sseEmitterService.send(sessionId, "done", donePayload);
+					QuestionPayload donePayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, questionText, 0);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 					break;
 
-				case "error":
+				case AiConstants.EVENT_ERROR:
 					String errMsg = dataNode.path("message").asText();
-					sseEmitterService.send(sessionId, "error", ErrorPayload.builder().message(errMsg).build());
+					sseEmitterService.send(sessionId, AiConstants.EVENT_ERROR,
+						ErrorPayload.builder().message(errMsg).build());
 					break;
 			}
 		} catch (JsonProcessingException e) {
@@ -580,26 +578,27 @@ public class FastApiClient implements AiClient {
 			JsonNode dataNode = rootNode.path("data");
 
 			switch (eventType) {
-				case "start":
+				case AiConstants.EVENT_START:
 					StatusPayload startPayload = StatusPayload.builder()
 						.status(dataNode.path("status").asText()).build();
-					sseEmitterService.send(sessionId, "start", startPayload);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_START, startPayload);
 					break;
 
-				case "continue":
+				case AiConstants.EVENT_CONTINUE:
 					String content = dataNode.path("content").asText();
-					QuestionPayload questionPayload = QuestionPayload.of(null, "CLOSING", content, 0);
-					sseEmitterService.send(sessionId, "continue", questionPayload);
+					QuestionPayload questionPayload = QuestionPayload.of(null, AiConstants.ACTION_CLOSING, content, 0);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 					break;
 
-				case "done":
+				case AiConstants.EVENT_DONE:
 					// 마무리 멘트 전송 후 인터뷰 완료 처리
 					sendInterviewComplete(sessionId);
 					break;
 
-				case "error":
+				case AiConstants.EVENT_ERROR:
 					String errMsg = dataNode.path("message").asText();
-					sseEmitterService.send(sessionId, "error", ErrorPayload.builder().message(errMsg).build());
+					sseEmitterService.send(sessionId, AiConstants.EVENT_ERROR,
+						ErrorPayload.builder().message(errMsg).build());
 					sendInterviewComplete(sessionId);
 					break;
 			}

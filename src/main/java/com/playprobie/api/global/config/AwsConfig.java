@@ -1,7 +1,9 @@
-package com.playprobie.api.infra.config;
+package com.playprobie.api.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.playprobie.api.global.config.properties.AwsProperties;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -23,14 +25,14 @@ public class AwsConfig {
 	public AwsCredentialsProvider awsCredentialsProvider() {
 		return StaticCredentialsProvider.create(
 			AwsBasicCredentials.create(
-				awsProperties.getAccessKey(),
-				awsProperties.getSecretKey()));
+				awsProperties.accessKey(),
+				awsProperties.secretKey()));
 	}
 
 	@Bean
 	public S3Client s3Client(AwsCredentialsProvider credentialsProvider) {
 		return S3Client.builder()
-			.region(Region.of(awsProperties.getS3().getRegion()))
+			.region(Region.of(awsProperties.s3().region()))
 			.credentialsProvider(credentialsProvider)
 			.build();
 	}
@@ -38,7 +40,7 @@ public class AwsConfig {
 	@Bean(destroyMethod = "close")
 	public S3Presigner s3Presigner(AwsCredentialsProvider credentialsProvider) {
 		return S3Presigner.builder()
-			.region(Region.of(awsProperties.getS3().getRegion()))
+			.region(Region.of(awsProperties.s3().region()))
 			.credentialsProvider(credentialsProvider)
 			.build();
 	}
@@ -46,7 +48,7 @@ public class AwsConfig {
 	@Bean
 	public GameLiftClient gameLiftClient(AwsCredentialsProvider credentialsProvider) {
 		return GameLiftClient.builder()
-			.region(Region.of(awsProperties.getRegion()))
+			.region(Region.of(awsProperties.region()))
 			.credentialsProvider(credentialsProvider)
 			.build();
 	}
@@ -54,7 +56,7 @@ public class AwsConfig {
 	@Bean
 	public StsClient stsClient(AwsCredentialsProvider credentialsProvider) {
 		return StsClient.builder()
-			.region(Region.of(awsProperties.getRegion()))
+			.region(Region.of(awsProperties.region()))
 			.credentialsProvider(credentialsProvider)
 			.build();
 	}
@@ -63,7 +65,7 @@ public class AwsConfig {
 	public software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient gameLiftStreamsClient(
 		AwsCredentialsProvider credentialsProvider) {
 		return software.amazon.awssdk.services.gameliftstreams.GameLiftStreamsClient.builder()
-			.region(Region.of(awsProperties.getGamelift().getRegion()))
+			.region(Region.of(awsProperties.gamelift().region()))
 			.credentialsProvider(credentialsProvider)
 			.build();
 	}

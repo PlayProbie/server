@@ -2,7 +2,7 @@ package com.playprobie.api.infra.gamelift;
 
 import org.springframework.stereotype.Service;
 
-import com.playprobie.api.infra.config.AwsProperties;
+import com.playprobie.api.global.config.properties.AwsProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +40,13 @@ import software.amazon.awssdk.services.gameliftstreams.model.UpdateStreamGroupRe
 @Slf4j
 public class GameLiftService {
 
+	private static final String OS_WINDOWS = "WINDOWS";
+	private static final String OS_UBUNTU = "UBUNTU";
+	private static final String RUNTIME_WIN_2022 = "2022";
+	private static final String RUNTIME_UBUNTU = "22_04_LTS"; // Renamed for clarity
+
+	private static final int SAFE_CAPACITY = 0; // Cost Safety Guarantee
+
 	private final GameLiftStreamsClient gameLiftStreamsClient;
 	private final AwsProperties awsProperties;
 
@@ -67,10 +74,10 @@ public class GameLiftService {
 
 		// RuntimeEnvironment 설정 (OS 타입에 따라)
 		RuntimeEnvironment.Builder runtimeBuilder = RuntimeEnvironment.builder();
-		if ("WINDOWS".equals(osType)) {
-			runtimeBuilder.type("WINDOWS").version("2022");
+		if (OS_WINDOWS.equals(osType)) {
+			runtimeBuilder.type(OS_WINDOWS).version(RUNTIME_WIN_2022);
 		} else {
-			runtimeBuilder.type("UBUNTU").version("22_04_LTS");
+			runtimeBuilder.type(OS_UBUNTU).version(RUNTIME_UBUNTU);
 		}
 
 		CreateApplicationRequest request = CreateApplicationRequest.builder()
@@ -103,14 +110,16 @@ public class GameLiftService {
 
 		// ⚠️ SAFETY: Cost Optimization - Capacity는 항상 0으로 하드코딩
 		// 절대 이 값을 외부 입력으로 변경하지 마세요!
-		final int SAFE_ALWAYS_ON_CAPACITY = 0;
-		final int SAFE_MAXIMUM_CAPACITY = 0;
+		// ⚠️ SAFETY: Cost Optimization - Capacity는 항상 0으로 하드코딩 (Class-level CONST used)
+		// 절대 이 값을 외부 입력으로 변경하지 마세요!
+		final int SAFE_ALWAYS_ON_CAPACITY = SAFE_CAPACITY;
+		final int SAFE_MAXIMUM_CAPACITY = SAFE_CAPACITY;
 
 		CreateStreamGroupRequest request = CreateStreamGroupRequest.builder()
 			.description(groupName)
 			.streamClass(StreamClass.fromValue(streamClassValue))
 			.locationConfigurations(LocationConfiguration.builder()
-				.locationName(awsProperties.getGamelift().getRegion())
+				.locationName(awsProperties.gamelift().region())
 				// 🚨 SAFETY: Cost Optimization
 				.alwaysOnCapacity(SAFE_ALWAYS_ON_CAPACITY)
 				.maximumCapacity(SAFE_MAXIMUM_CAPACITY)
@@ -156,7 +165,7 @@ public class GameLiftService {
 		UpdateStreamGroupRequest request = UpdateStreamGroupRequest.builder()
 			.identifier(streamGroupId)
 			.locationConfigurations(LocationConfiguration.builder()
-				.locationName(awsProperties.getGamelift().getRegion())
+				.locationName(awsProperties.gamelift().region())
 				.alwaysOnCapacity(targetCapacity) // 실제 할당할 인스턴스 수
 				.maximumCapacity(targetCapacity) // 최대 허용 용량
 				.build())

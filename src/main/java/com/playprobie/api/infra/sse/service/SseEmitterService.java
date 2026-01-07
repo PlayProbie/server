@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.playprobie.api.global.config.properties.AiProperties;
 import com.playprobie.api.infra.sse.repository.SseEmitterRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -16,16 +17,18 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class SseEmitterService {
 
-	private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 10;
+	private static final String EVENT_CONNECT = "connect";
+	private static final String DATA_CONNECTED = "connected";
 
 	private final SseEmitterRepository emitterRepository;
+	private final AiProperties aiProperties;
 
 	public SseEmitter connect(UUID uuid) {
 		String sessionUuid = uuid.toString();
-		SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
+		SseEmitter emitter = new SseEmitter(aiProperties.sse().timeout().toMillis());
 		emitterRepository.save(sessionUuid, emitter);
 
-		send(sessionUuid, "connect", "connected");
+		send(sessionUuid, EVENT_CONNECT, DATA_CONNECTED);
 		return emitter;
 	}
 

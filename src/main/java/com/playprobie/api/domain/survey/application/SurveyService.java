@@ -4,7 +4,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +30,7 @@ import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
 import com.playprobie.api.domain.survey.dto.response.UpdateSurveyStatusResponse;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
+import com.playprobie.api.global.config.properties.AppProperties;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
@@ -51,9 +51,7 @@ public class SurveyService {
 	private final StreamingResourceService streamingResourceService;
 	private final AiClient aiClient;
 	private final WorkspaceSecurityManager securityManager;
-
-	@Value("${playprobie.base-url}")
-	private String baseUrl;
+	private final AppProperties appProperties;
 
 	// ========== Survey CRUD ==========
 
@@ -81,7 +79,7 @@ public class SurveyService {
 		Survey savedSurvey = surveyRepository.save(survey);
 
 		// URL 생성 (UUID 사용)
-		String surveyUrl = baseUrl + "/surveys/session/" + savedSurvey.getUuid();
+		String surveyUrl = appProperties.baseUrl() + "/surveys/session/" + savedSurvey.getUuid();
 		savedSurvey.assignUrl(surveyUrl);
 
 		return SurveyResponse.from(savedSurvey);

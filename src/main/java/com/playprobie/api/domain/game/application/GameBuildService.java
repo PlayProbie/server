@@ -21,9 +21,9 @@ import com.playprobie.api.domain.game.dto.GameBuildResponse;
 import com.playprobie.api.domain.game.exception.GameBuildNotFoundException;
 import com.playprobie.api.domain.game.exception.GameNotFoundException;
 import com.playprobie.api.domain.game.exception.S3AccessException;
+import com.playprobie.api.global.config.properties.AwsProperties;
 import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.BusinessException;
-import com.playprobie.api.infra.config.AwsProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +44,8 @@ import software.amazon.awssdk.services.sts.model.StsException;
 @RequiredArgsConstructor
 @Slf4j
 public class GameBuildService {
+
+	private static final String SESSION_PREFIX_GAME_UPLOAD = "GameUpload-";
 
 	private final GameBuildRepository gameBuildRepository;
 	private final GameRepository gameRepository;
@@ -149,10 +151,10 @@ public class GameBuildService {
 			String policy = buildSessionPolicy(s3Prefix);
 
 			AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
-				.roleArn(awsProperties.getS3().getRoleArn())
-				.roleSessionName("GameUpload-" + UUID.randomUUID())
+				.roleArn(awsProperties.s3().roleArn())
+				.roleSessionName(SESSION_PREFIX_GAME_UPLOAD + UUID.randomUUID())
 				.policy(policy)
-				.durationSeconds(3600) // 1시간
+				.durationSeconds((int)awsProperties.s3().credentialsDuration().toSeconds())
 				.build();
 
 			AssumeRoleResponse response = stsClient.assumeRole(assumeRoleRequest);
@@ -177,7 +179,7 @@ public class GameBuildService {
 			statement.put("Effect", "Allow");
 			statement.put("Action", "s3:PutObject");
 			statement.put("Resource", String.format("arn:aws:s3:::%s/%s*",
-				awsProperties.getS3().getBucketName(), s3Prefix));
+				awsProperties.s3().bucketName(), s3Prefix));
 
 			return mapper.writeValueAsString(policy);
 		} catch (Exception e) {
@@ -191,7 +193,7 @@ public class GameBuildService {
 			String continuationToken = null;
 			do {
 				ListObjectsV2Request.Builder listReqBuilder = ListObjectsV2Request.builder()
-					.bucket(awsProperties.getS3().getBucketName())
+					.bucket(awsProperties.s3().bucketName())
 					.prefix(prefix);
 
 				if (continuationToken != null) {
@@ -206,7 +208,7 @@ public class GameBuildService {
 						.toList();
 
 					DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
-						.bucket(awsProperties.getS3().getBucketName())
+						.bucket(awsProperties.s3().bucketName())
 						.delete(Delete.builder().objects(objectIds).build())
 						.build();
 
@@ -226,7 +228,7 @@ public class GameBuildService {
 	private void verifyAtLeastOneFileExists(String prefix) {
 		try {
 			ListObjectsV2Request request = ListObjectsV2Request.builder()
-				.bucket(awsProperties.getS3().getBucketName())
+				.bucket(awsProperties.s3().bucketName())
 				.prefix(prefix)
 				.maxKeys(1) // 1개만 확인
 				.build();

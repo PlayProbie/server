@@ -12,7 +12,7 @@ import com.playprobie.api.domain.auth.exception.EmailDuplicateException;
 import com.playprobie.api.domain.auth.exception.InvalidCredentialsException;
 import com.playprobie.api.domain.user.dao.UserRepository;
 import com.playprobie.api.domain.user.domain.User;
-import com.playprobie.api.global.security.jwt.JwtProperties;
+import com.playprobie.api.global.config.properties.JwtProperties;
 import com.playprobie.api.global.security.jwt.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -62,6 +62,6 @@ public class AuthService {
 		String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
 
 		// DTO 조립 로직 moved from controller
-		return LoginResponse.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds(), user);
+		return LoginResponse.of(accessToken, jwtProperties.accessTokenExpiration(), user);
 	}
 }
