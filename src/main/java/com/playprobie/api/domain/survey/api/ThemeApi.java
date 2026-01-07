@@ -14,7 +14,7 @@ import com.playprobie.api.domain.survey.application.ThemeRecommendationService;
 import com.playprobie.api.domain.survey.domain.TestStage;
 import com.playprobie.api.domain.survey.domain.ThemeCategory;
 import com.playprobie.api.domain.survey.domain.ThemeDetail;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,7 +33,7 @@ public class ThemeApi {
      * GET /themes/recommendations?stage=PROTOTYPE
      */
     @GetMapping("/recommendations")
-    public ResponseEntity<ApiResponse<List<ThemeCategoryResponse>>> getRecommendedThemes(
+    public ResponseEntity<CommonResponse<List<ThemeCategoryResponse>>> getRecommendedThemes(
             @RequestParam String stage) {
         TestStage testStage = parseTestStage(stage);
         List<ThemeCategory> themes = themeRecommendationService.getRecommendedThemes(testStage);
@@ -42,7 +42,7 @@ public class ThemeApi {
                 .map(ThemeCategoryResponse::from)
                 .toList();
 
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     /**
@@ -50,7 +50,7 @@ public class ThemeApi {
      * GET /themes/{category}/details
      */
     @GetMapping("/{category}/details")
-    public ResponseEntity<ApiResponse<List<ThemeDetailResponse>>> getThemeDetails(
+    public ResponseEntity<CommonResponse<List<ThemeDetailResponse>>> getThemeDetails(
             @PathVariable String category) {
         ThemeCategory themeCategory = parseThemeCategory(category);
         List<ThemeDetail> details = themeRecommendationService.getThemeDetails(themeCategory);
@@ -59,7 +59,7 @@ public class ThemeApi {
                 .map(ThemeDetailResponse::from)
                 .toList();
 
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     /**
@@ -67,7 +67,7 @@ public class ThemeApi {
      * GET /themes/all
      */
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<Map<String, List<ThemeDetailResponse>>>> getAllThemes() {
+    public ResponseEntity<CommonResponse<Map<String, List<ThemeDetailResponse>>>> getAllThemes() {
         Map<ThemeCategory, List<ThemeDetail>> allThemes = themeRecommendationService.getAllThemesWithDetails();
 
         Map<String, List<ThemeDetailResponse>> response = allThemes.entrySet().stream()
@@ -77,7 +77,7 @@ public class ThemeApi {
                                 .map(ThemeDetailResponse::from)
                                 .toList()));
 
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     // ===== Private =====

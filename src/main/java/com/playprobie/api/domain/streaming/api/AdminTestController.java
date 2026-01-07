@@ -12,7 +12,7 @@ import com.playprobie.api.domain.streaming.application.StreamingResourceService;
 import com.playprobie.api.domain.streaming.dto.ResourceStatusResponse;
 import com.playprobie.api.domain.streaming.dto.TestActionResponse;
 import com.playprobie.api.domain.user.domain.User;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,10 +44,10 @@ public class AdminTestController {
      */
     @PostMapping("/start-test")
     @Operation(summary = "관리자 테스트 시작", description = "스트리밍 Capacity를 0 → 1로 설정하여 테스트를 시작합니다.")
-    public ResponseEntity<ApiResponse<TestActionResponse>> startTest(@PathVariable java.util.UUID surveyId,
+    public ResponseEntity<CommonResponse<TestActionResponse>> startTest(@PathVariable java.util.UUID surveyId,
             @AuthenticationPrincipal(expression = "user") User user) {
         TestActionResponse response = streamingResourceService.startTest(surveyId, user);
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     /**
@@ -61,10 +61,10 @@ public class AdminTestController {
      */
     @PostMapping("/stop-test")
     @Operation(summary = "관리자 테스트 종료", description = "스트리밍 Capacity를 1 → 0으로 설정하여 테스트를 종료합니다.")
-    public ResponseEntity<ApiResponse<TestActionResponse>> stopTest(@PathVariable java.util.UUID surveyId,
+    public ResponseEntity<CommonResponse<TestActionResponse>> stopTest(@PathVariable java.util.UUID surveyId,
             @AuthenticationPrincipal(expression = "user") User user) {
         TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     /**
@@ -78,9 +78,9 @@ public class AdminTestController {
      */
     @GetMapping("/status")
     @Operation(summary = "리소스 상태 조회", description = "GameLift 리소스 상태를 보링합니다.")
-    public ResponseEntity<ApiResponse<ResourceStatusResponse>> getStatus(@PathVariable java.util.UUID surveyId,
+    public ResponseEntity<CommonResponse<ResourceStatusResponse>> getStatus(@PathVariable java.util.UUID surveyId,
             @AuthenticationPrincipal(expression = "user") User user) {
         ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 }

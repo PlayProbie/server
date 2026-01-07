@@ -18,7 +18,7 @@ import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceService;
 import com.playprobie.api.domain.workspace.dto.InviteMemberRequest;
 import com.playprobie.api.domain.workspace.dto.WorkspaceMemberResponse;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,12 +42,12 @@ public class WorkspaceMemberController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스 또는 사용자를 찾을 수 없음"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 멤버임")
         })
-        public ResponseEntity<ApiResponse<WorkspaceMemberResponse>> inviteMember(
+        public ResponseEntity<CommonResponse<WorkspaceMemberResponse>> inviteMember(
                         @Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid,
                         @Valid @RequestBody InviteMemberRequest request,
                         @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
                 WorkspaceMemberResponse response = workspaceService.inviteMember(workspaceUuid, request, user);
-                return ResponseEntity.ok(ApiResponse.of(response));
+                return ResponseEntity.ok(CommonResponse.of(response));
         }
 
         @GetMapping
@@ -55,11 +55,11 @@ public class WorkspaceMemberController {
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
         })
-        public ResponseEntity<ApiResponse<List<WorkspaceMemberResponse>>> getMembers(
+        public ResponseEntity<CommonResponse<List<WorkspaceMemberResponse>>> getMembers(
                         @Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid,
                         @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
                 List<WorkspaceMemberResponse> responses = workspaceService.getMembers(workspaceUuid, user);
-                return ResponseEntity.ok(ApiResponse.of(responses));
+                return ResponseEntity.ok(CommonResponse.of(responses));
         }
 
         @DeleteMapping("/{userId}")

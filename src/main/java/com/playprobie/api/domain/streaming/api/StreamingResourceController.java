@@ -15,7 +15,7 @@ import com.playprobie.api.domain.streaming.application.StreamingResourceService;
 import com.playprobie.api.domain.streaming.dto.CreateStreamingResourceRequest;
 import com.playprobie.api.domain.streaming.dto.StreamingResourceResponse;
 import com.playprobie.api.domain.user.domain.User;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,69 +35,70 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Streaming Resource API", description = "스트리밍 리소스 관리 API (관리자용)")
 public class StreamingResourceController {
 
-    private final StreamingResourceService streamingResourceService;
+        private final StreamingResourceService streamingResourceService;
 
-    /**
-     * 스트리밍 리소스를 할당합니다 (비동기).
-     * 
-     * <p>
-     * POST /surveys/{surveyId}/streaming-resource
-     * 
-     * @param surveyId Survey PK
-     * @param request  할당 요청
-     * @return 202 Accepted (Location 헤더에 상태 조회 URL 포함)
-     */
-    @PostMapping
-    @Operation(summary = "스트리밍 리소스 할당 (비동기)", description = "GameLift 스트리밍 리소스를 할당합니다. " +
-            "리소스 생성은 비동기로 진행되며, 응답 코드 202 Accepted와 함께 " +
-            "Location 헤더에 포함된 URL을 통해 상태를 조회해야 합니다.")
-    public ResponseEntity<ApiResponse<StreamingResourceResponse>> createResource(
-            @AuthenticationPrincipal(expression = "user") User user,
-            @PathVariable java.util.UUID surveyId,
-            @Valid @RequestBody CreateStreamingResourceRequest request) {
+        /**
+         * 스트리밍 리소스를 할당합니다 (비동기).
+         * 
+         * <p>
+         * POST /surveys/{surveyId}/streaming-resource
+         * 
+         * @param surveyId Survey PK
+         * @param request  할당 요청
+         * @return 202 Accepted (Location 헤더에 상태 조회 URL 포함)
+         */
+        @PostMapping
+        @Operation(summary = "스트리밍 리소스 할당 (비동기)", description = "GameLift 스트리밍 리소스를 할당합니다. " +
+                        "리소스 생성은 비동기로 진행되며, 응답 코드 202 Accepted와 함께 " +
+                        "Location 헤더에 포함된 URL을 통해 상태를 조회해야 합니다.")
+        public ResponseEntity<CommonResponse<StreamingResourceResponse>> createResource(
+                        @AuthenticationPrincipal(expression = "user") User user,
+                        @PathVariable java.util.UUID surveyId,
+                        @Valid @RequestBody CreateStreamingResourceRequest request) {
 
-        StreamingResourceResponse response = streamingResourceService.createResource(surveyId, request, user);
+                StreamingResourceResponse response = streamingResourceService.createResource(surveyId, request, user);
 
-        return ResponseEntity
-                .status(HttpStatus.ACCEPTED)
-                .location(org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest()
-                        .build().toUri())
-                .body(ApiResponse.of(response));
-    }
+                return ResponseEntity
+                                .status(HttpStatus.ACCEPTED)
+                                .location(org.springframework.web.servlet.support.ServletUriComponentsBuilder
+                                                .fromCurrentRequest()
+                                                .build().toUri())
+                                .body(CommonResponse.of(response));
+        }
 
-    /**
-     * 스트리밍 리소스를 조회합니다.
-     * 
-     * <p>
-     * GET /surveys/{surveyId}/streaming-resource
-     * 
-     * @param surveyId Survey PK
-     * @return 200 OK
-     */
-    @GetMapping
-    @Operation(summary = "스트리밍 리소스 조회", description = "할당된 스트리밍 리소스 정보를 조회합니다.")
-    public ResponseEntity<ApiResponse<StreamingResourceResponse>> getResource(
-            @AuthenticationPrincipal(expression = "user") User user,
-            @PathVariable java.util.UUID surveyId) {
-        StreamingResourceResponse response = streamingResourceService.getResourceByUuid(surveyId, user);
-        return ResponseEntity.ok(ApiResponse.of(response));
-    }
+        /**
+         * 스트리밍 리소스를 조회합니다.
+         * 
+         * <p>
+         * GET /surveys/{surveyId}/streaming-resource
+         * 
+         * @param surveyId Survey PK
+         * @return 200 OK
+         */
+        @GetMapping
+        @Operation(summary = "스트리밍 리소스 조회", description = "할당된 스트리밍 리소스 정보를 조회합니다.")
+        public ResponseEntity<CommonResponse<StreamingResourceResponse>> getResource(
+                        @AuthenticationPrincipal(expression = "user") User user,
+                        @PathVariable java.util.UUID surveyId) {
+                StreamingResourceResponse response = streamingResourceService.getResourceByUuid(surveyId, user);
+                return ResponseEntity.ok(CommonResponse.of(response));
+        }
 
-    /**
-     * 스트리밍 리소스를 해제합니다.
-     * 
-     * <p>
-     * DELETE /surveys/{surveyId}/streaming-resource
-     * 
-     * @param surveyId Survey PK
-     * @return 204 No Content
-     */
-    @DeleteMapping
-    @Operation(summary = "스트리밍 리소스 해제", description = "GameLift 스트리밍 리소스를 해제합니다.")
-    public ResponseEntity<Void> deleteResource(
-            @AuthenticationPrincipal(expression = "user") User user,
-            @PathVariable java.util.UUID surveyId) {
-        streamingResourceService.deleteResource(surveyId, user);
-        return ResponseEntity.noContent().build();
-    }
+        /**
+         * 스트리밍 리소스를 해제합니다.
+         * 
+         * <p>
+         * DELETE /surveys/{surveyId}/streaming-resource
+         * 
+         * @param surveyId Survey PK
+         * @return 204 No Content
+         */
+        @DeleteMapping
+        @Operation(summary = "스트리밍 리소스 해제", description = "GameLift 스트리밍 리소스를 해제합니다.")
+        public ResponseEntity<Void> deleteResource(
+                        @AuthenticationPrincipal(expression = "user") User user,
+                        @PathVariable java.util.UUID surveyId) {
+                streamingResourceService.deleteResource(surveyId, user);
+                return ResponseEntity.noContent().build();
+        }
 }

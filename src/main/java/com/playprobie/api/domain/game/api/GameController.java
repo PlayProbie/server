@@ -21,7 +21,7 @@ import com.playprobie.api.domain.game.dto.UpdateGameRequest;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.workspace.application.WorkspaceService;
 import com.playprobie.api.domain.workspace.domain.Workspace;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,13 +45,13 @@ public class GameController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음"),
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
-	public ResponseEntity<ApiResponse<GameResponse>> createGame(
+	public ResponseEntity<CommonResponse<GameResponse>> createGame(
 			@AuthenticationPrincipal(expression = "user") User user,
 			@Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid,
 			@Valid @RequestBody CreateGameRequest request) {
 		Workspace workspace = workspaceService.getWorkspaceEntity(workspaceUuid);
 		GameResponse response = gameService.createGame(workspace, request, user);
-		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
+		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
 	}
 
 	@GetMapping("/workspaces/{workspaceUuid}/games")
@@ -61,11 +61,11 @@ public class GameController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음"),
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
-	public ResponseEntity<ApiResponse<List<GameResponse>>> getGamesByWorkspace(
+	public ResponseEntity<CommonResponse<List<GameResponse>>> getGamesByWorkspace(
 			@AuthenticationPrincipal(expression = "user") User user,
 			@Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid) {
 		List<GameResponse> responses = gameService.getGamesByWorkspace(workspaceUuid, user);
-		return ResponseEntity.ok(ApiResponse.of(responses));
+		return ResponseEntity.ok(CommonResponse.of(responses));
 	}
 
 	@GetMapping("/games")
@@ -74,10 +74,10 @@ public class GameController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
-	public ResponseEntity<ApiResponse<List<GameResponse>>> getGamesByUser(
+	public ResponseEntity<CommonResponse<List<GameResponse>>> getGamesByUser(
 			@AuthenticationPrincipal(expression = "user") User user) {
 		List<GameResponse> responses = gameService.getGamesByUser(user);
-		return ResponseEntity.ok(ApiResponse.of(responses));
+		return ResponseEntity.ok(CommonResponse.of(responses));
 	}
 
 	@GetMapping("/games/{gameUuid}")
@@ -87,11 +87,11 @@ public class GameController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
-	public ResponseEntity<ApiResponse<GameResponse>> getGame(
+	public ResponseEntity<CommonResponse<GameResponse>> getGame(
 			@AuthenticationPrincipal(expression = "user") User user,
 			@Parameter(description = "게임 UUID") @PathVariable UUID gameUuid) {
 		GameResponse response = gameService.getGameByUuid(gameUuid, user);
-		return ResponseEntity.ok(ApiResponse.of(response));
+		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
 	@PutMapping("/games/{gameUuid}")
@@ -101,12 +101,12 @@ public class GameController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게임을 찾을 수 없음"),
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없음")
 	})
-	public ResponseEntity<ApiResponse<GameResponse>> updateGame(
+	public ResponseEntity<CommonResponse<GameResponse>> updateGame(
 			@AuthenticationPrincipal(expression = "user") User user,
 			@Parameter(description = "게임 UUID") @PathVariable UUID gameUuid,
 			@Valid @RequestBody UpdateGameRequest request) {
 		GameResponse response = gameService.updateGame(gameUuid, request, user);
-		return ResponseEntity.ok(ApiResponse.of(response));
+		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
 	@DeleteMapping("/games/{gameUuid}")

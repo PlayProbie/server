@@ -18,7 +18,7 @@ import com.playprobie.api.domain.streaming.dto.SignalRequest;
 import com.playprobie.api.domain.streaming.dto.SignalResponse;
 import com.playprobie.api.domain.streaming.dto.TerminateSessionRequest;
 import com.playprobie.api.domain.streaming.dto.TerminateSessionResponse;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -54,9 +54,9 @@ public class TesterSessionController {
      */
     @GetMapping("/session")
     @Operation(summary = "세션 가용성 확인", description = "세션 가용 여부를 확인합니다.")
-    public ResponseEntity<ApiResponse<SessionAvailabilityResponse>> checkSession(@PathVariable UUID surveyUuid) {
+    public ResponseEntity<CommonResponse<SessionAvailabilityResponse>> checkSession(@PathVariable UUID surveyUuid) {
         SessionAvailabilityResponse response = streamingResourceService.checkSessionAvailability(surveyUuid);
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     /**
@@ -71,12 +71,12 @@ public class TesterSessionController {
      */
     @PostMapping("/signal")
     @Operation(summary = "WebRTC 시그널링", description = "WebRTC 시그널을 처리합니다.")
-    public ResponseEntity<ApiResponse<SignalResponse>> signal(
+    public ResponseEntity<CommonResponse<SignalResponse>> signal(
             @PathVariable UUID surveyUuid,
             @Valid @RequestBody SignalRequest request) {
 
         SignalResponse response = streamingResourceService.processSignal(surveyUuid, request.signalRequest());
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     /**
@@ -91,12 +91,12 @@ public class TesterSessionController {
      */
     @GetMapping("/session/status")
     @Operation(summary = "세션 상태 확인 (Heartbeat)", description = "세션 활성 상태를 확인합니다.")
-    public ResponseEntity<ApiResponse<SessionStatusResponse>> getSessionStatus(
+    public ResponseEntity<CommonResponse<SessionStatusResponse>> getSessionStatus(
             @PathVariable UUID surveyUuid,
             @RequestParam(name = "survey_session_uuid") UUID surveySessionUuid) {
 
         boolean isActive = streamingResourceService.isSessionActive(surveySessionUuid);
-        return ResponseEntity.ok(ApiResponse.of(isActive
+        return ResponseEntity.ok(CommonResponse.of(isActive
                 ? SessionStatusResponse.active(surveySessionUuid)
                 : SessionStatusResponse.inactive()));
     }
@@ -113,11 +113,11 @@ public class TesterSessionController {
      */
     @PostMapping("/session/terminate")
     @Operation(summary = "세션 종료", description = "세션을 종료합니다.")
-    public ResponseEntity<ApiResponse<TerminateSessionResponse>> terminateSession(
+    public ResponseEntity<CommonResponse<TerminateSessionResponse>> terminateSession(
             @PathVariable UUID surveyUuid,
             @Valid @RequestBody TerminateSessionRequest request) {
 
         streamingResourceService.terminateSession(surveyUuid, request.surveySessionUuid(), request.reason());
-        return ResponseEntity.ok(ApiResponse.of(TerminateSessionResponse.ok()));
+        return ResponseEntity.ok(CommonResponse.of(TerminateSessionResponse.ok()));
     }
 }

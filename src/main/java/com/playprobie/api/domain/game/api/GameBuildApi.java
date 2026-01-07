@@ -18,7 +18,7 @@ import com.playprobie.api.domain.game.dto.CompleteUploadRequest;
 import com.playprobie.api.domain.game.dto.CreateGameBuildRequest;
 import com.playprobie.api.domain.game.dto.CreateGameBuildResponse;
 import com.playprobie.api.domain.game.dto.GameBuildResponse;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,28 +35,28 @@ public class GameBuildApi {
 
     @GetMapping
     @Operation(summary = "빌드 목록 조회", description = "해당 게임에 속한 모든 빌드 이력을 조회합니다.")
-    public ResponseEntity<ApiResponse<java.util.List<GameBuildResponse>>> getBuilds(@PathVariable UUID gameUuid) {
+    public ResponseEntity<CommonResponse<java.util.List<GameBuildResponse>>> getBuilds(@PathVariable UUID gameUuid) {
         java.util.List<GameBuildResponse> response = gameBuildService.getBuildsByGameUuid(gameUuid);
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     @PostMapping
     @Operation(summary = "빌드 생성 및 자격 증명 발급", description = "새 게임 빌드를 생성하고, S3 업로드용 임시 자격 증명을 발급합니다.")
-    public ResponseEntity<ApiResponse<CreateGameBuildResponse>> createBuild(
+    public ResponseEntity<CommonResponse<CreateGameBuildResponse>> createBuild(
             @PathVariable UUID gameUuid,
             @Valid @RequestBody CreateGameBuildRequest request) {
         CreateGameBuildResponse response = gameBuildService.createBuild(gameUuid, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
     }
 
     @PostMapping("/{buildUuid}/complete")
     @Operation(summary = "업로드 완료 처리", description = "S3 업로드 완료를 확인하고 상태를 변경합니다.")
-    public ResponseEntity<ApiResponse<GameBuildResponse>> completeUpload(
+    public ResponseEntity<CommonResponse<GameBuildResponse>> completeUpload(
             @PathVariable UUID gameUuid,
             @PathVariable UUID buildUuid,
             @Valid @RequestBody CompleteUploadRequest request) {
         GameBuild gameBuild = gameBuildService.completeUpload(gameUuid, buildUuid, request);
-        return ResponseEntity.ok(ApiResponse.of(GameBuildResponse.forComplete(gameBuild)));
+        return ResponseEntity.ok(CommonResponse.of(GameBuildResponse.forComplete(gameBuild)));
     }
 
     @DeleteMapping("/{buildUuid}")

@@ -19,7 +19,7 @@ import com.playprobie.api.domain.workspace.application.WorkspaceService;
 import com.playprobie.api.domain.workspace.dto.CreateWorkspaceRequest;
 import com.playprobie.api.domain.workspace.dto.UpdateWorkspaceRequest;
 import com.playprobie.api.domain.workspace.dto.WorkspaceResponse;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
@@ -43,11 +43,11 @@ public class WorkspaceController {
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공")
         })
-        public ResponseEntity<ApiResponse<WorkspaceResponse>> createWorkspace(
+        public ResponseEntity<CommonResponse<WorkspaceResponse>> createWorkspace(
                         @Valid @RequestBody CreateWorkspaceRequest request,
                         @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
                 WorkspaceResponse response = workspaceService.createWorkspace(request, user);
-                return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
+                return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
         }
 
         @GetMapping
@@ -55,10 +55,10 @@ public class WorkspaceController {
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
         })
-        public ResponseEntity<ApiResponse<List<WorkspaceResponse>>> getWorkspaces(
+        public ResponseEntity<CommonResponse<List<WorkspaceResponse>>> getWorkspaces(
                         @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
                 List<WorkspaceResponse> responses = workspaceService.getWorkspaces(user);
-                return ResponseEntity.ok(ApiResponse.of(responses));
+                return ResponseEntity.ok(CommonResponse.of(responses));
         }
 
         @GetMapping("/{workspaceUuid}")
@@ -67,10 +67,10 @@ public class WorkspaceController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음")
         })
-        public ResponseEntity<ApiResponse<WorkspaceResponse>> getWorkspace(
+        public ResponseEntity<CommonResponse<WorkspaceResponse>> getWorkspace(
                         @Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid) {
                 WorkspaceResponse response = workspaceService.getWorkspace(workspaceUuid);
-                return ResponseEntity.ok(ApiResponse.of(response));
+                return ResponseEntity.ok(CommonResponse.of(response));
         }
 
         @PutMapping("/{workspaceUuid}")
@@ -79,14 +79,14 @@ public class WorkspaceController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "워크스페이스를 찾을 수 없음")
         })
-        public ResponseEntity<ApiResponse<WorkspaceResponse>> updateWorkspace(
+        public ResponseEntity<CommonResponse<WorkspaceResponse>> updateWorkspace(
                         @Parameter(description = "워크스페이스 UUID") @PathVariable UUID workspaceUuid,
                         @Valid @RequestBody UpdateWorkspaceRequest request,
                         @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
                 // Owner check is now done in Service
                 WorkspaceResponse response = workspaceService.updateWorkspace(workspaceUuid, request,
                                 user);
-                return ResponseEntity.ok(ApiResponse.of(response));
+                return ResponseEntity.ok(CommonResponse.of(response));
         }
 
         @DeleteMapping("/{workspaceUuid}")

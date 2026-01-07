@@ -13,7 +13,7 @@ import com.playprobie.api.domain.auth.dto.LoginResponse;
 import com.playprobie.api.domain.auth.dto.LoginResult;
 import com.playprobie.api.domain.auth.dto.SignupRequest;
 import com.playprobie.api.domain.auth.dto.SignupResponse;
-import com.playprobie.api.global.common.response.ApiResponse;
+import com.playprobie.api.global.common.response.CommonResponse;
 
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,14 +30,14 @@ public class AuthApi {
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
-    public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<CommonResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
         SignupResponse response = authService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
     }
 
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "이메일/비밀번호로 로그인하고 Access Token을 발급합니다.")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResult result = authService.login(request);
 
         // JWT를 응답 body에 포함
@@ -46,7 +46,7 @@ public class AuthApi {
                 result.expiresInSeconds(),
                 result.user());
 
-        return ResponseEntity.ok(ApiResponse.of(response));
+        return ResponseEntity.ok(CommonResponse.of(response));
     }
 
     @PostMapping("/logout")

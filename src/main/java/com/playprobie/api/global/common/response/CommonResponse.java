@@ -14,12 +14,12 @@ import lombok.RequiredArgsConstructor;
 @Schema(description = "공통 API 응답 래퍼")
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class ApiResponse<T> {
+public class CommonResponse<T> {
 
     @Schema(description = "API 응답 데이터")
     private final T result;
 
-    public static <T> ApiResponse<T> of(T result) {
-        return new ApiResponse<>(result);
+    public static <T> CommonResponse<T> of(T result) {
+        return new CommonResponse<>(result);
     }
 }
