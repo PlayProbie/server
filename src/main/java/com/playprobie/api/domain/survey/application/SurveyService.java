@@ -10,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.game.application.GameService;
 import com.playprobie.api.domain.game.domain.Game;
-import com.playprobie.api.domain.user.domain.User;
-import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
+import com.playprobie.api.domain.streaming.application.StreamingResourceService;
+import com.playprobie.api.domain.streaming.dto.TestActionResponse;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
@@ -29,8 +29,8 @@ import com.playprobie.api.domain.survey.dto.request.CreateSurveyRequest;
 import com.playprobie.api.domain.survey.dto.request.UpdateSurveyStatusRequest;
 import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
 import com.playprobie.api.domain.survey.dto.response.UpdateSurveyStatusResponse;
-import com.playprobie.api.domain.streaming.application.StreamingResourceService;
-import com.playprobie.api.domain.streaming.dto.TestActionResponse;
+import com.playprobie.api.domain.user.domain.User;
+import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
@@ -153,20 +153,21 @@ public class SurveyService {
 			request.testPurpose());
 	}
 
-	public QuestionFeedbackResponse getQuestionFeedback(String gameName, String gameGenre, String gameContext,
-		String testPurpose, String question) {
-		GenerateFeedbackRequest request = GenerateFeedbackRequest.builder()
-			.gameName(gameName)
+	public QuestionFeedbackResponse getQuestionFeedback(
+		com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
+		// Data extraction and processing logic moved from controller
+		String question = request.questions().get(0);
+		String gameGenre = String.join(", ", request.gameGenre());
+
+		GenerateFeedbackRequest aiRequest = GenerateFeedbackRequest.builder()
+			.gameName(request.gameName())
 			.gameGenre(gameGenre)
-			.gameContext(gameContext)
-			.testPurpose(testPurpose)
+			.gameContext(request.gameContext())
+			.testPurpose(request.testPurpose())
 			.originalQuestion(question)
 			.build();
-		// AI Feedback doesn't necessarily need workspace check if generic,
-		// but if it uses context from DB, it should.
-		// Current logic uses passed string.
 
-		GenerateFeedbackResponse aiResponse = aiClient.getQuestionFeedback(request);
+		GenerateFeedbackResponse aiResponse = aiClient.getQuestionFeedback(aiRequest);
 
 		return new QuestionFeedbackResponse(
 			question,

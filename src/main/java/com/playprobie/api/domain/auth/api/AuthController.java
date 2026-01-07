@@ -10,14 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.playprobie.api.domain.auth.application.AuthService;
 import com.playprobie.api.domain.auth.dto.LoginRequest;
 import com.playprobie.api.domain.auth.dto.LoginResponse;
-import com.playprobie.api.domain.auth.dto.LoginResult;
 import com.playprobie.api.domain.auth.dto.SignupRequest;
 import com.playprobie.api.domain.auth.dto.SignupResponse;
 import com.playprobie.api.global.common.response.CommonResponse;
 
-import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -40,14 +39,7 @@ public class AuthController {
 	@Operation(summary = "로그인", description = "이메일/비밀번호로 로그인하고 Access Token을 발급합니다.")
 	public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody
 	LoginRequest request) {
-		LoginResult result = authService.login(request);
-
-		// JWT를 응답 body에 포함
-		LoginResponse response = LoginResponse.of(
-			result.accessToken(),
-			result.expiresInSeconds(),
-			result.user());
-
+		LoginResponse response = authService.login(request);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 

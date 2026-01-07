@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.auth.dto.LoginRequest;
-import com.playprobie.api.domain.auth.dto.LoginResult;
+import com.playprobie.api.domain.auth.dto.LoginResponse;
 import com.playprobie.api.domain.auth.dto.SignupRequest;
 import com.playprobie.api.domain.auth.dto.SignupResponse;
 import com.playprobie.api.domain.auth.exception.EmailDuplicateException;
@@ -43,7 +43,7 @@ public class AuthService {
 	}
 
 	@Transactional(readOnly = true)
-	public LoginResult login(LoginRequest request) {
+	public LoginResponse login(LoginRequest request) {
 		// 사용자 조회
 		User user = userRepository.findByEmail(request.email())
 			.orElseThrow(InvalidCredentialsException::new);
@@ -61,6 +61,7 @@ public class AuthService {
 		// JWT 토큰 생성
 		String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
 
-		return LoginResult.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds(), user);
+		// DTO 조립 로직 moved from controller
+		return LoginResponse.of(accessToken, jwtProperties.getAccessTokenExpirationSeconds(), user);
 	}
 }

@@ -21,12 +21,12 @@ import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
 import com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest;
 import com.playprobie.api.domain.survey.dto.QuestionFeedbackResponse;
-import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.domain.survey.dto.request.AiQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.request.CreateSurveyRequest;
 import com.playprobie.api.domain.survey.dto.request.UpdateSurveyStatusRequest;
 import com.playprobie.api.domain.survey.dto.response.SurveyResponse;
 import com.playprobie.api.domain.survey.dto.response.UpdateSurveyStatusResponse;
+import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -91,14 +91,7 @@ public class SurveyController {
 	public ResponseEntity<CommonResponse<QuestionFeedbackResponse>> getQuestionFeedback(
 		@Valid @RequestBody
 		QuestionFeedbackRequest request) {
-		String question = request.questions().get(0);
-		String gameGenre = String.join(", ", request.gameGenre());
-		QuestionFeedbackResponse feedback = surveyService.getQuestionFeedback(
-			request.gameName(),
-			gameGenre,
-			request.gameContext(),
-			request.testPurpose(),
-			question);
+		QuestionFeedbackResponse feedback = surveyService.getQuestionFeedback(request);
 		return ResponseEntity.ok(CommonResponse.of(feedback));
 	}
 
