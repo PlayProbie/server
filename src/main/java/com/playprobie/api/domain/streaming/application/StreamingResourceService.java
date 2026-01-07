@@ -136,12 +136,26 @@ public class StreamingResourceService {
         }
 
         /**
-         * 스트리밍 리소스를 UUID로 조회합니다.
+         * 스트리밍 리소스를 UUID로 조회합니다 (JIT 동기화 포함).
          */
+        @Transactional
         public StreamingResourceResponse getResourceByUuid(UUID uuid, User user) {
                 StreamingResource resource = streamingResourceRepository.findBySurveyUuid(uuid)
                                 .orElseThrow(StreamingResourceNotFoundException::new);
                 securityManager.validateReadAccess(resource.getSurvey().getGame().getWorkspace(), user);
+
+                // JIT 상태 동기화 (Transitional State일 때만 수행)
+                if (resource.getAwsStreamGroupId() != null && isTransitionalState(resource.getStatus())) {
+                        try {
+                                GetStreamGroupResponse awsResponse = gameLiftService.getStreamGroupStatus(
+                                                resource.getAwsStreamGroupId());
+                                synchronizeState(resource, awsResponse.status());
+                        } catch (Exception e) {
+                                log.warn("Failed to sync status with AWS for resourceId={}: {}", resource.getId(),
+                                                e.getMessage());
+                        }
+                }
+
                 return StreamingResourceResponse.from(resource);
         }
 
