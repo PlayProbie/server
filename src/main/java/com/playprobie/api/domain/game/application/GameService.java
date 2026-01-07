@@ -31,7 +31,8 @@ public class GameService {
 	private final WorkspaceService workspaceService;
 
 	@Transactional
-	public GameResponse createGame(Workspace workspace, CreateGameRequest request, User user) {
+	public GameResponse createGame(UUID workspaceUuid, CreateGameRequest request, User user) {
+		Workspace workspace = workspaceService.getWorkspaceEntity(workspaceUuid);
 		securityManager.validateWriteAccess(workspace, user);
 
 		List<GameGenre> genres = request.gameGenre().stream()

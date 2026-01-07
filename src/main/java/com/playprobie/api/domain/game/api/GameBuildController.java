@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.playprobie.api.domain.game.application.GameBuildService;
-import com.playprobie.api.domain.game.domain.GameBuild;
 import com.playprobie.api.domain.game.dto.CompleteUploadRequest;
 import com.playprobie.api.domain.game.dto.CreateGameBuildRequest;
 import com.playprobie.api.domain.game.dto.CreateGameBuildResponse;
@@ -61,8 +60,8 @@ public class GameBuildController {
 		UUID buildUuid,
 		@Valid @RequestBody
 		CompleteUploadRequest request) {
-		GameBuild gameBuild = gameBuildService.completeUpload(gameUuid, buildUuid, request);
-		return ResponseEntity.ok(CommonResponse.of(GameBuildResponse.forComplete(gameBuild)));
+		GameBuildResponse response = gameBuildService.completeUpload(gameUuid, buildUuid, request);
+		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
 	@DeleteMapping("/{buildUuid}")

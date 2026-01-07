@@ -19,8 +19,6 @@ import com.playprobie.api.domain.game.dto.CreateGameRequest;
 import com.playprobie.api.domain.game.dto.GameResponse;
 import com.playprobie.api.domain.game.dto.UpdateGameRequest;
 import com.playprobie.api.domain.user.domain.User;
-import com.playprobie.api.domain.workspace.application.WorkspaceService;
-import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.global.common.response.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 public class GameController {
 
 	private final GameService gameService;
-	private final WorkspaceService workspaceService;
 
 	@PostMapping("/workspaces/{workspaceUuid}/games")
 	@Operation(summary = "게임 생성", description = "특정 워크스페이스 하위에 새 게임을 생성합니다.")
@@ -52,8 +49,7 @@ public class GameController {
 		UUID workspaceUuid,
 		@Valid @RequestBody
 		CreateGameRequest request) {
-		Workspace workspace = workspaceService.getWorkspaceEntity(workspaceUuid);
-		GameResponse response = gameService.createGame(workspace, request, user);
+		GameResponse response = gameService.createGame(workspaceUuid, request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(response));
 	}
 

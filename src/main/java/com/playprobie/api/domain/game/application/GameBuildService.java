@@ -3,13 +3,12 @@ package com.playprobie.api.domain.game.application;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.playprobie.api.domain.game.dao.GameBuildRepository;
 import com.playprobie.api.domain.game.dao.GameRepository;
 import com.playprobie.api.domain.game.domain.BuildStatus;
@@ -102,13 +101,13 @@ public class GameBuildService {
 	 * 업로드 완료를 확인하고 빌드 상태를 변경합니다.
 	 */
 	@Transactional
-	public GameBuild completeUpload(
+	public GameBuildResponse completeUpload(
 		UUID gameUuid, UUID buildId, CompleteUploadRequest request) {
 
 		GameBuild gameBuild = getVerifiedBuild(gameUuid, buildId);
 
 		if (gameBuild.getStatus() == BuildStatus.UPLOADED) {
-			return gameBuild;
+			return GameBuildResponse.forComplete(gameBuild);
 		}
 
 		// Light Verification: 최소 1개 파일 존재 확인
@@ -125,7 +124,7 @@ public class GameBuildService {
 			buildId, request.expectedFileCount(), request.expectedTotalSize(),
 			request.osType(), request.executablePath());
 
-		return gameBuild;
+		return GameBuildResponse.forComplete(gameBuild);
 	}
 
 	/**
