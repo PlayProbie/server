@@ -15,10 +15,9 @@
 ### Controller (API)
 
 ```java
-// 패턴: [도메인]Api 또는 [도메인]Controller
+// 패턴: [도메인]Controller
 @RestController
-public class UserApi { }        // REST API 명시적 표현
-public class UserController { } // 전통적인 방식
+public class UserController { }
 ```
 
 ### Service (Application)
