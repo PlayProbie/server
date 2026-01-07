@@ -157,13 +157,14 @@ public class GameLiftService {
                                 .identifier(streamGroupId)
                                 .locationConfigurations(LocationConfiguration.builder()
                                                 .locationName(awsProperties.getGamelift().getRegion())
-                                                .maximumCapacity(targetCapacity)
+                                                .alwaysOnCapacity(targetCapacity) // 실제 할당할 인스턴스 수
+                                                .maximumCapacity(targetCapacity) // 최대 허용 용량
                                                 .build())
                                 .build();
 
                 gameLiftStreamsClient.updateStreamGroup(request);
 
-                log.info("StreamGroup capacity updated to: {}", targetCapacity);
+                log.info("StreamGroup capacity updated to: {} (alwaysOn + maximum)", targetCapacity);
         }
 
         /**
