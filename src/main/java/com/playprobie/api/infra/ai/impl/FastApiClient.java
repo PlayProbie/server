@@ -334,23 +334,29 @@ public class FastApiClient implements AiClient {
 	}
 
 	private void sendInterviewComplete(String sessionId) {
-		// 세션 상태 완료로 변경
-		interviewService.completeSession(sessionId);
-
-		// 세션 완료 후 임베딩 요청 (비동기)
-		triggerSessionEmbedding(sessionId);
-
-		StatusPayload completePayload = StatusPayload.builder().status("completed").build();
-		sseEmitterService.send(sessionId, AiConstants.EVENT_INTERVIEW_COMPLETE, completePayload);
-
-		// 클라이언트가 이벤트를 수신할 시간을 확보하기 위해 잠시 대기
 		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
+			// 세션 상태 완료로 변경
+			interviewService.completeSession(sessionId);
 
-		sseEmitterService.complete(sessionId);
+			// 세션 완료 후 임베딩 요청 (비동기)
+			triggerSessionEmbedding(sessionId);
+
+			StatusPayload completePayload = StatusPayload.builder().status("completed").build();
+			sseEmitterService.send(sessionId, AiConstants.EVENT_INTERVIEW_COMPLETE, completePayload);
+
+			// 클라이언트가 이벤트를 수신할 시간을 확보하기 위해 잠시 대기
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+
+			sseEmitterService.complete(sessionId);
+		} catch (IllegalStateException e) {
+			// 이미 완료된 세션인 경우 무시 (중복 호출 방지)
+			log.warn("⚠️ [INTERVIEW COMPLETE] Session already completed, skipping. sessionId={}, error={}",
+					sessionId, e.getMessage());
+		}
 	}
 
 	// 세션 완료 시 고정질문별로 그룹핑된 Q&A 데이터를 AI 서버에 임베딩 요청
@@ -600,10 +606,31 @@ public class FastApiClient implements AiClient {
 					sseEmitterService.send(sessionId, AiConstants.EVENT_START, startPayload);
 					break;
 
+				// ===== 인사말 스트리밍 (새 이벤트) =====
+				case AiConstants.EVENT_GREETING_CONTINUE:
+					String greetingToken = dataNode.path("content").asText();
+					QuestionPayload greetingPayload = QuestionPayload.of(null, "GREETING", greetingToken, 0);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_GREETING_CONTINUE, greetingPayload);
+					break;
+
+				// ===== 인사말 완료 → 첫번째 고정질문 전송 =====
+				case AiConstants.EVENT_GREETING_DONE:
+					log.info("👋 [GREETING DONE] Sending first fixed question. sessionId={}", sessionId);
+					// DB에서 첫번째 고정질문 조회
+					FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
+					QuestionPayload questionPayload = QuestionPayload.of(
+							firstQuestion.fixedQId(),
+							AiConstants.ACTION_FIXED,
+							firstQuestion.qContent(),
+							1);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, questionPayload);
+					break;
+
+				// ===== 레거시 호환: 기존 continue 이벤트 =====
 				case AiConstants.EVENT_CONTINUE:
 					String content = dataNode.path("content").asText();
-					QuestionPayload questionPayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, content, 0);
-					sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
+					QuestionPayload openingPayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, content, 0);
+					sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, openingPayload);
 					break;
 
 				case AiConstants.EVENT_DONE:
@@ -618,6 +645,7 @@ public class FastApiClient implements AiClient {
 							ErrorPayload.builder().message(errMsg).build());
 					break;
 			}
+
 		} catch (JsonProcessingException e) {
 			log.error("Failed to parse opening event: {}", e.getMessage());
 		}

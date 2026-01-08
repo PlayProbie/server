@@ -57,35 +57,47 @@ Content-Type: application/json
 {
   "event": "start",
   "data": {
-    "status": "generating_opening"
+    "status": "processing"
   }
 }
 ```
 
-#### 2-2. `continue` 이벤트 (스트리밍)
+#### 2-2. `greeting_continue` 이벤트 (인사말 스트리밍)
 ```json
 {
-  "event": "continue",
+  "event": "greeting_continue",
   "data": {
-    "content": "안녕하세요! 오늘 테스트에..."  // 오프닝 멘트 토큰
+    "content": "안녕"  // 인사말 토큰
   }
 }
 ```
 - 여러 번 전송됨 (스트리밍)
-- `q_type`: `"OPENING"`
-- `turn_num`: `0`
+- `q_type`: `"GREETING"`
 
-#### 2-3. `done` 이벤트
+#### 2-3. `greeting_done` 이벤트 (인사말 완료)
 ```json
 {
-  "event": "done",
+  "event": "greeting_done",
   "data": {
-    "question_text": "첫 번째 질문은..."  // 완성된 오프닝 질문
+    "greeting_text": "안녕하세요! 👋 게임 테스트 시작해볼게요 🎮"
   }
+}
+```
+→ **Spring이 첫번째 고정질문을 DB에서 조회하여 클라이언트에 전송**
+
+#### 2-4. Spring → 클라이언트: 첫번째 고정질문
+```json
+event: "question"
+data: {
+  "fixed_q_id": 1,
+  "q_type": "FIXED",
+  "question_text": "게임의 조작법은 어떠셨나요?",
+  "turn_num": 1
 }
 ```
 
 ---
+
 
 ### 3️⃣ Phase 3: 고정 질문 (Fixed Question)
 
