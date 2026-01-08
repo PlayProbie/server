@@ -47,5 +47,6 @@ public final class SecurityConstants {
 			// 게임/설문 API (개발용 - 추후 인증 적용 필요)
 			"/games/**",
 			"/surveys/**",
+			"/analytics/**"
 	};
 }
