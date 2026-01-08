@@ -16,8 +16,8 @@ public record SessionEmbeddingRequest(
 	@Schema(description = "세션 ID", example = "session_12345") @JsonProperty("session_id")
 	String sessionId,
 
-	@Schema(description = "설문 ID", example = "1") @JsonProperty("survey_id")
-	Long surveyId,
+	@Schema(description = "설문 UUID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890") @JsonProperty("survey_uuid")
+	String surveyUuid,
 
 	@Schema(description = "고정 질문 ID", example = "10") @JsonProperty("fixed_question_id")
 	Long fixedQuestionId,
