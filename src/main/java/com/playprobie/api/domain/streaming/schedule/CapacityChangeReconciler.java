@@ -32,11 +32,12 @@ public class CapacityChangeReconciler {
 	private final CapacityChangeAsyncService asyncService;
 
 	// 1분마다 실행, 최소 락 유지시간 30초, 서버 시작 후 10초 대기 (테이블 생성 보장)
+	// PENDING 상태로 5분 이상 방치된 요청을 재처리합니다
 	@Scheduled(fixedDelay = 60000, initialDelay = 10000)
 	@SchedulerLock(name = "CapacityChangeReconciler_reconcile", lockAtLeastFor = "PT30S", lockAtMostFor = "PT50S")
 	public void reconcile() {
-		// 1. PENDING 상태로 1분 이상 지난 요청 조회 (Stuck Requests)
-		LocalDateTime threshold = LocalDateTime.now().minusMinutes(1);
+		// 1. PENDING 상태로 5분 이상 지난 요청 조회 (Stuck Requests)
+		LocalDateTime threshold = LocalDateTime.now().minusMinutes(5);
 		List<CapacityChangeRequest> stuckRequests = requestRepository
 			.findAllByStatusAndCreatedAtBefore(RequestStatus.PENDING, threshold);
 

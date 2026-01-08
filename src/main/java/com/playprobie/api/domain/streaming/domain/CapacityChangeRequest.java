@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
  * 용량 변경 요청 추적 엔티티.
  *
  * <p>
- * 비동기 작업의 상태를 추적하고 Idempotency를 보장하기 위해 사용됩니다.
+ * 비동기 작업의 상태를 추적하기 위해 사용됩니다.
  */
 @Entity
 @Table(name = "capacity_change_request")
@@ -35,9 +35,6 @@ public class CapacityChangeRequest extends BaseTimeEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
-	@Column(name = "idempotency_key", nullable = false, unique = true)
-	private String idempotencyKey;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "resource_id", nullable = false)
@@ -61,19 +58,17 @@ public class CapacityChangeRequest extends BaseTimeEntity {
 	private LocalDateTime completedAt;
 
 	@Builder
-	public CapacityChangeRequest(String idempotencyKey, StreamingResource resource, CapacityChangeType type,
+	public CapacityChangeRequest(StreamingResource resource, CapacityChangeType type,
 		Integer targetCapacity) {
-		this.idempotencyKey = idempotencyKey;
 		this.resource = resource;
 		this.type = type;
 		this.targetCapacity = targetCapacity;
 		this.status = RequestStatus.PENDING;
 	}
 
-	public static CapacityChangeRequest create(String idempotencyKey, StreamingResource resource,
+	public static CapacityChangeRequest create(StreamingResource resource,
 		CapacityChangeType type, int targetCapacity) {
 		return CapacityChangeRequest.builder()
-			.idempotencyKey(idempotencyKey)
 			.resource(resource)
 			.type(type)
 			.targetCapacity(targetCapacity)
