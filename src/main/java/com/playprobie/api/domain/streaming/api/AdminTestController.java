@@ -18,6 +18,8 @@ import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +33,10 @@ public class AdminTestController {
 
 	@PostMapping("/start-test")
 	@Operation(summary = "관리자 테스트 시작", description = "스트리밍 Capacity를 0 → 1로 설정하여 테스트를 시작합니다.")
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "테스트 시작 성공"),
+		@ApiResponse(responseCode = "429", description = "요청이 너무 많음 (Async Queue Full)")
+	})
 	public ResponseEntity<CommonResponse<TestActionResponse>> startTest(
 		@PathVariable
 		UUID surveyId,
@@ -39,21 +45,17 @@ public class AdminTestController {
 
 		TestActionResponse response = streamingResourceService.startTest(surveyId, user);
 
-		HttpHeaders headers = new HttpHeaders();
-		if (response.isAsyncPending()) {
-			headers.add("Retry-After", "5");
-			if (response.requestId() != null) {
-				headers.add("X-Request-ID", response.requestId().toString());
-			}
-		}
-
 		return ResponseEntity.ok()
-			.headers(headers)
+			.headers(buildAsyncHeaders(response))
 			.body(CommonResponse.of(response));
 	}
 
 	@PostMapping("/stop-test")
 	@Operation(summary = "관리자 테스트 종료", description = "스트리밍 Capacity를 1 → 0으로 설정하여 테스트를 종료합니다.")
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "테스트 종료 성공"),
+		@ApiResponse(responseCode = "429", description = "요청이 너무 많음 (Async Queue Full)")
+	})
 	public ResponseEntity<CommonResponse<TestActionResponse>> stopTest(
 		@PathVariable
 		UUID surveyId,
@@ -62,16 +64,8 @@ public class AdminTestController {
 
 		TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
 
-		HttpHeaders headers = new HttpHeaders();
-		if (response.isAsyncPending()) {
-			headers.add("Retry-After", "5");
-			if (response.requestId() != null) {
-				headers.add("X-Request-ID", response.requestId().toString());
-			}
-		}
-
 		return ResponseEntity.ok()
-			.headers(headers)
+			.headers(buildAsyncHeaders(response))
 			.body(CommonResponse.of(response));
 	}
 
@@ -84,5 +78,19 @@ public class AdminTestController {
 		User user) {
 		ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
+	}
+
+	/**
+	 * 비동기 처리 중인 응답에 대해 폴링 힌트 헤더를 생성합니다.
+	 */
+	private HttpHeaders buildAsyncHeaders(TestActionResponse response) {
+		HttpHeaders headers = new HttpHeaders();
+		if (response.isAsyncPending()) {
+			headers.add("Retry-After", "5");
+			if (response.requestId() != null) {
+				headers.add("X-Request-ID", response.requestId().toString());
+			}
+		}
+		return headers;
 	}
 }
