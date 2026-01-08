@@ -20,31 +20,32 @@ public final class SecurityConstants {
 	 * </p>
 	 */
 	public static final String[] PUBLIC_URLS = {
-		// auth관련
-		"/auth/**",
+			// auth관련
+			"/auth/**",
 
-		// api 문서
-		"/swagger-ui/**",
-		"/swagger-ui.html",
-		"/v3/api-docs/**",
-		"/api-docs/**",
+			// api 문서
+			"/swagger-ui/**",
+			"/swagger-ui.html",
+			"/v3/api-docs/**",
+			"/api-docs/**",
 
-		// db, health
-		"/h2-console/**",
-		"/actuator/**",
-		"/health",
+			// db, health
+			"/h2-console/**",
+			"/actuator/**",
+			"/health",
 
-		// 정적리소스
-		"/favicon.ico",
-		"/error",
+			// 정적리소스
+			"/favicon.ico",
+			"/error",
 
-		// 인터뷰 API (비회원 접근 가능)
-		"/interview/*/*",
-		"/interview/*/stream",
-		"/interview/*/messages",
+			// 인터뷰 API (비회원 접근 가능)
+			"/interview/*",
+			"/interview/*/*",
+			"/interview/*/stream",
+			"/interview/*/messages",
 
-		// 게임/설문 API (개발용 - 추후 인증 적용 필요)
-		"/games/**",
-		"/surveys/**",
+			// 게임/설문 API (개발용 - 추후 인증 적용 필요)
+			"/games/**",
+			"/surveys/**",
 	};
 }
