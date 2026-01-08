@@ -50,8 +50,10 @@ public class CapacityChangeAsyncService {
 			gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), targetCapacity);
 
 			// Success: Confirm State
-			if (type == CapacityChangeType.START_TEST || type == CapacityChangeType.ACTIVATE) {
+			if (type == CapacityChangeType.START_TEST) {
 				resource.confirmStartTest();
+			} else if (type == CapacityChangeType.ACTIVATE) {
+				resource.markActive();
 			} else {
 				resource.confirmStopTest();
 			}

@@ -189,7 +189,7 @@ public class StreamingResource extends BaseTimeEntity {
 		this.currentCapacity = 0;
 	}
 
-	@Column(name = "error_message")
+	@Column(name = "error_message", columnDefinition = "TEXT")
 	private String errorMessage;
 
 	public void markError(String errorMessage) {

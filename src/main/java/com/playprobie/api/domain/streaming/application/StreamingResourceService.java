@@ -276,11 +276,12 @@ public class StreamingResourceService {
 		gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), resource.getMaxCapacity());
 
 		resource.activate(resource.getMaxCapacity());
+		resource.markActive(); // 동기 호출 성공이므로 즉시 ACTIVE 전환
 		streamingResourceRepository.save(resource);
 
 		log.info("Resource activated for resourceId={}, capacity={}", resource.getId(),
 			resource.getMaxCapacity());
-		return TestActionResponse.startTest("SCALING", resource.getMaxCapacity());
+		return TestActionResponse.startTest("ACTIVE", resource.getMaxCapacity());
 	}
 
 	/**
@@ -426,7 +427,7 @@ public class StreamingResourceService {
 			if (allocatedCapacity >= desiredCapacity) {
 				// 2. 용량 확보됨 -> DB 상태를 ACTIVE로 동기화
 				if (resource.getStatus() != StreamingResourceStatus.ACTIVE) {
-					resource.activate(resource.getMaxCapacity());
+					resource.markActive();
 					log.info("Resource verified as ACTIVE and READY (Capacity {}/{}) via sync logic. resourceId={}",
 						allocatedCapacity, desiredCapacity, resource.getId());
 				}
@@ -535,7 +536,7 @@ public class StreamingResourceService {
 			.build();
 		surveySessionRepository.save(session);
 
-		// AWS StartStreamSession 호출
+		// AWS StartStreamSession 호출 (내부적으로 Polling 수행)
 		StartStreamSessionResponse awsResponse = gameLiftService.startStreamSession(
 			resource.getAwsStreamGroupId(),
 			resource.getAwsApplicationId(),

@@ -91,9 +91,9 @@ public class StreamingProvisioner {
 	 * StreamGroup이 안정적인 상태(ACTIVATING이 아님)가 될 때까지 대기합니다.
 	 */
 	private void waitForStreamGroupStable(String streamGroupId) {
-		long timeoutMillis = awsProperties.gamelift().provisioningTimeout().toMillis();
-		long pollingMillis = awsProperties.gamelift().pollingInterval().toMillis();
-		int maxAttempts = (int)(timeoutMillis / pollingMillis);
+		// User Requested: 5 seconds interval, 30 attempts (Total 150s)
+		long pollingMillis = 5000L;
+		int maxAttempts = 30;
 
 		for (int i = 0; i < maxAttempts; i++) {
 			GetStreamGroupResponse response = gameLiftService.getStreamGroupStatus(streamGroupId);
