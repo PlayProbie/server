@@ -158,23 +158,68 @@ public class GameLiftService {
 	 * @param streamGroupId  StreamGroup ARN 또는 ID
 	 * @param targetCapacity 목표 Capacity
 	 */
+	// ... existing methods ...
+
+	/**
+	 * StreamGroup의 Capacity를 업데이트합니다.
+	 *
+	 * @param streamGroupId  StreamGroup ARN 또는 ID
+	 * @param targetCapacity 목표 Capacity
+	 */
 	public void updateStreamGroupCapacity(String streamGroupId, int targetCapacity) {
 		log.info("Updating StreamGroup capacity: streamGroupId={}, targetCapacity={}",
 			streamGroupId, targetCapacity);
 
-		UpdateStreamGroupRequest request = UpdateStreamGroupRequest.builder()
-			.identifier(streamGroupId)
-			.locationConfigurations(LocationConfiguration.builder()
-				.locationName(awsProperties.gamelift().region())
-				.alwaysOnCapacity(targetCapacity) // 실제 할당할 인스턴스 수
-				.maximumCapacity(targetCapacity) // 최대 허용 용량
-				.build())
-			.build();
-
-		gameLiftStreamsClient.updateStreamGroup(request);
+		executeWithRetry(() -> {
+			UpdateStreamGroupRequest request = UpdateStreamGroupRequest.builder()
+				.identifier(streamGroupId)
+				.locationConfigurations(LocationConfiguration.builder()
+					.locationName(awsProperties.gamelift().region())
+					.alwaysOnCapacity(targetCapacity)
+					.maximumCapacity(targetCapacity)
+					.build())
+				.build();
+			return gameLiftStreamsClient.updateStreamGroup(request);
+		}, "updateStreamGroupCapacity");
 
 		log.info("StreamGroup capacity updated to: {} (alwaysOn + maximum)", targetCapacity);
 	}
+
+	private <T> T executeWithRetry(java.util.function.Supplier<T> operation, String operationName) {
+		int maxRetries = 3;
+		for (int attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				return operation.get();
+			} catch (software.amazon.awssdk.services.gameliftstreams.model.ThrottlingException
+				| software.amazon.awssdk.services.gameliftstreams.model.ServiceQuotaExceededException
+				| software.amazon.awssdk.core.exception.SdkClientException e) {
+
+				log.warn("AWS Transient Error on {}, attempt {}/{}: {}", operationName, attempt, maxRetries,
+					e.getMessage());
+				if (attempt == maxRetries) {
+					throw new com.playprobie.api.infra.gamelift.exception.GameLiftTransientException(
+						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR);
+				}
+				try {
+					Thread.sleep(1000L * attempt);
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					throw new com.playprobie.api.global.error.exception.BusinessException(
+						com.playprobie.api.global.error.ErrorCode.INTERNAL_SERVER_ERROR);
+				}
+			} catch (software.amazon.awssdk.services.gameliftstreams.model.ResourceNotFoundException e) {
+				throw new com.playprobie.api.infra.gamelift.exception.GameLiftResourceNotFoundException(
+					com.playprobie.api.global.error.ErrorCode.GAMELIFT_RESOURCE_NOT_FOUND);
+			} catch (software.amazon.awssdk.awscore.exception.AwsServiceException e) {
+				log.error("AWS Service Exception on {}: {}", operationName, e.getMessage());
+				throw new com.playprobie.api.global.error.exception.BusinessException(
+					com.playprobie.api.global.error.ErrorCode.GAMELIFT_CAPACITY_UPDATE_FAILED);
+			}
+		}
+		throw new com.playprobie.api.global.error.exception.BusinessException(
+			com.playprobie.api.global.error.ErrorCode.GAMELIFT_CAPACITY_UPDATE_FAILED);
+	}
+	// ... existing methods ...
 
 	/**
 	 * StreamGroup의 현재 상태를 조회합니다.
