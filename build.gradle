@@ -50,12 +50,18 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
+	// ShedLock for Distributed Scheduling
+	implementation 'net.javacrumbs.shedlock:shedlock-spring:6.2.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-core:6.2.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.2.0'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.awaitility:awaitility:4.2.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
