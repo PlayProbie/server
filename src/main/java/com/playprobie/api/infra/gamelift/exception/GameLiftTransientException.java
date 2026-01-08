@@ -7,4 +7,8 @@ public class GameLiftTransientException extends BusinessException {
 	public GameLiftTransientException(ErrorCode errorCode) {
 		super(errorCode);
 	}
+
+	public GameLiftTransientException(String message, ErrorCode errorCode) {
+		super(message, errorCode);
+	}
 }

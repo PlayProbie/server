@@ -12,16 +12,21 @@ import software.amazon.awssdk.services.gameliftstreams.model.CreateApplicationRe
 import software.amazon.awssdk.services.gameliftstreams.model.CreateApplicationResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.CreateStreamGroupRequest;
 import software.amazon.awssdk.services.gameliftstreams.model.CreateStreamGroupResponse;
+import software.amazon.awssdk.services.gameliftstreams.model.CreateStreamSessionConnectionRequest;
+import software.amazon.awssdk.services.gameliftstreams.model.CreateStreamSessionConnectionResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.DeleteApplicationRequest;
 import software.amazon.awssdk.services.gameliftstreams.model.DeleteStreamGroupRequest;
 import software.amazon.awssdk.services.gameliftstreams.model.GetStreamGroupRequest;
 import software.amazon.awssdk.services.gameliftstreams.model.GetStreamGroupResponse;
+import software.amazon.awssdk.services.gameliftstreams.model.GetStreamSessionRequest;
+import software.amazon.awssdk.services.gameliftstreams.model.GetStreamSessionResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.LocationConfiguration;
 import software.amazon.awssdk.services.gameliftstreams.model.Protocol;
 import software.amazon.awssdk.services.gameliftstreams.model.RuntimeEnvironment;
 import software.amazon.awssdk.services.gameliftstreams.model.StartStreamSessionRequest;
 import software.amazon.awssdk.services.gameliftstreams.model.StartStreamSessionResponse;
 import software.amazon.awssdk.services.gameliftstreams.model.StreamClass;
+import software.amazon.awssdk.services.gameliftstreams.model.StreamSessionStatus;
 import software.amazon.awssdk.services.gameliftstreams.model.TerminateStreamSessionRequest;
 import software.amazon.awssdk.services.gameliftstreams.model.UpdateStreamGroupRequest;
 
@@ -167,6 +172,9 @@ public class GameLiftService {
 	 * @param targetCapacity 목표 Capacity
 	 */
 	public void updateStreamGroupCapacity(String streamGroupId, int targetCapacity) {
+		if (streamGroupId == null || streamGroupId.isBlank()) {
+			throw new IllegalArgumentException("streamGroupId cannot be null or empty");
+		}
 		log.info("Updating StreamGroup capacity: streamGroupId={}, targetCapacity={}",
 			streamGroupId, targetCapacity);
 
@@ -187,6 +195,9 @@ public class GameLiftService {
 
 	private <T> T executeWithRetry(java.util.function.Supplier<T> operation, String operationName) {
 		int maxRetries = 3;
+		// 마지막 에러 메시지를 담기 위한 변수
+		String lastErrorMessage = "Unknown error";
+
 		for (int attempt = 1; attempt <= maxRetries; attempt++) {
 			try {
 				return operation.get();
@@ -194,10 +205,15 @@ public class GameLiftService {
 				| software.amazon.awssdk.services.gameliftstreams.model.ServiceQuotaExceededException
 				| software.amazon.awssdk.core.exception.SdkClientException e) {
 
+				lastErrorMessage = e.getMessage();
 				log.warn("AWS Transient Error on {}, attempt {}/{}: {}", operationName, attempt, maxRetries,
-					e.getMessage());
+					lastErrorMessage);
+
 				if (attempt == maxRetries) {
+					// 원인 메시지를 포함하여 예외 던짐
 					throw new com.playprobie.api.infra.gamelift.exception.GameLiftTransientException(
+						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR.getMessage() + ": "
+							+ lastErrorMessage,
 						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR);
 				}
 				try {
@@ -250,17 +266,122 @@ public class GameLiftService {
 
 		log.info("Starting stream session: streamGroupId={}, applicationId={}",
 			streamGroupId, applicationId);
+		log.info("SignalRequest value: {}", signalRequest);
 
 		StartStreamSessionRequest request = StartStreamSessionRequest.builder()
 			.identifier(streamGroupId)
 			.applicationIdentifier(applicationId)
 			.protocol(Protocol.WEB_RTC)
 			.signalRequest(signalRequest)
+			.userId(java.util.UUID.randomUUID().toString())
+			// .connectionTimeoutSeconds(120) // Polling을 직접 수행하므로 SDK 타임아웃은 기본값 사용 혹은 제거
 			.build();
 
 		StartStreamSessionResponse response = gameLiftStreamsClient.startStreamSession(request);
 
-		log.info("Stream session started: arn={}", response.arn());
+		if (response.signalResponse() != null) {
+			return response;
+		}
+
+		// SignalResponse가 없고, 상태가 ACTIVATING인 경우 Polling으로 대기
+		if (response.status() == StreamSessionStatus.ACTIVATING) {
+			return waitForActiveAndConnect(streamGroupId, extractSessionId(response.arn()), signalRequest, response);
+		}
+
+		// 그 외 상태 (ERROR 등)
+		return response;
+	}
+
+	private StartStreamSessionResponse waitForActiveAndConnect(String streamGroupId, String streamSessionId,
+		String signalRequest, StartStreamSessionResponse originalResponse) {
+		int maxRetries = 20; // 20초 (넉넉하게)
+		int intervalMillis = 1000;
+
+		for (int i = 1; i <= maxRetries; i++) {
+			try {
+				Thread.sleep(intervalMillis);
+
+				GetStreamSessionResponse sessionInfo = gameLiftStreamsClient
+					.getStreamSession(GetStreamSessionRequest.builder()
+						.identifier(streamGroupId)
+						.streamSessionIdentifier(streamSessionId)
+						.build());
+
+				if (sessionInfo.status() == StreamSessionStatus.ACTIVE) {
+					try {
+						var connResponse = createStreamSessionConnection(streamGroupId, streamSessionId, signalRequest);
+
+						// createStreamSessionConnection 응답을 StartStreamSessionResponse 형식으로 변환하여 반환
+						return StartStreamSessionResponse.builder()
+							.arn(originalResponse.arn())
+							.status(StreamSessionStatus.ACTIVE)
+							.signalResponse(connResponse.signalResponse())
+							.build();
+					} catch (Exception e) {
+						log.error("[Connection Failed] Failed to create connection after ACTIVE: {}", e.getMessage());
+						throw e;
+					}
+				} else if (sessionInfo.status() == StreamSessionStatus.ERROR
+					|| sessionInfo.status() == StreamSessionStatus.TERMINATED) {
+					log.error("[Polling Failed] Session reached terminal state: {}", sessionInfo.status());
+					break;
+				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				break;
+			} catch (Exception e) {
+				log.warn("[Polling Error] Error while polling: {}", e.getMessage());
+			}
+		}
+
+		log.warn("[Polling Timeout] Session did not become ACTIVE within {} seconds. Terminating session...",
+			maxRetries);
+
+		try {
+			terminateStreamSession(streamGroupId, streamSessionId);
+			log.info("[Cleanup] Terminated timed-out session: {}", streamSessionId);
+		} catch (Exception e) {
+			log.error("[Cleanup Failed] Failed to terminate session after timeout: {}", e.getMessage());
+		}
+
+		// 타임아웃 시 클라이언트에게 명시적 에러 반환
+		throw new com.playprobie.api.global.error.exception.BusinessException(
+			com.playprobie.api.global.error.ErrorCode.INTERNAL_SERVER_ERROR); // 적절한 Timeout ErrorCode가 있다면 교체 권장
+	}
+
+	private String extractSessionId(String arn) {
+		if (arn == null)
+			return null;
+		String[] parts = arn.split("/");
+		return parts.length > 0 ? parts[parts.length - 1] : null;
+	}
+
+	/**
+	 * 스트리밍 세션에 대한 연결을 생성합니다. (StartStreamSession 후 SignalResponse가 없을 때 사용)
+	 *
+	 * @param streamGroupId   StreamGroup ARN 또는 ID
+	 * @param streamSessionId StreamSession ID (ARN 아님)
+	 * @param signalRequest   클라이언트의 Signal Request
+	 * @return 연결 응답 (Signal Response 포함)
+	 */
+	public CreateStreamSessionConnectionResponse createStreamSessionConnection(
+		String streamGroupId,
+		String streamSessionId,
+		String signalRequest) {
+
+		log.info("Creating stream session connection: streamGroupId={}, sessionId={}",
+			streamGroupId, streamSessionId);
+
+		CreateStreamSessionConnectionRequest request = CreateStreamSessionConnectionRequest.builder()
+			.identifier(streamGroupId)
+			.streamSessionIdentifier(streamSessionId)
+			.signalRequest(signalRequest)
+			.build();
+
+		CreateStreamSessionConnectionResponse response = gameLiftStreamsClient.createStreamSessionConnection(request);
+
+		log.info("Stream session connection created: signalResponse={}",
+			response.signalResponse() != null ? "present" : "NULL");
 		return response;
 	}
 
