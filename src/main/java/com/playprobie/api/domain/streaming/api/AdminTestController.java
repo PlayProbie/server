@@ -2,6 +2,7 @@ package com.playprobie.api.domain.streaming.api;
 
 import java.util.UUID;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,8 +36,20 @@ public class AdminTestController {
 		UUID surveyId,
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
+
 		TestActionResponse response = streamingResourceService.startTest(surveyId, user);
-		return ResponseEntity.ok(CommonResponse.of(response));
+
+		HttpHeaders headers = new HttpHeaders();
+		if (response.isAsyncPending()) {
+			headers.add("Retry-After", "5");
+			if (response.requestId() != null) {
+				headers.add("X-Request-ID", response.requestId().toString());
+			}
+		}
+
+		return ResponseEntity.ok()
+			.headers(headers)
+			.body(CommonResponse.of(response));
 	}
 
 	@PostMapping("/stop-test")
@@ -46,8 +59,20 @@ public class AdminTestController {
 		UUID surveyId,
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
+
 		TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
-		return ResponseEntity.ok(CommonResponse.of(response));
+
+		HttpHeaders headers = new HttpHeaders();
+		if (response.isAsyncPending()) {
+			headers.add("Retry-After", "5");
+			if (response.requestId() != null) {
+				headers.add("X-Request-ID", response.requestId().toString());
+			}
+		}
+
+		return ResponseEntity.ok()
+			.headers(headers)
+			.body(CommonResponse.of(response));
 	}
 
 	@GetMapping("/status")
