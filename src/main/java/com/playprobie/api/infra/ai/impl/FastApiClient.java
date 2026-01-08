@@ -51,6 +51,7 @@ public class FastApiClient implements AiClient {
 	private final ObjectMapper objectMapper;
 	private final InterviewService interviewService;
 	private final AiProperties aiProperties;
+	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
 
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose) {
@@ -319,6 +320,10 @@ public class FastApiClient implements AiClient {
 				.getLogsGroupedByFixedQuestion(sessionId);
 
 			Long surveyId = interviewService.getSurveyIdBySession(sessionId);
+			// Survey UUID 조회
+			com.playprobie.api.domain.survey.domain.Survey survey = surveyRepository.findById(surveyId)
+				.orElseThrow(() -> new RuntimeException("Survey not found: " + surveyId));
+			String surveyUuid = survey.getUuid().toString();
 
 			logsByFixedQuestion.forEach((fixedQuestionId, logs) -> {
 				List<SessionEmbeddingRequest.QaPair> qaPairs = logs.stream()
@@ -332,14 +337,14 @@ public class FastApiClient implements AiClient {
 				if (!qaPairs.isEmpty()) {
 					SessionEmbeddingRequest request = SessionEmbeddingRequest.builder()
 						.sessionId(sessionId)
-						.surveyId(surveyId)
+						.surveyUuid(surveyUuid) // surveyUuid 사용
 						.fixedQuestionId(fixedQuestionId)
 						.qaPairs(qaPairs)
 						.autoTriggerAnalysis(true)
 						.build();
 
 					// Embedding 요청 후 analysis 자동 트리거
-					embedSessionData(request, surveyId, fixedQuestionId).subscribe();
+					embedSessionData(request, surveyUuid, fixedQuestionId).subscribe();
 				}
 			});
 		} catch (Exception e) {
@@ -349,10 +354,10 @@ public class FastApiClient implements AiClient {
 
 	@Override
 	public Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request) {
-		return embedSessionData(request, request.surveyId(), request.fixedQuestionId());
+		return embedSessionData(request, request.surveyUuid(), request.fixedQuestionId());
 	}
 
-	private Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request, Long surveyId,
+	private Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request, String surveyUuid,
 		Long fixedQuestionId) {
 		log.debug("📡 Embedding 요청 준비: session={}, fixedQId={}", request.sessionId(), fixedQuestionId);
 		return aiWebClient.post()
@@ -380,7 +385,7 @@ public class FastApiClient implements AiClient {
 						request.sessionId(), fixedQuestionId, result.embeddingId());
 					// Embedding 완료 후 자동으로 analysis 트리거 (플래그 확인)
 					if (request.autoTriggerAnalysis() == null || request.autoTriggerAnalysis()) {
-						triggerAnalysis(surveyId, fixedQuestionId);
+						triggerAnalysis(surveyUuid, fixedQuestionId);
 					} else {
 						log.info("⏭️ Question {} Auto-trigger analysis skipped", fixedQuestionId);
 					}
@@ -391,11 +396,11 @@ public class FastApiClient implements AiClient {
 	}
 
 	@Override
-	public void triggerAnalysis(Long surveyId, Long fixedQuestionId) {
+	public void triggerAnalysis(String surveyUuid, Long fixedQuestionId) {
 		try {
 			log.info("🔍 Question {} 분석 시작...", fixedQuestionId);
 			// Analysis를 비동기로 시작 (결과는 DB에 저장됨)
-			streamQuestionAnalysis(surveyId, fixedQuestionId)
+			streamQuestionAnalysis(surveyUuid, fixedQuestionId)
 				.subscribe(
 					sse -> {
 						String event = sse.event();
@@ -424,7 +429,7 @@ public class FastApiClient implements AiClient {
 					error -> log.error("❌ Question {} 분석 실패: {}", fixedQuestionId, error.getMessage()),
 					() -> log.info("✅ Question {} 분석 스트림 종료", fixedQuestionId));
 		} catch (Exception e) {
-			log.error("Failed to trigger analysis for survey: {}, question: {}", surveyId, fixedQuestionId, e);
+			log.error("Failed to trigger analysis for survey: {}, question: {}", surveyUuid, fixedQuestionId, e);
 		}
 	}
 
@@ -442,9 +447,9 @@ public class FastApiClient implements AiClient {
 	}
 
 	@Override
-	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId) {
+	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId) {
 		QuestionAnalysisRequest request = QuestionAnalysisRequest.builder()
-			.surveyId(surveyId)
+			.surveyUuid(surveyUuid)
 			.fixedQuestionId(fixedQuestionId)
 			.build();
 

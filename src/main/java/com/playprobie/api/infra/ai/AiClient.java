@@ -45,8 +45,8 @@ public interface AiClient {
 	Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request);
 
 	// 질문 분석 수동 트리거 (Mock 데이터 등에서 사용)
-	void triggerAnalysis(Long surveyId, Long fixedQuestionId);
+	void triggerAnalysis(String surveyUuid, Long fixedQuestionId);
 
-	// 질문 분석 요청 (SSE 스트리밍)
-	Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId);
+	// 질문 분석 요청 (SSE 스트리밍) - surveyUuid 사용
+	Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId);
 }

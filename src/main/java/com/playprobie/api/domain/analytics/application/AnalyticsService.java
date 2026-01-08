@@ -39,6 +39,7 @@ public class AnalyticsService {
 	private final QuestionResponseAnalysisRepository questionResponseAnalysisRepository;
 	private final AiClient aiClient;
 	private final FixedQuestionRepository fixedQuestionRepository;
+	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
 	private final ObjectMapper objectMapper;
 	private final TransactionTemplate transactionTemplate;
 
@@ -48,8 +49,14 @@ public class AnalyticsService {
 	/**
 	 * 설문 전체 질문 분석 결과 조회 (캐시 or AI 분석)
 	 */
-	public Flux<QuestionResponseAnalysisWrapper> getSurveyAnalysis(Long surveyId) {
-		log.info("🔍 분석 요청: surveyId={}", surveyId);
+	public Flux<QuestionResponseAnalysisWrapper> getSurveyAnalysis(UUID surveyUuid) {
+		log.info("🔍 분석 요청: surveyUuid={}", surveyUuid);
+
+		com.playprobie.api.domain.survey.domain.Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(() -> new com.playprobie.api.global.error.exception.BusinessException(
+				com.playprobie.api.global.error.ErrorCode.ENTITY_NOT_FOUND));
+		Long surveyId = survey.getId();
+
 		List<FixedQuestion> questions = fixedQuestionRepository.findBySurveyIdOrderByOrderAsc(surveyId);
 		log.info("📋 조회된 질문 수: {}", questions.size());
 		if (questions.isEmpty()) {
@@ -92,7 +99,7 @@ public class AnalyticsService {
 
 			log.info("🔄 재분석 시작: {}개 질문", questions.size());
 			return Flux.fromIterable(questions)
-				.flatMap(question -> analyzeAndSave(surveyId, question))
+				.flatMap(question -> analyzeAndSave(survey.getUuid(), surveyId, question))
 				.doFinally(signal -> {
 					analysisInProgress.remove(surveyId);
 					log.info("🔓 분석 완료, 잠금 해제: surveyId={}", surveyId);
@@ -134,13 +141,14 @@ public class AnalyticsService {
 		STALE // 재분석 필요
 	}
 
-	private Mono<QuestionResponseAnalysisWrapper> analyzeAndSave(Long surveyId, FixedQuestion question) {
+	private Mono<QuestionResponseAnalysisWrapper> analyzeAndSave(UUID surveyUuid, Long surveyId,
+		FixedQuestion question) {
 		int currentCount = interviewLogRepository.countByFixedQuestionIdAndAnswerTextIsNotNull(question.getId());
 
 		// 분석 시작 전에 IN_PROGRESS 상태로 변경 (별도 트랜잭션)
 		markAsInProgressWithTransaction(question, currentCount);
 
-		return aiClient.streamQuestionAnalysis(surveyId, question.getId())
+		return aiClient.streamQuestionAnalysis(surveyUuid.toString(), question.getId())
 			.filter(sse -> "done".equals(sse.event()))
 			.next()
 			.map(sse -> {
@@ -220,7 +228,8 @@ public class AnalyticsService {
 	 * answer_id로부터 실제 답변 텍스트 조회
 	 *
 	 * @param answerId 형식: {session_uuid}_{fixed_question_id}_{hash}
-	 *                 UUID는 하이픈 포함 36자 (예: ac1565f9-9b91-1346-819b-91c352bf002d_1_82c7e975)
+	 *                 UUID는 하이픈 포함 36자 (예:
+	 *                 ac1565f9-9b91-1346-819b-91c352bf002d_1_82c7e975)
 	 * @return 포맷팅된 대화 텍스트 (Q&A 형식)
 	 */
 	private String fetchAnswerText(String answerId) {
