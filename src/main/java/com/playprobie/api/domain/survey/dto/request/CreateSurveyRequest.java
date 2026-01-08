@@ -24,11 +24,13 @@ public record CreateSurveyRequest(
 
 		@Schema(description = "설문 종료 시간 (ISO 8601 형식)", example = "2024-01-31T18:00:00+09:00", requiredMode = Schema.RequiredMode.REQUIRED, type = "string") @NotNull(message = "종료 시간은 필수입니다") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul") @JsonProperty("ended_at") OffsetDateTime endedAt,
 
-		@Schema(description = "테스트 단계", example = "prototype", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @JsonProperty("test_stage") String testStage,
+		@Schema(description = "테스트 목적 (레거시, 선택)", example = "전투 밸런스 피드백 수집", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @JsonProperty("test_purpose") String testPurpose,
 
-		@Schema(description = "테마 우선순위 (1~3개)", example = "[\"gameplay\", \"ui_ux\", \"balance\"]", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "테마 우선순위는 필수입니다") @Size(min = 1, max = 3, message = "테마는 1~3개 선택해야 합니다") @JsonProperty("theme_priorities") List<String> themePriorities,
+		@JsonProperty("test_stage") String testStage,
 
-		@Schema(description = "테마별 세부사항", example = "{\"gameplay\": [\"core_loop\"]}", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @JsonProperty("theme_details") Map<String, List<String>> themeDetails,
+		@NotNull(message = "테마 우선순위는 필수입니다") @Size(min = 1, max = 3, message = "테마는 1~3개 선택해야 합니다") @JsonProperty("theme_priorities") List<String> themePriorities,
 
-		@Schema(description = "버전 노트", example = "v1.0", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @JsonProperty("version_note") String versionNote) {
+		@JsonProperty("theme_details") Map<String, List<String>> themeDetails,
+
+		@JsonProperty("version_note") String versionNote) {
 }

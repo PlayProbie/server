@@ -64,17 +64,37 @@ public class FastApiClient implements AiClient {
 				.themeDetails(themeDetails)
 				.build();
 
-		Mono<GenerateQuestionResponse> response = aiWebClient.post()
-				.uri("/fixed-questions/draft")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON)
-				.bodyValue(request)
-				.retrieve()
-				.bodyToMono(GenerateQuestionResponse.class);
+		log.info("📤 AI 질문 생성 요청: gameName={}, gameGenre={}, themePriorities={}", gameName, gameGenre, themePriorities);
 
-		GenerateQuestionResponse result = response.block();
+		try {
+			GenerateQuestionResponse result = aiWebClient.post()
+					.uri("/fixed-questions/draft")
+					.contentType(MediaType.APPLICATION_JSON)
+					.accept(MediaType.APPLICATION_JSON)
+					.bodyValue(request)
+					.retrieve()
+					.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+							clientResponse -> clientResponse.bodyToMono(String.class)
+									.flatMap(body -> {
+										log.error("❌ AI 서버 에러: status={}, body={}", clientResponse.statusCode(), body);
+										return reactor.core.publisher.Mono.error(
+												new RuntimeException("AI Server Error: " + clientResponse.statusCode()
+														+ " - " + body));
+									}))
+					.bodyToMono(GenerateQuestionResponse.class)
+					.block();
 
-		return result.getQuestions();
+			if (result == null || result.getQuestions() == null) {
+				log.error("❌ AI 서버 응답이 null입니다");
+				throw new RuntimeException("AI 서버로부터 응답을 받지 못했습니다");
+			}
+
+			log.info("📥 AI 질문 생성 완료: {} 개의 질문 생성", result.getQuestions().size());
+			return result.getQuestions();
+		} catch (Exception e) {
+			log.error("❌ AI 질문 생성 실패: {}", e.getMessage(), e);
+			throw e;
+		}
 	}
 
 	@Override

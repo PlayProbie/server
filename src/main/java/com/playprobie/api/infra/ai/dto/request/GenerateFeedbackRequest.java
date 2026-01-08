@@ -1,5 +1,8 @@
 package com.playprobie.api.infra.ai.dto.request;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -16,14 +19,17 @@ public class GenerateFeedbackRequest {
 	@Schema(description = "게임 이름", example = "My RPG Game")
 	private String gameName;
 
-	@Schema(description = "게임 장르", example = "RPG")
+	@Schema(description = "게임 장르", example = "RPG, ACTION")
 	private String gameGenre;
 
 	@Schema(description = "게임 설명", example = "중세 판타지 배경의 오픈월드 게임")
 	private String gameContext;
 
-	@Schema(description = "테스트 목적", example = "게임 밸런스 확인")
-	private String testPurpose;
+	@Schema(description = "테마 우선순위 (1~3개)", example = "[\"gameplay\", \"ui_ux\"]")
+	private List<String> themePriorities;
+
+	@Schema(description = "테마별 세부 항목 (선택)", example = "{\"gameplay\": [\"core_loop\", \"fun\"]}")
+	private Map<String, List<String>> themeDetails;
 
 	@Schema(description = "원본 질문", example = "게임 난이도는 어땠나요?")
 	private String originalQuestion;

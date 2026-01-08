@@ -145,13 +145,13 @@ public class SurveyService {
 			com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
 		// Data extraction and processing logic moved from controller
 		String question = request.questions().get(0);
-		String gameGenre = String.join(", ", request.gameGenre());
 
 		GenerateFeedbackRequest aiRequest = GenerateFeedbackRequest.builder()
 				.gameName(request.gameName())
-				.gameGenre(gameGenre)
+				.gameGenre(String.join(", ", request.gameGenre()))
 				.gameContext(request.gameContext())
-				.testPurpose(request.testPurpose())
+				.themePriorities(request.themePriorities())
+				.themeDetails(request.themeDetails())
 				.originalQuestion(question)
 				.build();
 
