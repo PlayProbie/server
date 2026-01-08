@@ -29,14 +29,14 @@ public class AnalyticsController {
 	 * 설문 분석 결과 스트리밍 (SSE)
 	 * GET /api/analytics/{surveyId}
 	 */
-	@GetMapping(value = "/{surveyId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@GetMapping(value = "/{surveyUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	@Operation(summary = "설문 분석 결과 스트리밍", description = "AI 분석 결과를 SSE로 스트리밍합니다.")
 	public Flux<ServerSentEvent<Object>> getSurveyAnalysis(
 		@PathVariable
-		Long surveyId) {
-		log.info("📊 SSE 분석 요청 시작: surveyId={}", surveyId);
+		java.util.UUID surveyUuid) {
+		log.info("📊 SSE 분석 요청 시작: surveyUuid={}", surveyUuid);
 
-		return analyticsService.getSurveyAnalysis(surveyId)
+		return analyticsService.getSurveyAnalysis(surveyUuid)
 			.doOnNext(data -> log.info("📤 SSE 데이터 전송: questionId={}", data.fixedQuestionId()))
 			.map(data -> ServerSentEvent.builder()
 				.event("message") // 클라이언트 onmessage와 매칭
@@ -47,7 +47,7 @@ public class AnalyticsController {
 				.event("complete")
 				.data((Object)"done") // 데이터가 있어야 브라우저에서 이벤트가 정상 발생
 				.build()))
-			.doOnComplete(() -> log.info("✅ SSE 스트림 완료: surveyId={}", surveyId))
-			.doOnError(e -> log.error("❌ SSE 스트림 에러: surveyId={}, error={}", surveyId, e.getMessage()));
+			.doOnComplete(() -> log.info("✅ SSE 스트림 완료: surveyUuid={}", surveyUuid))
+			.doOnError(e -> log.error("❌ SSE 스트림 에러: surveyUuid={}, error={}", surveyUuid, e.getMessage()));
 	}
 }

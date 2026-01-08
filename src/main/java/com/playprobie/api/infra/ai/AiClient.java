@@ -1,6 +1,7 @@
 package com.playprobie.api.infra.ai;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.codec.ServerSentEvent;
 
@@ -26,7 +27,8 @@ public interface AiClient {
 	 *
 	 * @return 생성된 질문 목록 (최대 5개)
 	 */
-	List<String> generateQuestions(String gameName, String gameGenre, String gameContext, String testPurpose);
+	List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
+			List<String> themePriorities, Map<String, List<String>> themeDetails);
 
 	/**
 	 * 질문 피드백 기반 대안 생성
@@ -45,8 +47,8 @@ public interface AiClient {
 	Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request);
 
 	// 질문 분석 수동 트리거 (Mock 데이터 등에서 사용)
-	void triggerAnalysis(Long surveyId, Long fixedQuestionId);
+	void triggerAnalysis(String surveyUuid, Long fixedQuestionId);
 
-	// 질문 분석 요청 (SSE 스트리밍)
-	Flux<ServerSentEvent<String>> streamQuestionAnalysis(Long surveyId, Long fixedQuestionId);
+	// 질문 분석 요청 (SSE 스트리밍) - surveyUuid 사용
+	Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId);
 }
