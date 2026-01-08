@@ -42,21 +42,21 @@ public class InterviewService {
 
 	@Transactional
 	public InterviewCreateResponse createSession(UUID surveyUuid,
-		com.playprobie.api.domain.interview.dto.TesterProfileRequest profileRequest) {
+			com.playprobie.api.domain.interview.dto.TesterProfileRequest profileRequest) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
 
 		SurveySession surveySession = SurveySession.builder()
-			.survey(survey)
-			.testerProfile(profileRequest != null ? profileRequest.toEntity() : null)
-			.build();
+				.survey(survey)
+				.testerProfile(profileRequest != null ? profileRequest.toEntity() : null)
+				.build();
 
 		SurveySession savedSession = surveySessionRepository.save(surveySession);
 
 		return InterviewCreateResponse.builder()
-			.session(SessionInfo.from(savedSession))
-			.sseUrl(InterviewUrlProvider.getStreamUrl(savedSession.getUuid()))
-			.build();
+				.session(SessionInfo.from(savedSession))
+				.sseUrl(InterviewUrlProvider.getStreamUrl(savedSession.getUuid()))
+				.build();
 	}
 
 	@Transactional
@@ -70,13 +70,13 @@ public class InterviewService {
 	@Transactional
 	public InterviewHistoryResponse getInterviewHistory(java.util.UUID surveyUuid, java.util.UUID sessionUuid) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
-			.orElseThrow(EntityNotFoundException::new);
+				.orElseThrow(EntityNotFoundException::new);
 		return getInterviewHistory(survey.getId(), sessionUuid);
 	}
 
 	private SurveySession findAndValidateSession(Long surveyId, java.util.UUID sessionUuid) {
 		SurveySession session = surveySessionRepository.findByUuid(sessionUuid)
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 		session.validateSurveyId(surveyId);
 		return session;
 	}
@@ -86,28 +86,36 @@ public class InterviewService {
 		UUID uuid = UUID.fromString(sessionUuid);
 
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 
 		return fixedQuestionRepository.findFirstBySurveyIdOrderByOrderAsc(session.getSurvey().getId())
-			.map(FixedQuestionResponse::from)
-			.orElseThrow(EntityNotFoundException::new);
+				.map(FixedQuestionResponse::from)
+				.orElseThrow(EntityNotFoundException::new);
 	}
 
 	public FixedQuestionResponse getQuestionById(Long fixedQId) {
 		return fixedQuestionRepository.findById(fixedQId)
-			.map(FixedQuestionResponse::from)
-			.orElseThrow(EntityNotFoundException::new);
+				.map(FixedQuestionResponse::from)
+				.orElseThrow(EntityNotFoundException::new);
+	}
+
+	/**
+	 * 특정 설문의 전체 질문 수를 조회합니다.
+	 * Option A: FastAPI에 전달하여 마지막 질문 여부 판단에 사용
+	 */
+	public int getTotalQuestionCount(Long surveyId) {
+		return (int) fixedQuestionRepository.countBySurveyId(surveyId);
 	}
 
 	public Optional<FixedQuestionResponse> getNextQuestion(String sessionId, int currentOrder) {
 		UUID uuid = UUID.fromString(sessionId);
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 
 		return fixedQuestionRepository
-			.findFirstBySurveyIdAndOrderGreaterThanOrderByOrderAsc(
-				session.getSurvey().getId(), currentOrder)
-			.map(FixedQuestionResponse::from);
+				.findFirstBySurveyIdAndOrderGreaterThanOrderByOrderAsc(
+						session.getSurvey().getId(), currentOrder)
+				.map(FixedQuestionResponse::from);
 	}
 
 	/**
@@ -117,25 +125,25 @@ public class InterviewService {
 	@Transactional
 	public void saveTailQuestionLog(String sessionId, Long fixedQId, String tailQuestionText, int tailQuestionCount) {
 		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 
 		// 해당 고정 질문 내에서의 최대 turnNum을 조회하여 +1
 		Integer maxTurnNum = interviewLogRepository.findMaxTurnNumBySessionIdAndFixedQId(
-			surveySession.getId(), fixedQId);
+				surveySession.getId(), fixedQId);
 		int nextTurnNum = (maxTurnNum != null ? maxTurnNum : 0) + 1;
 
 		InterviewLog interviewLog = InterviewLog.builder()
-			.session(surveySession)
-			.fixedQuestionId(fixedQId)
-			.turnNum(nextTurnNum)
-			.type(QuestionType.TAIL)
-			.questionText(tailQuestionText)
-			.answerText(null) // 아직 응답 없음
-			.build();
+				.session(surveySession)
+				.fixedQuestionId(fixedQId)
+				.turnNum(nextTurnNum)
+				.type(QuestionType.TAIL)
+				.questionText(tailQuestionText)
+				.answerText(null) // 아직 응답 없음
+				.build();
 
 		interviewLogRepository.save(interviewLog);
 		log.info("Saved tail question log for session: {}, fixedQId: {}, turnNum: {}", sessionId, fixedQId,
-			nextTurnNum);
+				nextTurnNum);
 	}
 
 	/**
@@ -144,19 +152,19 @@ public class InterviewService {
 	 * - 꼬리질문 응답(turnNum>1): 기존 레코드 업데이트 또는 새 레코드 생성
 	 */
 	public UserAnswerResponse saveInterviewLog(String sessionId, UserAnswerRequest request,
-		FixedQuestionResponse currentQuestion) {
+			FixedQuestionResponse currentQuestion) {
 		// 세션 UUID로 SurveySession 조회 (없으면 예외)
 		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
-			.orElseThrow(() -> new RuntimeException("Session not found"));
+				.orElseThrow(() -> new RuntimeException("Session not found"));
 
 		// turnNum > 1이면 꼬리질문에 대한 응답임 (turnNum=1은 고정질문)
 		if (request.getTurnNum() > 1) {
 			// 해당 세션 + 고정질문 + 턴번호로 기존 꼬리질문 레코드 조회 시도
 			Optional<InterviewLog> existingLog = interviewLogRepository
-				.findBySessionIdAndFixedQuestionIdAndTurnNum(
-					surveySession.getId(), // 세션 ID
-					request.getFixedQId(), // 고정질문 ID
-					request.getTurnNum()); // 턴 번호
+					.findBySessionIdAndFixedQuestionIdAndTurnNum(
+							surveySession.getId(), // 세션 ID
+							request.getFixedQId(), // 고정질문 ID
+							request.getTurnNum()); // 턴 번호
 
 			// 기존 레코드가 있으면 → AI가 먼저 꼬리질문을 저장해둔 정상 케이스
 			if (existingLog.isPresent()) {
@@ -166,63 +174,63 @@ public class InterviewService {
 
 				// 응답 DTO 생성하여 반환
 				return UserAnswerResponse.of(
-					savedLog.getTurnNum(),
-					String.valueOf(savedLog.getType()),
-					savedLog.getFixedQuestionId(),
-					savedLog.getQuestionText(),
-					savedLog.getAnswerText());
+						savedLog.getTurnNum(),
+						String.valueOf(savedLog.getType()),
+						savedLog.getFixedQuestionId(),
+						savedLog.getQuestionText(),
+						savedLog.getAnswerText());
 			}
 
 			// 기존 레코드가 없으면 → Race Condition 발생 (AI 저장보다 사용자 답변이 먼저 도착)
 			// 예외를 던지지 않고, 새 레코드를 직접 생성하여 오류 방지
 			log.warn("Tail question log not found for turnNum={}. Creating new record. sessionId={}, fixedQId={}",
-				request.getTurnNum(), sessionId, request.getFixedQId());
+					request.getTurnNum(), sessionId, request.getFixedQId());
 
 			// 새 꼬리질문 레코드 생성 (답변과 함께)
 			InterviewLog newTailLog = InterviewLog.builder()
-				.session(surveySession) // 세션 연결
-				.fixedQuestionId(request.getFixedQId()) // 고정질문 ID
-				.turnNum(request.getTurnNum()) // 턴 번호
-				.type(QuestionType.TAIL) // 질문 유형: 꼬리질문
-				.questionText(request.getQuestionText()) // 클라이언트가 보낸 질문 텍스트
-				.answerText(request.getAnswerText()) // 사용자 답변
-				.build();
+					.session(surveySession) // 세션 연결
+					.fixedQuestionId(request.getFixedQId()) // 고정질문 ID
+					.turnNum(request.getTurnNum()) // 턴 번호
+					.type(QuestionType.TAIL) // 질문 유형: 꼬리질문
+					.questionText(request.getQuestionText()) // 클라이언트가 보낸 질문 텍스트
+					.answerText(request.getAnswerText()) // 사용자 답변
+					.build();
 
 			InterviewLog savedLog = interviewLogRepository.save(newTailLog); // DB 저장
 
 			return UserAnswerResponse.of(
+					savedLog.getTurnNum(),
+					String.valueOf(savedLog.getType()),
+					savedLog.getFixedQuestionId(),
+					savedLog.getQuestionText(),
+					savedLog.getAnswerText());
+		}
+
+		// turnNum == 1이면 고정질문에 대한 첫 응답 → 항상 새 레코드 생성
+		InterviewLog interviewLog = InterviewLog.builder()
+				.session(surveySession) // 세션 연결
+				.fixedQuestionId(currentQuestion.fixedQId()) // 고정질문 ID
+				.turnNum(request.getTurnNum()) // 턴 번호 (항상 1)
+				.type(QuestionType.FIXED) // 질문 유형: 고정질문
+				.questionText(currentQuestion.qContent()) // 고정질문 내용
+				.answerText(request.getAnswerText()) // 사용자 답변
+				.build();
+
+		InterviewLog savedLog = interviewLogRepository.save(interviewLog); // DB 저장
+
+		return UserAnswerResponse.of(
 				savedLog.getTurnNum(),
 				String.valueOf(savedLog.getType()),
 				savedLog.getFixedQuestionId(),
 				savedLog.getQuestionText(),
 				savedLog.getAnswerText());
-		}
-
-		// turnNum == 1이면 고정질문에 대한 첫 응답 → 항상 새 레코드 생성
-		InterviewLog interviewLog = InterviewLog.builder()
-			.session(surveySession) // 세션 연결
-			.fixedQuestionId(currentQuestion.fixedQId()) // 고정질문 ID
-			.turnNum(request.getTurnNum()) // 턴 번호 (항상 1)
-			.type(QuestionType.FIXED) // 질문 유형: 고정질문
-			.questionText(currentQuestion.qContent()) // 고정질문 내용
-			.answerText(request.getAnswerText()) // 사용자 답변
-			.build();
-
-		InterviewLog savedLog = interviewLogRepository.save(interviewLog); // DB 저장
-
-		return UserAnswerResponse.of(
-			savedLog.getTurnNum(),
-			String.valueOf(savedLog.getType()),
-			savedLog.getFixedQuestionId(),
-			savedLog.getQuestionText(),
-			savedLog.getAnswerText());
 	}
 
 	@Transactional
 	public void completeSession(String sessionUuid) {
 		UUID uuid = UUID.fromString(sessionUuid);
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 
 		session.complete();
 		log.info("Session completed: {}", sessionUuid);
@@ -232,17 +240,17 @@ public class InterviewService {
 	public Map<Long, List<InterviewLog>> getLogsGroupedByFixedQuestion(String sessionUuid) {
 		UUID uuid = UUID.fromString(sessionUuid);
 		List<InterviewLog> logs = interviewLogRepository
-			.findBySessionUuidOrderByFixedQuestionIdAscTurnNumAsc(uuid);
+				.findBySessionUuidOrderByFixedQuestionIdAscTurnNumAsc(uuid);
 
 		return logs.stream()
-			.collect(Collectors.groupingBy(InterviewLog::getFixedQuestionId));
+				.collect(Collectors.groupingBy(InterviewLog::getFixedQuestionId));
 	}
 
 	// 세션 UUID로 Survey ID 조회
 	public Long getSurveyIdBySession(String sessionUuid) {
 		UUID uuid = UUID.fromString(sessionUuid);
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
-			.orElseThrow(SessionNotFoundException::new);
+				.orElseThrow(SessionNotFoundException::new);
 
 		return session.getSurvey().getId();
 	}

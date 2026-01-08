@@ -144,13 +144,30 @@ public class FastApiClient implements AiClient {
 			return;
 		}
 
-		// AI 서버에 보낼 요청 DTO 생성
-		AiInteractionRequest aiInteractionRequest = new AiInteractionRequest(
+		// ===== Option A: 질문 정보 조회 =====
+		// 1. 현재 질문 정보 조회
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
+		int currentQuestionOrder = currentQuestion.qOrder();
+
+		// 2. Survey ID 조회
+		Long surveyId = interviewService.getSurveyIdBySession(sessionId);
+
+		// 3. 전체 질문 수 조회
+		int totalQuestions = interviewService.getTotalQuestionCount(surveyId);
+
+		log.info("📋 [QUESTION INFO] sessionId={}, surveyId={}, currentOrder={}, totalQuestions={}",
+				sessionId, surveyId, currentQuestionOrder, totalQuestions);
+
+		// AI 서버에 보낼 요청 DTO 생성 (질문 정보 포함)
+		AiInteractionRequest aiInteractionRequest = AiInteractionRequest.of(
 				sessionId, // 세션 ID
 				userAnswerRequest.getAnswerText(), // 사용자 답변
 				userAnswerRequest.getQuestionText(), // 현재 질문 텍스트
 				null, // game_info (미사용)
-				null); // conversation_history (미사용)
+				null, // conversation_history (미사용)
+				surveyId, // 설문 ID
+				currentQuestionOrder, // 현재 질문 순서
+				totalQuestions); // 전체 질문 수
 
 		// AI 서버에 SSE 스트리밍 요청 전송
 		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
@@ -502,7 +519,7 @@ public class FastApiClient implements AiClient {
 		interviewService.getNextQuestion(sessionId, currentOrder)
 				.ifPresentOrElse(
 						nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-						() -> sendInterviewComplete(sessionId));
+						() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE)); // 🔧 종료 멘트 후 완료
 	}
 
 	// ========== Session Opening/Closing Methods (Phase 2, 5) ==========
@@ -542,6 +559,9 @@ public class FastApiClient implements AiClient {
 	 * Phase 5: 마무리 멘트 생성 후 인터뷰 완료 처리
 	 */
 	public void streamClosing(String sessionId, String endReason) {
+		log.info("🎬 [CLOSING START] Requesting closing remarks from AI. sessionId={}, reason={}", sessionId,
+				endReason);
+
 		AiSessionEndRequest request = AiSessionEndRequest.builder()
 				.sessionId(sessionId)
 				.endReason(endReason)
@@ -560,10 +580,11 @@ public class FastApiClient implements AiClient {
 		eventStream.subscribe(
 				sse -> handleClosingEvent(sessionId, sse.data()),
 				error -> {
-					log.error("Error in streamClosing: {}", error.getMessage());
+					log.error("❌ [CLOSING ERROR] FastAPI error during closing: sessionId={}, error={}",
+							sessionId, error.getMessage(), error);
 					sendInterviewComplete(sessionId);
 				},
-				() -> log.info("Closing stream completed for sessionId: {}", sessionId));
+				() -> log.info("✅ [CLOSING STREAM COMPLETE] AI closing stream finished. sessionId={}", sessionId));
 	}
 
 	private void handleOpeningEvent(String sessionId, String jsonStr) {
@@ -603,13 +624,16 @@ public class FastApiClient implements AiClient {
 	}
 
 	private void handleClosingEvent(String sessionId, String jsonStr) {
+		log.debug("📥 [CLOSING EVENT RAW] sessionId={}, json={}", sessionId, jsonStr);
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
 			String eventType = rootNode.path("event").asText();
 			JsonNode dataNode = rootNode.path("data");
+			log.info("🎭 [CLOSING EVENT] sessionId={}, eventType={}", sessionId, eventType);
 
 			switch (eventType) {
 				case AiConstants.EVENT_START:
+					log.info("▶️ [CLOSING START EVENT] Sending start event to client. sessionId={}", sessionId);
 					StatusPayload startPayload = StatusPayload.builder()
 							.status(dataNode.path("status").asText()).build();
 					sseEmitterService.send(sessionId, AiConstants.EVENT_START, startPayload);
@@ -617,24 +641,33 @@ public class FastApiClient implements AiClient {
 
 				case AiConstants.EVENT_CONTINUE:
 					String content = dataNode.path("content").asText();
+					log.info("💬 [CLOSING CONTENT] Streaming closing remarks. sessionId={}, contentLength={}",
+							sessionId, content.length());
 					QuestionPayload questionPayload = QuestionPayload.of(null, AiConstants.ACTION_CLOSING, content, 0);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 					break;
 
 				case AiConstants.EVENT_DONE:
+					log.info("🏁 [CLOSING DONE] Closing remarks complete. Finalizing interview. sessionId={}",
+							sessionId);
 					// 마무리 멘트 전송 후 인터뷰 완료 처리
 					sendInterviewComplete(sessionId);
 					break;
 
 				case AiConstants.EVENT_ERROR:
 					String errMsg = dataNode.path("message").asText();
+					log.error("❌ [CLOSING ERROR EVENT] AI returned error. sessionId={}, error={}", sessionId, errMsg);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_ERROR,
 							ErrorPayload.builder().message(errMsg).build());
 					sendInterviewComplete(sessionId);
 					break;
+
+				default:
+					log.warn("⚠️ [UNKNOWN CLOSING EVENT] eventType={}, sessionId={}", eventType, sessionId);
 			}
 		} catch (JsonProcessingException e) {
-			log.error("Failed to parse closing event: {}", e.getMessage());
+			log.error("❌ [CLOSING PARSE ERROR] Failed to parse closing event. sessionId={}, error={}",
+					sessionId, e.getMessage(), e);
 			sendInterviewComplete(sessionId);
 		}
 	}
