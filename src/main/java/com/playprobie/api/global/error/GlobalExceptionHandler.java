@@ -76,6 +76,14 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
 	}
 
+	@ExceptionHandler(org.springframework.core.task.TaskRejectedException.class)
+	protected ResponseEntity<ErrorResponse> handleTaskRejectedException(
+		org.springframework.core.task.TaskRejectedException e) {
+		log.error("TaskRejectedException: Async queue is full", e);
+		final ErrorResponse response = ErrorResponse.of(ErrorCode.TOO_MANY_REQUESTS);
+		return new ResponseEntity<>(response, HttpStatus.TOO_MANY_REQUESTS);
+	}
+
 	@ExceptionHandler(BusinessException.class)
 	protected ResponseEntity<ErrorResponse> handleBusinessException(final BusinessException e) {
 		log.warn("handleBusinessException", e);

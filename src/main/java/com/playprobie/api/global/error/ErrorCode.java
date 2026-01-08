@@ -37,7 +37,7 @@ public enum ErrorCode {
 
 	// Workspace
 	WORKSPACE_NOT_FOUND(404, "W001", "워크스페이스를 찾을 수 없습니다."),
-	WORKSPACE_MEMBER_NOT_FOUND(404, "W002", "워크스페이스 멤버를 찾을 수 없습니다."),
+	WORKSPACE_MEMBER_NOT_FOUND(403, "W002", "워크스페이스 멤버를 찾을 수 없습니다."),
 	WORKSPACE_ACCESS_DENIED(403, "W003", "해당 워크스페이스에 접근 권한이 없습니다."),
 	WORKSPACE_MEMBER_ALREADY_EXISTS(409, "W004", "이미 해당 워크스페이스의 멤버입니다."),
 
@@ -49,7 +49,16 @@ public enum ErrorCode {
 	INVALID_SIGNAL_REQUEST(400, "T001", "잘못된 Signal Request입니다."),
 	RESOURCE_NOT_AVAILABLE(404, "T002", "리소스 미할당 또는 세션 불가"),
 	GAMELIFT_SERVICE_ERROR(503, "T003", "GameLift 서비스 오류"),
-	SESSION_CAPACITY_EXCEEDED(429, "T004", "현재 접속 가능한 세션이 꽉 찼습니다.");
+	SESSION_CAPACITY_EXCEEDED(429, "T004", "현재 접속 가능한 세션이 꽉 찼습니다."),
+
+	// GameLift System
+	GAMELIFT_TRANSIENT_ERROR(503, "GL001", "GameLift 서비스 일시적 오류입니다. 잠시 후 재시도해주세요."),
+	GAMELIFT_RESOURCE_NOT_FOUND(404, "GL002", "AWS 리소스를 찾을 수 없습니다."),
+	GAMELIFT_CAPACITY_UPDATE_FAILED(500, "GL003", "용량 업데이트에 실패했습니다."),
+
+	// Streaming Resource Transition
+	RESOURCE_ALREADY_IN_TRANSITION(409, "SR003", "리소스가 이미 상태 전환 중입니다."),
+	TOO_MANY_REQUESTS(429, "SR004", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
 
 	private final int status;
 	private final String code;

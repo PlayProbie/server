@@ -17,12 +17,15 @@ public enum StreamingResourceStatus {
 	PENDING("연결 대기"),
 	PROVISIONING("리소스 생성 중"),
 	READY("준비 완료 (Capacity=0)"),
+	SCALING_UP("용량 증가 중"),
+	SCALING_DOWN("용량 감소 중"),
 	TESTING("관리자 테스트 (Capacity=1)"),
 	SCALING("확장 중"),
 	ACTIVE("서비스 중 (Capacity=N)"),
 	CLEANING("정리 중"),
 	TERMINATED("삭제됨"),
-	ERROR("오류 발생");
+	ERROR("오류 발생"),
+	FAILED_FATAL("치명적 오류 (수동 복구 필요)");
 
 	private final String description;
 

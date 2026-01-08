@@ -12,7 +12,10 @@ import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
 import com.playprobie.api.domain.interview.domain.SessionStatus;
 import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.model.StreamClass;
+import com.playprobie.api.domain.streaming.dao.CapacityChangeRequestRepository;
 import com.playprobie.api.domain.streaming.dao.StreamingResourceRepository;
+import com.playprobie.api.domain.streaming.domain.CapacityChangeRequest;
+import com.playprobie.api.domain.streaming.domain.CapacityChangeType;
 import com.playprobie.api.domain.streaming.domain.StreamingResource;
 import com.playprobie.api.domain.streaming.domain.StreamingResourceStatus;
 import com.playprobie.api.domain.streaming.dto.CreateStreamingResourceRequest;
@@ -59,6 +62,8 @@ public class StreamingResourceService {
 	private final GameLiftService gameLiftService;
 	private final WorkspaceSecurityManager securityManager;
 	private final StreamingProvisioner streamingProvisioner;
+	private final CapacityChangeRequestRepository capacityChangeRequestRepository;
+	private final CapacityChangeAsyncService capacityChangeAsyncService;
 
 	// ========== Admin: Resource Management ==========
 
@@ -203,21 +208,54 @@ public class StreamingResourceService {
 	 * @return 테스트 상태
 	 */
 	@Transactional
-	public TestActionResponse startTest(Long surveyId, User user) {
-		log.info("Starting test for surveyId={}", surveyId);
-
-		StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
+	public TestActionResponse startTest(UUID surveyUuid, User user) {
+		String idempotencyKey = UUID.randomUUID().toString();
+		log.info("Starting test: surveyUuid={}, user={}, key={}", surveyUuid, user.getEmail(), idempotencyKey);
+		Survey survey = surveyRepository.findByUuid(surveyUuid).orElseThrow(SurveyNotFoundException::new);
+		StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId())
 			.orElseThrow(StreamingResourceNotFoundException::new);
 		securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
-		// Capacity를 1로 변경
-		gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), 1);
+		// [Idempotency] Check existing request
+		java.util.Optional<CapacityChangeRequest> existing = capacityChangeRequestRepository
+			.findByIdempotencyKey(idempotencyKey);
+		if (existing.isPresent()) {
+			return mapToResponse(existing.get(), resource);
+		}
 
-		resource.startTest();
+		if (resource.getStatus() == StreamingResourceStatus.TESTING) {
+			return TestActionResponse.startTest("TESTING", 1);
+		}
+
+		// State Guard
+		if (resource.getStatus() == StreamingResourceStatus.SCALING_UP ||
+			resource.getStatus() == StreamingResourceStatus.SCALING_DOWN) {
+			throw new BusinessException(ErrorCode.RESOURCE_ALREADY_IN_TRANSITION);
+		}
+
+		// Phase 1: DB Update & Intent Logging
+		CapacityChangeRequest request = CapacityChangeRequest.create(
+			idempotencyKey, resource, CapacityChangeType.START_TEST, 1);
+		capacityChangeRequestRepository.save(request);
+
+		resource.markScalingUp(1);
 		streamingResourceRepository.save(resource);
 
-		log.info("Test started for resourceId={}", resource.getId());
-		return TestActionResponse.startTest(resource.getStatus().name(), resource.getCurrentCapacity());
+		// Phase 2: Async Execution with Fail-Fast
+		try {
+			capacityChangeAsyncService.applyCapacityChange(
+				resource.getId(), request.getId(), 1, CapacityChangeType.START_TEST);
+		} catch (org.springframework.core.task.TaskRejectedException e) {
+			log.error("Async Task Queue Full! Rolling back transaction for resourceId={}", resource.getId());
+			throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+		}
+
+		return TestActionResponse.inProgress("SCALING_UP", 1, request.getId());
+	}
+
+	@Transactional
+	public TestActionResponse startTest(Long surveyId, User user) {
+		throw new UnsupportedOperationException("Use startTest(UUID, User, String) instead");
 	}
 
 	/**
@@ -238,18 +276,12 @@ public class StreamingResourceService {
 		gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), resource.getMaxCapacity());
 
 		resource.activate(resource.getMaxCapacity());
+		resource.markActive(); // 동기 호출 성공이므로 즉시 ACTIVE 전환
 		streamingResourceRepository.save(resource);
 
 		log.info("Resource activated for resourceId={}, capacity={}", resource.getId(),
 			resource.getMaxCapacity());
-		return TestActionResponse.startTest("SCALING", resource.getMaxCapacity());
-	}
-
-	@Transactional
-	public TestActionResponse startTest(java.util.UUID surveyUuid, User user) {
-		Survey survey = surveyRepository.findByUuid(surveyUuid)
-			.orElseThrow(SurveyNotFoundException::new);
-		return startTest(survey.getId(), user);
+		return TestActionResponse.startTest("ACTIVE", resource.getMaxCapacity());
 	}
 
 	/**
@@ -259,28 +291,62 @@ public class StreamingResourceService {
 	 * @return 테스트 상태
 	 */
 	@Transactional
-	public TestActionResponse stopTest(Long surveyId, User user) {
-		log.info("Stopping test for surveyId={}", surveyId);
-
-		StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
+	public TestActionResponse stopTest(UUID surveyUuid, User user) {
+		String idempotencyKey = UUID.randomUUID().toString();
+		log.info("Stopping test: surveyUuid={}, user={}, key={}", surveyUuid, user.getEmail(), idempotencyKey);
+		Survey survey = surveyRepository.findByUuid(surveyUuid).orElseThrow(SurveyNotFoundException::new);
+		StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId())
 			.orElseThrow(StreamingResourceNotFoundException::new);
 		securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
-		// Capacity를 0으로 변경
-		gameLiftService.updateStreamGroupCapacity(resource.getAwsStreamGroupId(), 0);
+		// [Idempotency] Check existing request
+		java.util.Optional<CapacityChangeRequest> existing = capacityChangeRequestRepository
+			.findByIdempotencyKey(idempotencyKey);
+		if (existing.isPresent()) {
+			return mapToResponse(existing.get(), resource);
+		}
 
-		resource.stopTest();
+		if (resource.getStatus() == StreamingResourceStatus.READY) {
+			return TestActionResponse.stopTest("READY", 0);
+		}
+
+		if (resource.getStatus() == StreamingResourceStatus.SCALING_UP ||
+			resource.getStatus() == StreamingResourceStatus.SCALING_DOWN) {
+			throw new BusinessException(ErrorCode.RESOURCE_ALREADY_IN_TRANSITION);
+		}
+
+		// Phase 1: DB Update
+		CapacityChangeRequest request = CapacityChangeRequest.create(
+			idempotencyKey, resource, CapacityChangeType.STOP_TEST, 0);
+		capacityChangeRequestRepository.save(request);
+
+		resource.markScalingDown();
 		streamingResourceRepository.save(resource);
 
-		log.info("Test stopped for resourceId={}", resource.getId());
-		return TestActionResponse.stopTest(resource.getStatus().name(), resource.getCurrentCapacity());
+		// Phase 2: Async Execution with Fail-Fast
+		try {
+			capacityChangeAsyncService.applyCapacityChange(
+				resource.getId(), request.getId(), 0, CapacityChangeType.STOP_TEST);
+		} catch (org.springframework.core.task.TaskRejectedException e) {
+			log.error("Async Task Queue Full! Rolling back transaction for resourceId={}", resource.getId());
+			throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+		}
+
+		return TestActionResponse.inProgress("SCALING_DOWN", 0, request.getId());
 	}
 
 	@Transactional
-	public TestActionResponse stopTest(java.util.UUID surveyUuid, User user) {
-		Survey survey = surveyRepository.findByUuid(surveyUuid)
-			.orElseThrow(SurveyNotFoundException::new);
-		return stopTest(survey.getId(), user);
+	public TestActionResponse stopTest(Long surveyId, User user) {
+		throw new UnsupportedOperationException("Use stopTest(UUID, User, String) instead");
+	}
+
+	private TestActionResponse mapToResponse(CapacityChangeRequest request, StreamingResource resource) {
+		if (request.getStatus() == com.playprobie.api.domain.streaming.domain.RequestStatus.COMPLETED) {
+			return new TestActionResponse(resource.getStatus().name(), resource.getCurrentCapacity(), "이미 처리된 요청입니다.",
+				request.getId(), null);
+		}
+		return TestActionResponse.inProgress(resource.getStatus().name(), resource.getCurrentCapacity(),
+			request.getId());
 	}
 
 	/**
@@ -361,7 +427,7 @@ public class StreamingResourceService {
 			if (allocatedCapacity >= desiredCapacity) {
 				// 2. 용량 확보됨 -> DB 상태를 ACTIVE로 동기화
 				if (resource.getStatus() != StreamingResourceStatus.ACTIVE) {
-					resource.activate(resource.getMaxCapacity());
+					resource.markActive();
 					log.info("Resource verified as ACTIVE and READY (Capacity {}/{}) via sync logic. resourceId={}",
 						allocatedCapacity, desiredCapacity, resource.getId());
 				}
@@ -470,7 +536,7 @@ public class StreamingResourceService {
 			.build();
 		surveySessionRepository.save(session);
 
-		// AWS StartStreamSession 호출
+		// AWS StartStreamSession 호출 (내부적으로 Polling 수행)
 		StartStreamSessionResponse awsResponse = gameLiftService.startStreamSession(
 			resource.getAwsStreamGroupId(),
 			resource.getAwsApplicationId(),

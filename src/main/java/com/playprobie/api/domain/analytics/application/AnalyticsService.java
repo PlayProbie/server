@@ -1,25 +1,19 @@
 package com.playprobie.api.domain.analytics.application;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
-import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.infra.ai.AiClient;
@@ -53,8 +47,8 @@ public class AnalyticsService {
 		log.info("🔍 분석 요청: surveyUuid={}", surveyUuid);
 
 		com.playprobie.api.domain.survey.domain.Survey survey = surveyRepository.findByUuid(surveyUuid)
-				.orElseThrow(() -> new com.playprobie.api.global.error.exception.BusinessException(
-						com.playprobie.api.global.error.ErrorCode.ENTITY_NOT_FOUND));
+			.orElseThrow(() -> new com.playprobie.api.global.error.exception.BusinessException(
+				com.playprobie.api.global.error.ErrorCode.ENTITY_NOT_FOUND));
 		Long surveyId = survey.getId();
 
 		List<FixedQuestion> questions = fixedQuestionRepository.findBySurveyIdOrderByOrderAsc(surveyId);
@@ -71,15 +65,15 @@ public class AnalyticsService {
 		// FRESH 또는 IN_PROGRESS인 경우 캐시 반환
 		if (status == AnalysisCheckResult.FRESH || status == AnalysisCheckResult.IN_PROGRESS) {
 			List<QuestionResponseAnalysis> cachedResults = questionResponseAnalysisRepository
-					.findAllBySurveyId(surveyId);
+				.findAllBySurveyId(surveyId);
 			log.info("💾 캐시된 분석 결과: {}개", cachedResults.size());
 			return Flux.fromIterable(cachedResults)
-					// 임시 분석중 데이터는 제외 (실제 결과만 반환)
-					.filter(entity -> !entity.getResultJson().contains("\"status\":\"analyzing\""))
-					.map(entity -> QuestionResponseAnalysisWrapper.builder()
-							.fixedQuestionId(entity.getFixedQuestionId())
-							.resultJson(entity.getResultJson())
-							.build());
+				// 임시 분석중 데이터는 제외 (실제 결과만 반환)
+				.filter(entity -> !entity.getResultJson().contains("\"status\":\"analyzing\""))
+				.map(entity -> QuestionResponseAnalysisWrapper.builder()
+					.fixedQuestionId(entity.getFixedQuestionId())
+					.resultJson(entity.getResultJson())
+					.build());
 		}
 		// STALE인 경우에만 재분석 (동시성 제어 포함)
 		else {
@@ -87,23 +81,23 @@ public class AnalyticsService {
 			if (analysisInProgress.putIfAbsent(surveyId, Boolean.TRUE) != null) {
 				log.info("🔒 이미 분석 진행 중: surveyId={}, 캐시 반환", surveyId);
 				List<QuestionResponseAnalysis> cachedResults = questionResponseAnalysisRepository
-						.findAllBySurveyId(surveyId);
+					.findAllBySurveyId(surveyId);
 				return Flux.fromIterable(cachedResults)
-						.filter(entity -> entity.getResultJson() != null
-								&& !entity.getResultJson().contains("\"status\":\"analyzing\""))
-						.map(entity -> QuestionResponseAnalysisWrapper.builder()
-								.fixedQuestionId(entity.getFixedQuestionId())
-								.resultJson(entity.getResultJson())
-								.build());
+					.filter(entity -> entity.getResultJson() != null
+						&& !entity.getResultJson().contains("\"status\":\"analyzing\""))
+					.map(entity -> QuestionResponseAnalysisWrapper.builder()
+						.fixedQuestionId(entity.getFixedQuestionId())
+						.resultJson(entity.getResultJson())
+						.build());
 			}
 
 			log.info("🔄 재분석 시작: {}개 질문", questions.size());
 			return Flux.fromIterable(questions)
-					.flatMap(question -> analyzeAndSave(survey.getUuid(), surveyId, question))
-					.doFinally(signal -> {
-						analysisInProgress.remove(surveyId);
-						log.info("🔓 분석 완료, 잠금 해제: surveyId={}", surveyId);
-					});
+				.flatMap(question -> analyzeAndSave(survey.getUuid(), surveyId, question))
+				.doFinally(signal -> {
+					analysisInProgress.remove(surveyId);
+					log.info("🔓 분석 완료, 잠금 해제: surveyId={}", surveyId);
+				});
 		}
 	}
 
@@ -113,7 +107,7 @@ public class AnalyticsService {
 	private AnalysisCheckResult checkAnalysisStatus(FixedQuestion question) {
 		int currentCount = interviewLogRepository.countByFixedQuestionIdAndAnswerTextIsNotNull(question.getId());
 		Optional<QuestionResponseAnalysis> cached = questionResponseAnalysisRepository.findByFixedQuestionId(
-				question.getId());
+			question.getId());
 
 		if (cached.isEmpty()) {
 			return AnalysisCheckResult.STALE; // 분석된 적 없음
@@ -142,25 +136,25 @@ public class AnalyticsService {
 	}
 
 	private Mono<QuestionResponseAnalysisWrapper> analyzeAndSave(UUID surveyUuid, Long surveyId,
-			FixedQuestion question) {
+		FixedQuestion question) {
 		int currentCount = interviewLogRepository.countByFixedQuestionIdAndAnswerTextIsNotNull(question.getId());
 
 		// 분석 시작 전에 IN_PROGRESS 상태로 변경 (별도 트랜잭션)
 		markAsInProgressWithTransaction(question, currentCount);
 
 		return aiClient.streamQuestionAnalysis(surveyUuid.toString(), question.getId())
-				.filter(sse -> "done".equals(sse.event()))
-				.next()
-				.map(sse -> {
-					String resultJson = sse.data();
-					if (resultJson != null) {
-						saveOrUpdateResultWithTransaction(question, resultJson, currentCount);
-					}
-					return QuestionResponseAnalysisWrapper.builder()
-							.fixedQuestionId(question.getId())
-							.resultJson(resultJson)
-							.build();
-				});
+			.filter(sse -> "done".equals(sse.event()))
+			.next()
+			.map(sse -> {
+				String resultJson = sse.data();
+				if (resultJson != null) {
+					saveOrUpdateResultWithTransaction(question, resultJson, currentCount);
+				}
+				return QuestionResponseAnalysisWrapper.builder()
+					.fixedQuestionId(question.getId())
+					.resultJson(resultJson)
+					.build();
+			});
 	}
 
 	/**
@@ -169,19 +163,19 @@ public class AnalyticsService {
 	private void markAsInProgressWithTransaction(FixedQuestion question, int count) {
 		transactionTemplate.executeWithoutResult(status -> {
 			log.info("Marking analysis as IN_PROGRESS for surveyId={}, questionId={}", question.getSurveyId(),
-					question.getId());
+				question.getId());
 
 			questionResponseAnalysisRepository.findByFixedQuestionId(question.getId())
-					.ifPresentOrElse(
-							existing -> {
-								existing.markInProgress();
-								questionResponseAnalysisRepository.save(existing);
-							},
-							() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
-									question.getId(),
-									question.getSurveyId(),
-									"{\"status\":\"analyzing\"}", // 분석 진행 중 임시 JSON
-									count)));
+				.ifPresentOrElse(
+					existing -> {
+						existing.markInProgress();
+						questionResponseAnalysisRepository.save(existing);
+					},
+					() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
+						question.getId(),
+						question.getSurveyId(),
+						"{\"status\":\"analyzing\"}", // 분석 진행 중 임시 JSON
+						count)));
 		});
 	}
 
@@ -191,55 +185,55 @@ public class AnalyticsService {
 	private void saveOrUpdateResultWithTransaction(FixedQuestion question, String json, int count) {
 		transactionTemplate.executeWithoutResult(status -> {
 			log.info("Saving analysis result for surveyId={}, questionId={}, count={}", question.getSurveyId(),
-					question.getId(), count);
+				question.getId(), count);
 
 			questionResponseAnalysisRepository.findByFixedQuestionId(question.getId())
-					.ifPresentOrElse(
-							existing -> {
-								existing.updateResult(json, count);
-								questionResponseAnalysisRepository.save(existing);
-							},
-							() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
-									question.getId(),
-									question.getSurveyId(),
-									json,
-									count)));
+				.ifPresentOrElse(
+					existing -> {
+						existing.updateResult(json, count);
+						questionResponseAnalysisRepository.save(existing);
+					},
+					() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
+						question.getId(),
+						question.getSurveyId(),
+						json,
+						count)));
 		});
 	}
 
 	@Transactional
 	protected void markAsInProgress(FixedQuestion question, int count) {
 		log.info("Marking analysis as IN_PROGRESS for surveyId={}, questionId={}", question.getSurveyId(),
-				question.getId());
+			question.getId());
 
 		questionResponseAnalysisRepository.findByFixedQuestionId(question.getId())
-				.ifPresentOrElse(
-						existing -> {
-							existing.markInProgress();
-							questionResponseAnalysisRepository.save(existing);
-						},
-						() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
-								question.getId(),
-								question.getSurveyId(),
-								"{\"status\":\"analyzing\"}", // 분석 진행 중 임시 JSON
-								count)));
+			.ifPresentOrElse(
+				existing -> {
+					existing.markInProgress();
+					questionResponseAnalysisRepository.save(existing);
+				},
+				() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
+					question.getId(),
+					question.getSurveyId(),
+					"{\"status\":\"analyzing\"}", // 분석 진행 중 임시 JSON
+					count)));
 	}
 
 	@Transactional
 	protected void saveOrUpdateResult(FixedQuestion question, String json, int count) {
 		log.info("Saving analysis result for surveyId={}, questionId={}, count={}", question.getSurveyId(),
-				question.getId(), count);
+			question.getId(), count);
 
 		questionResponseAnalysisRepository.findByFixedQuestionId(question.getId())
-				.ifPresentOrElse(
-						existing -> {
-							existing.updateResult(json, count);
-							questionResponseAnalysisRepository.save(existing);
-						},
-						() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
-								question.getId(),
-								question.getSurveyId(),
-								json,
-								count)));
+			.ifPresentOrElse(
+				existing -> {
+					existing.updateResult(json, count);
+					questionResponseAnalysisRepository.save(existing);
+				},
+				() -> questionResponseAnalysisRepository.save(new QuestionResponseAnalysis(
+					question.getId(),
+					question.getSurveyId(),
+					json,
+					count)));
 	}
 }
