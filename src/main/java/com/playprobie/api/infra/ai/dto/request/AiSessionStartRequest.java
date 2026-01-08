@@ -14,30 +14,30 @@ import lombok.Getter;
 @Builder
 public class AiSessionStartRequest {
 
-    @JsonProperty("session_id")
-    private final String sessionId;
+	@JsonProperty("session_id")
+	private final String sessionId;
 
-    @JsonProperty("game_info")
-    private final Map<String, Object> gameInfo;
+	@JsonProperty("game_info")
+	private final Map<String, Object> gameInfo;
 
-    @JsonProperty("tester_profile")
-    private final TesterProfileDto testerProfile;
+	@JsonProperty("tester_profile")
+	private final TesterProfileDto testerProfile;
 
-    @Getter
-    @Builder
-    public static class TesterProfileDto {
-        @JsonProperty("tester_id")
-        private final String testerId;
+	@Getter
+	@Builder
+	public static class TesterProfileDto {
+		@JsonProperty("tester_id")
+		private final String testerId;
 
-        @JsonProperty("age_group")
-        private final String ageGroup;
+		@JsonProperty("age_group")
+		private final String ageGroup;
 
-        private final String gender;
+		private final String gender;
 
-        @JsonProperty("prefer_genre")
-        private final String preferGenre;
+		@JsonProperty("prefer_genre")
+		private final String preferGenre;
 
-        @JsonProperty("skill_level")
-        private final String skillLevel;
-    }
+		@JsonProperty("skill_level")
+		private final String skillLevel;
+	}
 }

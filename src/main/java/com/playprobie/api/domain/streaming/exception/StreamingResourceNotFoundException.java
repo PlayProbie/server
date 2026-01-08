@@ -8,11 +8,11 @@ import com.playprobie.api.global.error.exception.EntityNotFoundException;
  */
 public class StreamingResourceNotFoundException extends EntityNotFoundException {
 
-    public StreamingResourceNotFoundException() {
-        super(ErrorCode.STREAMING_RESOURCE_NOT_FOUND);
-    }
+	public StreamingResourceNotFoundException() {
+		super(ErrorCode.STREAMING_RESOURCE_NOT_FOUND);
+	}
 
-    public StreamingResourceNotFoundException(Long surveyId) {
-        super("surveyId: " + surveyId, ErrorCode.STREAMING_RESOURCE_NOT_FOUND);
-    }
+	public StreamingResourceNotFoundException(Long surveyId) {
+		super("surveyId: " + surveyId, ErrorCode.STREAMING_RESOURCE_NOT_FOUND);
+	}
 }

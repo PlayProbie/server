@@ -45,9 +45,6 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "survey_name")
 	private String name;
 
-	@Column(name = "survey_url", unique = true)
-	private String surveyUrl;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "test_purpose")
 	private TestPurpose testPurpose;
@@ -82,8 +79,8 @@ public class Survey extends BaseTimeEntity {
 
 	@Builder
 	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt,
-			TestStage testStage, java.util.List<String> themePriorities,
-			java.util.Map<String, java.util.List<String>> themeDetails, String versionNote) {
+		TestStage testStage, java.util.List<String> themePriorities,
+		java.util.Map<String, java.util.List<String>> themeDetails, String versionNote) {
 		this.game = Objects.requireNonNull(game, "Survey 생성 시 Game은 필수입니다");
 		this.name = Objects.requireNonNull(name, "Survey 생성 시 name은 필수입니다");
 		this.testPurpose = testPurpose;
@@ -96,10 +93,6 @@ public class Survey extends BaseTimeEntity {
 		this.themePriorities = themePriorities;
 		this.themeDetails = themeDetails;
 		this.versionNote = versionNote;
-	}
-
-	public void assignUrl(String surveyUrl) {
-		this.surveyUrl = surveyUrl;
 	}
 
 	public boolean isOpen() {

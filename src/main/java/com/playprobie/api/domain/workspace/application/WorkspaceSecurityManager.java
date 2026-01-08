@@ -16,40 +16,40 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class WorkspaceSecurityManager {
 
-    private final WorkspaceMemberRepository workspaceMemberRepository;
+	private final WorkspaceMemberRepository workspaceMemberRepository;
 
-    /**
-     * Validate if the user has read access to the workspace.
-     * Currently checks for simple membership.
-     *
-     * @param workspace target workspace
-     * @param user      requesting user
-     * @throws BusinessException if access is denied (W002)
-     */
-    public void validateReadAccess(Workspace workspace, User user) {
-        validateMembership(workspace, user);
-    }
+	/**
+	 * Validate if the user has read access to the workspace.
+	 * Currently checks for simple membership.
+	 *
+	 * @param workspace target workspace
+	 * @param user      requesting user
+	 * @throws BusinessException if access is denied (W002)
+	 */
+	public void validateReadAccess(Workspace workspace, User user) {
+		validateMembership(workspace, user);
+	}
 
-    /**
-     * Validate if the user has write access to the workspace.
-     * Currently checks for simple membership.
-     * Can be extended to check for specific roles (OWNER, ADMIN) in the future.
-     *
-     * @param workspace target workspace
-     * @param user      requesting user
-     * @throws BusinessException if access is denied (W002)
-     */
-    public void validateWriteAccess(Workspace workspace, User user) {
-        validateMembership(workspace, user);
-    }
+	/**
+	 * Validate if the user has write access to the workspace.
+	 * Currently checks for simple membership.
+	 * Can be extended to check for specific roles (OWNER, ADMIN) in the future.
+	 *
+	 * @param workspace target workspace
+	 * @param user      requesting user
+	 * @throws BusinessException if access is denied (W002)
+	 */
+	public void validateWriteAccess(Workspace workspace, User user) {
+		validateMembership(workspace, user);
+	}
 
-    private void validateMembership(Workspace workspace, User user) {
-        if (workspace == null) {
-            throw new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND);
-        }
+	private void validateMembership(Workspace workspace, User user) {
+		if (workspace == null) {
+			throw new BusinessException(ErrorCode.WORKSPACE_NOT_FOUND);
+		}
 
-        if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspace.getId(), user.getId())) {
-            throw new BusinessException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
-        }
-    }
+		if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspace.getId(), user.getId())) {
+			throw new BusinessException(ErrorCode.WORKSPACE_MEMBER_NOT_FOUND);
+		}
+	}
 }

@@ -9,7 +9,9 @@ import lombok.Builder;
 @Builder
 public record QuestionAnalysisRequest(
 
-                @Schema(description = "설문 ID", example = "1") @JsonProperty("survey_id") Long surveyId,
+	@Schema(description = "설문 ID", example = "1") @JsonProperty("survey_id")
+	Long surveyId,
 
-                @Schema(description = "고정 질문 ID", example = "10") @JsonProperty("fixed_question_id") Long fixedQuestionId) {
+	@Schema(description = "고정 질문 ID", example = "10") @JsonProperty("fixed_question_id")
+	Long fixedQuestionId) {
 }

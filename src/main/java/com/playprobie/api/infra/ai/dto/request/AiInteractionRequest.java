@@ -12,22 +12,27 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AiInteractionRequest(
 
-		@Schema(description = "세션 ID", example = "session_12345") @JsonProperty("session_id") String sessionId,
+	@Schema(description = "세션 ID", example = "session_12345") @JsonProperty("session_id")
+	String sessionId,
 
-		@Schema(description = "사용자 응답 텍스트", example = "네, 재미있었습니다.") @JsonProperty("user_answer") String userAnswer,
+	@Schema(description = "사용자 응답 텍스트", example = "네, 재미있었습니다.") @JsonProperty("user_answer")
+	String userAnswer,
 
-		@Schema(description = "현재 질문", example = "게임이 재미있었나요?") @JsonProperty("current_question") String currentQuestion,
+	@Schema(description = "현재 질문", example = "게임이 재미있었나요?") @JsonProperty("current_question")
+	String currentQuestion,
 
-		@Schema(description = "게임 정보 메타데이터 (key-value)", example = "{\"gameName\": \"RPG Game\"}") @JsonProperty("game_info") Map<String, Object> gameInfo,
+	@Schema(description = "게임 정보 메타데이터 (key-value)", example = "{\"gameName\": \"RPG Game\"}") @JsonProperty("game_info")
+	Map<String, Object> gameInfo,
 
-		@Schema(description = "대화 내역 리스트", example = "[{\"role\": \"user\", \"content\": \"hello\"}]") @JsonProperty("conversation_history") List<Map<String, String>> conversationHistory) {
+	@Schema(description = "대화 내역 리스트", example = "[{\"role\": \"user\", \"content\": \"hello\"}]") @JsonProperty("conversation_history")
+	List<Map<String, String>> conversationHistory) {
 
 	public static AiInteractionRequest of(
-			String sessionId,
-			String userAnswer,
-			String currentQuestion,
-			Map<String, Object> gameInfo,
-			List<Map<String, String>> history) {
+		String sessionId,
+		String userAnswer,
+		String currentQuestion,
+		Map<String, Object> gameInfo,
+		List<Map<String, String>> history) {
 		return new AiInteractionRequest(sessionId, userAnswer, currentQuestion, gameInfo, history);
 	}
 }

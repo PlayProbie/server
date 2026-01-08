@@ -22,41 +22,41 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "workspace_member", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "workspace_id", "user_id" })
+	@UniqueConstraint(columnNames = {"workspace_id", "user_id"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WorkspaceMember extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "member_id")
+	private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "workspace_id", nullable = false)
-    private Workspace workspace;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "workspace_id", nullable = false)
+	private Workspace workspace;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private WorkspaceRole role;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "role", nullable = false)
+	private WorkspaceRole role;
 
-    @Builder
-    public WorkspaceMember(Workspace workspace, User user, WorkspaceRole role) {
-        this.workspace = workspace;
-        this.user = user;
-        this.role = role;
-    }
+	@Builder
+	public WorkspaceMember(Workspace workspace, User user, WorkspaceRole role) {
+		this.workspace = workspace;
+		this.user = user;
+		this.role = role;
+	}
 
-    public void updateRole(WorkspaceRole newRole) {
-        this.role = newRole;
-    }
+	public void updateRole(WorkspaceRole newRole) {
+		this.role = newRole;
+	}
 
-    public boolean isOwner() {
-        return this.role == WorkspaceRole.OWNER;
-    }
+	public boolean isOwner() {
+		return this.role == WorkspaceRole.OWNER;
+	}
 }

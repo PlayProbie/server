@@ -15,20 +15,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+	private final UserRepository userRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-        return new CustomUserDetails(user);
-    }
+	@Override
+	@Transactional(readOnly = true)
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		User user = userRepository.findByEmail(email)
+			.orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+		return new CustomUserDetails(user);
+	}
 
-    @Transactional(readOnly = true)
-    public UserDetails loadUserById(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
-        return new CustomUserDetails(user);
-    }
+	@Transactional(readOnly = true)
+	public UserDetails loadUserById(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+		return new CustomUserDetails(user);
+	}
 }

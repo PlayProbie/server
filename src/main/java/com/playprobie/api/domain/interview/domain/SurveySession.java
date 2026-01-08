@@ -42,7 +42,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "survey_session")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@EqualsAndHashCode(of = { "id" }, callSuper = false)
+@EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class SurveySession {
 
 	@Id
@@ -152,7 +152,7 @@ public class SurveySession {
 
 	/**
 	 * AWS GameLift 스트리밍 세션에 연결됨을 기록합니다.
-	 * 
+	 *
 	 * @param awsSessionId AWS GameLift Streams Session ID
 	 */
 	public void connect(String awsSessionId) {

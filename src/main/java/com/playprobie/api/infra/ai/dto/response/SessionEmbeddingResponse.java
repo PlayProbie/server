@@ -9,9 +9,12 @@ import lombok.Builder;
 @Builder
 public record SessionEmbeddingResponse(
 
-                @Schema(description = "임베딩 ID", example = "emb_12345") @JsonProperty("embedding_id") String embeddingId,
+	@Schema(description = "임베딩 ID", example = "emb_12345") @JsonProperty("embedding_id")
+	String embeddingId,
 
-                @Schema(description = "성공 여부", example = "true") @JsonProperty("success") boolean success,
+	@Schema(description = "성공 여부", example = "true") @JsonProperty("success")
+	boolean success,
 
-                @Schema(description = "응답 메시지", example = "Successfully processed") @JsonProperty("message") String message) {
+	@Schema(description = "응답 메시지", example = "Successfully processed") @JsonProperty("message")
+	String message) {
 }

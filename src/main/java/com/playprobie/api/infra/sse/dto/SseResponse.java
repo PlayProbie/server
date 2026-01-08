@@ -23,9 +23,9 @@ public class SseResponse<T> {
 
 	public static <T> SseResponse<T> of(String id, String event, T data) {
 		return SseResponse.<T>builder()
-				.id(id)
-				.event(event)
-				.data(data)
-				.build();
+			.id(id)
+			.event(event)
+			.data(data)
+			.build();
 	}
 }

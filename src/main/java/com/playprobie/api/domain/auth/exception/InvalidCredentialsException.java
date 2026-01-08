@@ -5,7 +5,7 @@ import com.playprobie.api.global.error.exception.BusinessException;
 
 public class InvalidCredentialsException extends BusinessException {
 
-    public InvalidCredentialsException() {
-        super(ErrorCode.INVALID_CREDENTIALS);
-    }
+	public InvalidCredentialsException() {
+		super(ErrorCode.INVALID_CREDENTIALS);
+	}
 }

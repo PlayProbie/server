@@ -9,9 +9,9 @@ import com.playprobie.api.domain.workspace.domain.Workspace;
 
 public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
 
-    Optional<Workspace> findByName(String name);
+	Optional<Workspace> findByName(String name);
 
-    Optional<Workspace> findByUuid(UUID uuid);
+	Optional<Workspace> findByUuid(UUID uuid);
 
-    boolean existsByName(String name);
+	boolean existsByName(String name);
 }

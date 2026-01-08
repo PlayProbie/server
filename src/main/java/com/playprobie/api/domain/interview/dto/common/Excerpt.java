@@ -18,10 +18,10 @@ public class Excerpt {
 
 	public static Excerpt from(InterviewLog log) {
 		return Excerpt.builder()
-				.turnNum(log.getTurnNum())
-				.qType(log.getType() != null ? log.getType().name() : null)
-				.questionText(log.getQuestionText())
-				.answerText(log.getAnswerText())
-				.build();
+			.turnNum(log.getTurnNum())
+			.qType(log.getType() != null ? log.getType().name() : null)
+			.questionText(log.getQuestionText())
+			.answerText(log.getAnswerText())
+			.build();
 	}
 }

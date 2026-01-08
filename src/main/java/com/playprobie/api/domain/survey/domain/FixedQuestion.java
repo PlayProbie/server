@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "fixed_question")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@EqualsAndHashCode(of = { "id" }, callSuper = false)
+@EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class FixedQuestion extends BaseTimeEntity {
 
 	@Id

@@ -13,30 +13,39 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record SessionEmbeddingRequest(
 
-        @Schema(description = "세션 ID", example = "session_12345") @JsonProperty("session_id") String sessionId,
+	@Schema(description = "세션 ID", example = "session_12345") @JsonProperty("session_id")
+	String sessionId,
 
-        @Schema(description = "설문 ID", example = "1") @JsonProperty("survey_id") Long surveyId,
+	@Schema(description = "설문 ID", example = "1") @JsonProperty("survey_id")
+	Long surveyId,
 
-        @Schema(description = "고정 질문 ID", example = "10") @JsonProperty("fixed_question_id") Long fixedQuestionId,
+	@Schema(description = "고정 질문 ID", example = "10") @JsonProperty("fixed_question_id")
+	Long fixedQuestionId,
 
-        @Schema(description = "QA 쌍 목록") @JsonProperty("qa_pairs") List<QaPair> qaPairs,
+	@Schema(description = "QA 쌍 목록") @JsonProperty("qa_pairs")
+	List<QaPair> qaPairs,
 
-        @Schema(description = "추가 메타데이터") @JsonProperty("metadata") Object metadata,
+	@Schema(description = "추가 메타데이터") @JsonProperty("metadata")
+	Object metadata,
 
-        @Schema(description = "분석 자동 트리거 여부", example = "true") @com.fasterxml.jackson.annotation.JsonIgnore Boolean autoTriggerAnalysis) {
+	@Schema(description = "분석 자동 트리거 여부", example = "true") @com.fasterxml.jackson.annotation.JsonIgnore
+	Boolean autoTriggerAnalysis) {
 
-    @Schema(description = "질문-답변 쌍")
-    @Builder
-    public record QaPair(
+	@Schema(description = "질문-답변 쌍")
+	@Builder
+	public record QaPair(
 
-            @Schema(description = "질문 텍스트", example = "재미있었나요?") @JsonProperty("question") String question,
+		@Schema(description = "질문 텍스트", example = "재미있었나요?") @JsonProperty("question")
+		String question,
 
-            @Schema(description = "답변 텍스트", example = "네") @JsonProperty("answer") String answer,
+		@Schema(description = "답변 텍스트", example = "네") @JsonProperty("answer")
+		String answer,
 
-            @Schema(description = "질문 유형 (FIXED, AI)", example = "FIXED") @JsonProperty("question_type") String questionType) {
+		@Schema(description = "질문 유형 (FIXED, AI)", example = "FIXED") @JsonProperty("question_type")
+		String questionType) {
 
-        public static QaPair of(String question, String answer, String questionType) {
-            return new QaPair(question, answer, questionType);
-        }
-    }
+		public static QaPair of(String question, String answer, String questionType) {
+			return new QaPair(question, answer, questionType);
+		}
+	}
 }

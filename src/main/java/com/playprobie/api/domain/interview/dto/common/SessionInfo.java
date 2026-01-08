@@ -20,10 +20,10 @@ public class SessionInfo {
 
 	public static SessionInfo from(SurveySession entity) {
 		return SessionInfo.builder()
-				.sessionId(entity.getId())
-				.sessionUuid(entity.getUuid())
-				.surveyId(entity.getSurvey().getId())
-				.status(entity.getStatus().name())
-				.build();
+			.sessionId(entity.getId())
+			.sessionUuid(entity.getUuid())
+			.surveyId(entity.getSurvey().getId())
+			.status(entity.getStatus().name())
+			.build();
 	}
 }

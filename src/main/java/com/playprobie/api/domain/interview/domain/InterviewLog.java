@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "interview_log")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@EqualsAndHashCode(of = { "id" }, callSuper = false)
+@EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class InterviewLog extends BaseTimeEntity {
 
 	@Id
@@ -62,7 +62,7 @@ public class InterviewLog extends BaseTimeEntity {
 
 	@Builder
 	public InterviewLog(SurveySession session, Long fixedQuestionId, Integer turnNum,
-			QuestionType type, String questionText, String answerText) {
+		QuestionType type, String questionText, String answerText) {
 		this.session = Objects.requireNonNull(session, "InterviewLog 생성 시 session은 필수입니다");
 		this.fixedQuestionId = Objects.requireNonNull(fixedQuestionId, "InterviewLog 생성 시 fixedQuestionId는 필수입니다");
 		this.turnNum = turnNum;

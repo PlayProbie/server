@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum QuestionStatus {
-    DRAFT("draft", "임시"),
-    CONFIRMED("confirmed", "확정");
+	DRAFT("draft", "임시"),
+	CONFIRMED("confirmed", "확정");
 
-    private final String code;
-    private final String description;
+	private final String code;
+	private final String description;
 }

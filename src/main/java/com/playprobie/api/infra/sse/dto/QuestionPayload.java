@@ -23,10 +23,10 @@ public class QuestionPayload {
 	// 정적 팩토리 메서드 (생성 편의성)
 	public static QuestionPayload of(Long fixedQId, String qType, String questionText, int turnNum) {
 		return QuestionPayload.builder()
-				.fixedQId(fixedQId)
-				.qType(qType)
-				.questionText(questionText)
-				.turnNum(turnNum)
-				.build();
+			.fixedQId(fixedQId)
+			.qType(qType)
+			.questionText(questionText)
+			.turnNum(turnNum)
+			.build();
 	}
 }

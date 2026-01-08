@@ -13,19 +13,23 @@ import com.playprobie.api.domain.workspace.domain.WorkspaceMember;
 
 public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember, Long> {
 
-    @Query("SELECT wm FROM WorkspaceMember wm JOIN FETCH wm.workspace WHERE wm.user = :user")
-    List<WorkspaceMember> findAllByUserWithWorkspace(@Param("user") User user);
+	@Query("SELECT wm FROM WorkspaceMember wm JOIN FETCH wm.workspace WHERE wm.user = :user")
+	List<WorkspaceMember> findAllByUserWithWorkspace(@Param("user")
+	User user);
 
-    @Query("SELECT wm FROM WorkspaceMember wm JOIN FETCH wm.user WHERE wm.workspace = :workspace")
-    List<WorkspaceMember> findAllByWorkspaceWithUser(@Param("workspace") Workspace workspace);
+	@Query("SELECT wm FROM WorkspaceMember wm JOIN FETCH wm.user WHERE wm.workspace = :workspace")
+	List<WorkspaceMember> findAllByWorkspaceWithUser(@Param("workspace")
+	Workspace workspace);
 
-    boolean existsByWorkspaceAndUser(Workspace workspace, User user);
+	boolean existsByWorkspaceAndUser(Workspace workspace, User user);
 
-    Optional<WorkspaceMember> findByWorkspaceAndUser(Workspace workspace, User user);
+	Optional<WorkspaceMember> findByWorkspaceAndUser(Workspace workspace, User user);
 
-    // Check if a user has access to a workspace by workspaceId and user
-    boolean existsByWorkspaceIdAndUser(Long workspaceId, User user);
+	// Check if a user has access to a workspace by workspaceId and user
+	boolean existsByWorkspaceIdAndUser(Long workspaceId, User user);
 
-    @Query("SELECT CASE WHEN COUNT(wm) > 0 THEN true ELSE false END FROM WorkspaceMember wm WHERE wm.workspace.id = :workspaceId AND wm.user.id = :userId")
-    boolean existsByWorkspaceIdAndUserId(@Param("workspaceId") Long workspaceId, @Param("userId") Long userId);
+	@Query("SELECT CASE WHEN COUNT(wm) > 0 THEN true ELSE false END FROM WorkspaceMember wm WHERE wm.workspace.id = :workspaceId AND wm.user.id = :userId")
+	boolean existsByWorkspaceIdAndUserId(@Param("workspaceId")
+	Long workspaceId, @Param("userId")
+	Long userId);
 }
