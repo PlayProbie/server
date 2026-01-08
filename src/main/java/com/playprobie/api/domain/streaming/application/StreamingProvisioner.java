@@ -89,11 +89,14 @@ public class StreamingProvisioner {
 
 	/**
 	 * StreamGroup이 안정적인 상태(ACTIVATING이 아님)가 될 때까지 대기합니다.
+	 *
+	 * <p>
+	 * Polling 설정은 application.yml의 aws.gamelift.polling-interval에서 조절 가능합니다.
+	 * 기본값: 5초 간격, 30회 시도 (총 150초 대기)
 	 */
 	private void waitForStreamGroupStable(String streamGroupId) {
-		// User Requested: 5 seconds interval, 30 attempts (Total 150s)
-		long pollingMillis = 5000L;
-		int maxAttempts = 30;
+		long pollingMillis = awsProperties.gamelift().pollingInterval().toMillis();
+		int maxAttempts = 30; // 총 대기시간 = pollingInterval × maxAttempts
 
 		for (int i = 0; i < maxAttempts; i++) {
 			GetStreamGroupResponse response = gameLiftService.getStreamGroupStatus(streamGroupId);

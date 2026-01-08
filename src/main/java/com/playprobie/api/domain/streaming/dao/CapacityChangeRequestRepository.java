@@ -13,8 +13,6 @@ import com.playprobie.api.domain.streaming.domain.RequestStatus;
 
 public interface CapacityChangeRequestRepository extends JpaRepository<CapacityChangeRequest, Long> {
 
-	Optional<CapacityChangeRequest> findByIdempotencyKey(String idempotencyKey);
-
 	// Fetch join to avoid N+1 when accessing resource
 	@Query("SELECT r FROM CapacityChangeRequest r JOIN FETCH r.resource WHERE r.id = :id")
 	Optional<CapacityChangeRequest> findByIdWithResource(@Param("id")

@@ -13,6 +13,14 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>
  * ddl-auto: create 환경에서 서버 시작 시 shedlock 테이블을 보장하기 위해 사용됩니다.
+ *
+ * <p>
+ * {@link ApplicationRunner}로 실행되므로 애플리케이션 시작 즉시 테이블을 생성하며,
+ * {@link org.springframework.scheduling.annotation.Scheduled}의 initialDelay와는 무관합니다.
+ *
+ * <p>
+ * {@code CREATE TABLE IF NOT EXISTS}를 사용하여 다중 인스턴스 환경에서도 안전하게 동작합니다.
+ * 프로덕션 환경에서는 Flyway/Liquibase 같은 마이그레이션 도구 사용을 권장합니다.
  */
 @Component
 @RequiredArgsConstructor
