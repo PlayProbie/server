@@ -209,19 +209,11 @@ public class StreamingResourceService {
 	 */
 	@Transactional
 	public TestActionResponse startTest(UUID surveyUuid, User user) {
-		String idempotencyKey = UUID.randomUUID().toString();
-		log.info("Starting test: surveyUuid={}, user={}, key={}", surveyUuid, user.getEmail(), idempotencyKey);
+		log.info("Starting test: surveyUuid={}, user={}", surveyUuid, user.getEmail());
 		Survey survey = surveyRepository.findByUuid(surveyUuid).orElseThrow(SurveyNotFoundException::new);
 		StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId())
 			.orElseThrow(StreamingResourceNotFoundException::new);
 		securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
-
-		// [Idempotency] Check existing request
-		java.util.Optional<CapacityChangeRequest> existing = capacityChangeRequestRepository
-			.findByIdempotencyKey(idempotencyKey);
-		if (existing.isPresent()) {
-			return mapToResponse(existing.get(), resource);
-		}
 
 		if (resource.getStatus() == StreamingResourceStatus.TESTING) {
 			return TestActionResponse.startTest("TESTING", 1);
@@ -235,7 +227,7 @@ public class StreamingResourceService {
 
 		// Phase 1: DB Update & Intent Logging
 		CapacityChangeRequest request = CapacityChangeRequest.create(
-			idempotencyKey, resource, CapacityChangeType.START_TEST, 1);
+			resource, CapacityChangeType.START_TEST, 1);
 		capacityChangeRequestRepository.save(request);
 
 		resource.markScalingUp(1);
@@ -251,11 +243,6 @@ public class StreamingResourceService {
 		}
 
 		return TestActionResponse.inProgress("SCALING_UP", 1, request.getId());
-	}
-
-	@Transactional
-	public TestActionResponse startTest(Long surveyId, User user) {
-		throw new UnsupportedOperationException("Use startTest(UUID, User, String) instead");
 	}
 
 	/**
@@ -292,19 +279,11 @@ public class StreamingResourceService {
 	 */
 	@Transactional
 	public TestActionResponse stopTest(UUID surveyUuid, User user) {
-		String idempotencyKey = UUID.randomUUID().toString();
-		log.info("Stopping test: surveyUuid={}, user={}, key={}", surveyUuid, user.getEmail(), idempotencyKey);
+		log.info("Stopping test: surveyUuid={}, user={}", surveyUuid, user.getEmail());
 		Survey survey = surveyRepository.findByUuid(surveyUuid).orElseThrow(SurveyNotFoundException::new);
 		StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId())
 			.orElseThrow(StreamingResourceNotFoundException::new);
 		securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
-
-		// [Idempotency] Check existing request
-		java.util.Optional<CapacityChangeRequest> existing = capacityChangeRequestRepository
-			.findByIdempotencyKey(idempotencyKey);
-		if (existing.isPresent()) {
-			return mapToResponse(existing.get(), resource);
-		}
 
 		if (resource.getStatus() == StreamingResourceStatus.READY) {
 			return TestActionResponse.stopTest("READY", 0);
@@ -317,7 +296,7 @@ public class StreamingResourceService {
 
 		// Phase 1: DB Update
 		CapacityChangeRequest request = CapacityChangeRequest.create(
-			idempotencyKey, resource, CapacityChangeType.STOP_TEST, 0);
+			resource, CapacityChangeType.STOP_TEST, 0);
 		capacityChangeRequestRepository.save(request);
 
 		resource.markScalingDown();
@@ -333,20 +312,6 @@ public class StreamingResourceService {
 		}
 
 		return TestActionResponse.inProgress("SCALING_DOWN", 0, request.getId());
-	}
-
-	@Transactional
-	public TestActionResponse stopTest(Long surveyId, User user) {
-		throw new UnsupportedOperationException("Use stopTest(UUID, User, String) instead");
-	}
-
-	private TestActionResponse mapToResponse(CapacityChangeRequest request, StreamingResource resource) {
-		if (request.getStatus() == com.playprobie.api.domain.streaming.domain.RequestStatus.COMPLETED) {
-			return new TestActionResponse(resource.getStatus().name(), resource.getCurrentCapacity(), "이미 처리된 요청입니다.",
-				request.getId(), null);
-		}
-		return TestActionResponse.inProgress(resource.getStatus().name(), resource.getCurrentCapacity(),
-			request.getId());
 	}
 
 	/**

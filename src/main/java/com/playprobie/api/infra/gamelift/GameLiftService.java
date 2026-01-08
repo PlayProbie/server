@@ -195,7 +195,7 @@ public class GameLiftService {
 
 	private <T> T executeWithRetry(java.util.function.Supplier<T> operation, String operationName) {
 		int maxRetries = 3;
-		// 마지막 에러 메시지를 담기 위한 변수
+		// 마지막 에러 메시지를 담기 위한 변수 (서버 로그용)
 		String lastErrorMessage = "Unknown error";
 
 		for (int attempt = 1; attempt <= maxRetries; attempt++) {
@@ -210,10 +210,10 @@ public class GameLiftService {
 					lastErrorMessage);
 
 				if (attempt == maxRetries) {
-					// 원인 메시지를 포함하여 예외 던짐
+					// AWS 상세 에러는 로깅만 하고, 클라이언트에는 일반화된 메시지만 반환
+					log.error("AWS Transient Error (Max Retries): {}", lastErrorMessage);
 					throw new com.playprobie.api.infra.gamelift.exception.GameLiftTransientException(
-						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR.getMessage() + ": "
-							+ lastErrorMessage,
+						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR.getMessage(),
 						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR);
 				}
 				try {

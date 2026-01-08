@@ -147,7 +147,7 @@ class AdminTestControllerTest {
 		assertThat(updated.getStatus()).isEqualTo(StreamingResourceStatus.SCALING_UP);
 		assertThat(updated.getCurrentCapacity()).isEqualTo(1);
 
-		// Key는 내부 생성되므로 존재 여부만 확인
+		// CapacityChangeRequest 생성 확인
 		long count = requestRepository.count();
 		assertThat(count).isEqualTo(1);
 
