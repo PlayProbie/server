@@ -37,7 +37,7 @@ public enum ErrorCode {
 
 	// Workspace
 	WORKSPACE_NOT_FOUND(404, "W001", "워크스페이스를 찾을 수 없습니다."),
-	WORKSPACE_MEMBER_NOT_FOUND(404, "W002", "워크스페이스 멤버를 찾을 수 없습니다."),
+	WORKSPACE_MEMBER_NOT_FOUND(403, "W002", "워크스페이스 멤버를 찾을 수 없습니다."),
 	WORKSPACE_ACCESS_DENIED(403, "W003", "해당 워크스페이스에 접근 권한이 없습니다."),
 	WORKSPACE_MEMBER_ALREADY_EXISTS(409, "W004", "이미 해당 워크스페이스의 멤버입니다."),
 

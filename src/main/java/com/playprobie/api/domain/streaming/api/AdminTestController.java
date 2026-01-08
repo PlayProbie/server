@@ -1,5 +1,7 @@
 package com.playprobie.api.domain.streaming.api;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,10 +16,9 @@ import com.playprobie.api.domain.streaming.dto.TestActionResponse;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.CommonResponse;
 
-import lombok.RequiredArgsConstructor;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/surveys/{surveyId}/streaming-resource")
@@ -29,8 +30,9 @@ public class AdminTestController {
 
 	@PostMapping("/start-test")
 	@Operation(summary = "관리자 테스트 시작", description = "스트리밍 Capacity를 0 → 1로 설정하여 테스트를 시작합니다.")
-	public ResponseEntity<CommonResponse<TestActionResponse>> startTest(@PathVariable
-	java.util.UUID surveyId,
+	public ResponseEntity<CommonResponse<TestActionResponse>> startTest(
+		@PathVariable
+		UUID surveyId,
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
 		TestActionResponse response = streamingResourceService.startTest(surveyId, user);
@@ -39,8 +41,9 @@ public class AdminTestController {
 
 	@PostMapping("/stop-test")
 	@Operation(summary = "관리자 테스트 종료", description = "스트리밍 Capacity를 1 → 0으로 설정하여 테스트를 종료합니다.")
-	public ResponseEntity<CommonResponse<TestActionResponse>> stopTest(@PathVariable
-	java.util.UUID surveyId,
+	public ResponseEntity<CommonResponse<TestActionResponse>> stopTest(
+		@PathVariable
+		UUID surveyId,
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
 		TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
@@ -48,9 +51,10 @@ public class AdminTestController {
 	}
 
 	@GetMapping("/status")
-	@Operation(summary = "리소스 상태 조회", description = "GameLift 리소스 상태를 보링합니다.")
-	public ResponseEntity<CommonResponse<ResourceStatusResponse>> getStatus(@PathVariable
-	java.util.UUID surveyId,
+	@Operation(summary = "리소스 상태 조회", description = "GameLift 리소스 상태를 조회합니다.")
+	public ResponseEntity<CommonResponse<ResourceStatusResponse>> getStatus(
+		@PathVariable
+		UUID surveyId,
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
 		ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);
