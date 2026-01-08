@@ -44,10 +44,10 @@ public class TesterProfile {
 	 */
 	public static TesterProfile createAnonymous(String ageGroup, String gender, String preferGenre) {
 		return TesterProfile.builder()
-				.testerId(UUID.randomUUID().toString())
-				.ageGroup(ageGroup)
-				.gender(gender)
-				.preferGenre(preferGenre)
-				.build();
+			.testerId(UUID.randomUUID().toString())
+			.ageGroup(ageGroup)
+			.gender(gender)
+			.preferGenre(preferGenre)
+			.build();
 	}
 }

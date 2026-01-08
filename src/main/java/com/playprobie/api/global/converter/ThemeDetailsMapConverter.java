@@ -16,30 +16,29 @@ import jakarta.persistence.Converter;
 @Converter
 public class ThemeDetailsMapConverter implements AttributeConverter<Map<String, List<String>>, String> {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+	private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Override
-    public String convertToDatabaseColumn(Map<String, List<String>> attribute) {
-        if (attribute == null || attribute.isEmpty()) {
-            return null;
-        }
-        try {
-            return objectMapper.writeValueAsString(attribute);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to convert map to JSON", e);
-        }
-    }
+	@Override
+	public String convertToDatabaseColumn(Map<String, List<String>> attribute) {
+		if (attribute == null || attribute.isEmpty()) {
+			return null;
+		}
+		try {
+			return objectMapper.writeValueAsString(attribute);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to convert map to JSON", e);
+		}
+	}
 
-    @Override
-    public Map<String, List<String>> convertToEntityAttribute(String dbData) {
-        if (dbData == null || dbData.isEmpty()) {
-            return Map.of();
-        }
-        try {
-            return objectMapper.readValue(dbData, new TypeReference<Map<String, List<String>>>() {
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to convert JSON to map", e);
-        }
-    }
+	@Override
+	public Map<String, List<String>> convertToEntityAttribute(String dbData) {
+		if (dbData == null || dbData.isEmpty()) {
+			return Map.of();
+		}
+		try {
+			return objectMapper.readValue(dbData, new TypeReference<Map<String, List<String>>>() {});
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to convert JSON to map", e);
+		}
+	}
 }

@@ -19,30 +19,30 @@ import lombok.Getter;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class SurveyResultListResponse {
 
-        private List<SessionItem> content;
+	private List<SessionItem> content;
 
-        @Schema(description = "다음 페이지 커서", example = "10")
-        private Long nextCursor;
+	@Schema(description = "다음 페이지 커서", example = "10")
+	private Long nextCursor;
 
-        @Schema(description = "다음 페이지 존재 여부", example = "true")
-        private boolean hasNext;
+	@Schema(description = "다음 페이지 존재 여부", example = "true")
+	private boolean hasNext;
 
-        @Getter
-        @Builder
-        public static class SessionItem {
-                private java.util.UUID sessionUuid;
-                private String surveyName;
+	@Getter
+	@Builder
+	public static class SessionItem {
+		private java.util.UUID sessionUuid;
+		private String surveyName;
 
-                @Schema(description = "설문 UUID", example = "550e8400-e29b-41d4-a716-446655440000")
-                private UUID surveyUuid;
+		@Schema(description = "설문 UUID", example = "550e8400-e29b-41d4-a716-446655440000")
+		private UUID surveyUuid;
 
-                @Schema(description = "테스터 ID", example = "tester123")
-                private String testerId;
-                private SessionStatus status;
-                private String firstQuestion;
+		@Schema(description = "테스터 ID", example = "tester123")
+		private String testerId;
+		private SessionStatus status;
+		private String firstQuestion;
 
-                @Schema(description = "종료 일시", example = "2024-01-01T10:30:00+09:00", type = "string")
-                @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul")
-                private OffsetDateTime endedAt;
-        }
+		@Schema(description = "종료 일시", example = "2024-01-01T10:30:00+09:00", type = "string")
+		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul")
+		private OffsetDateTime endedAt;
+	}
 }

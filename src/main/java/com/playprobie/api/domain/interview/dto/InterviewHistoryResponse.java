@@ -29,13 +29,13 @@ public class InterviewHistoryResponse {
 	private String sseUrl;
 
 	public static InterviewHistoryResponse assemble(
-			SurveySession session,
-			List<InterviewLog> logs,
-			String sseUrl) {
+		SurveySession session,
+		List<InterviewLog> logs,
+		String sseUrl) {
 		return InterviewHistoryResponse.builder()
-				.session(SessionInfo.from(session))
-				.excerpts(logs.stream().map(Excerpt::from).toList())
-				.sseUrl(sseUrl)
-				.build();
+			.session(SessionInfo.from(session))
+			.excerpts(logs.stream().map(Excerpt::from).toList())
+			.sseUrl(sseUrl)
+			.build();
 	}
 }

@@ -8,7 +8,7 @@ import com.playprobie.api.global.error.exception.BusinessException;
  */
 public class StreamingResourceAlreadyExistsException extends BusinessException {
 
-    public StreamingResourceAlreadyExistsException() {
-        super(ErrorCode.STREAMING_RESOURCE_ALREADY_EXISTS);
-    }
+	public StreamingResourceAlreadyExistsException() {
+		super(ErrorCode.STREAMING_RESOURCE_ALREADY_EXISTS);
+	}
 }

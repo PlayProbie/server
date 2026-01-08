@@ -13,16 +13,16 @@ import lombok.Getter;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class SurveyResultSummaryResponse {
 
-    @Schema(description = "총 설문 수", example = "10")
-    private long surveyCount;
+	@Schema(description = "총 설문 수", example = "10")
+	private long surveyCount;
 
-    @Schema(description = "총 응답 수", example = "150")
-    private long responseCount;
+	@Schema(description = "총 응답 수", example = "150")
+	private long responseCount;
 
-    public static SurveyResultSummaryResponse of(long surveyCount, long responseCount) {
-        return SurveyResultSummaryResponse.builder()
-                .surveyCount(surveyCount)
-                .responseCount(responseCount)
-                .build();
-    }
+	public static SurveyResultSummaryResponse of(long surveyCount, long responseCount) {
+		return SurveyResultSummaryResponse.builder()
+			.surveyCount(surveyCount)
+			.responseCount(responseCount)
+			.build();
+	}
 }

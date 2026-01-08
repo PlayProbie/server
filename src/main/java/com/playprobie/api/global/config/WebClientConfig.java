@@ -1,35 +1,38 @@
 package com.playprobie.api.global.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.playprobie.api.global.config.properties.AiProperties;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class WebClientConfig {
 
-	@Value("${ai.server.url}")
-	private String aiServerURl;
+	private final AiProperties aiProperties;
 
 	@Bean
 	public WebClient aiWebClient() {
 		HttpClient httpClient = HttpClient.create()
-				.option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 30000) // 30초 연결 타임아웃
-				.responseTimeout(java.time.Duration.ofSeconds(300)); // 5분 응답 타임아웃
+			.option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS,
+				(int)aiProperties.client().connectTimeout().toMillis())
+			.responseTimeout(aiProperties.client().readTimeout());
 
 		return WebClient.builder()
-				.baseUrl(aiServerURl)
-				.clientConnector(new ReactorClientHttpConnector(httpClient))
-				.filter(logRequest())
-				.filter(logResponse())
-				.build();
+			.baseUrl(aiProperties.server().url())
+			.clientConnector(new ReactorClientHttpConnector(httpClient))
+			.filter(logRequest())
+			.filter(logResponse())
+			.build();
 	}
 
 	private ExchangeFilterFunction logRequest() {

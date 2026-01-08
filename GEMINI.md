@@ -42,6 +42,7 @@ You MUST strictly adhere to the following documentation located in
 ## 4. Naming & Structure
 
 - Reference: `.agent/instructions/naming_conventions.md`
+- Reference: `.agent/instructions/coding_conventions.md`
 - Reference: `.agent/instructions/project_structure.md`
 - Follow the Domain-based package structure (`domain`, `global`, `infra`).
 - Adhere to naming rules (e.g., `[Domain]Service`, `[Domain]Repository`).

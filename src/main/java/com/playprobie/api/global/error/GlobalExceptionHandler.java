@@ -27,8 +27,8 @@ public class GlobalExceptionHandler {
 		log.warn("handleHttpMediaTypeNotAcceptableException: {}", e.getMessage());
 		// JSON이 아닌 plain text로 응답하여 협상 실패 방지
 		return ResponseEntity
-				.status(HttpStatus.NOT_ACCEPTABLE)
-				.body("Media type not acceptable: " + e.getMessage());
+			.status(HttpStatus.NOT_ACCEPTABLE)
+			.body("Media type not acceptable: " + e.getMessage());
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
 	 */
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	protected ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
-			MethodArgumentTypeMismatchException e) {
+		MethodArgumentTypeMismatchException e) {
 		log.warn("handleMethodArgumentTypeMismatchException", e);
 		final ErrorResponse response = ErrorResponse.of(e);
 		return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
 	 */
 	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
 	protected ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
-			HttpRequestMethodNotSupportedException e) {
+		HttpRequestMethodNotSupportedException e) {
 		log.warn("handleHttpRequestMethodNotSupportedException", e);
 		final ErrorResponse response = ErrorResponse.of(ErrorCode.METHOD_NOT_ALLOWED);
 		return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);

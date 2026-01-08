@@ -4,7 +4,7 @@ import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 
 public class GameBuildNotFoundException extends EntityNotFoundException {
-    public GameBuildNotFoundException() {
-        super(ErrorCode.GAME_BUILD_NOT_FOUND);
-    }
+	public GameBuildNotFoundException() {
+		super(ErrorCode.GAME_BUILD_NOT_FOUND);
+	}
 }

@@ -14,12 +14,12 @@ import lombok.Getter;
 @Builder
 public class AiSessionEndRequest {
 
-    @JsonProperty("session_id")
-    private final String sessionId;
+	@JsonProperty("session_id")
+	private final String sessionId;
 
-    @JsonProperty("end_reason")
-    private final String endReason;
+	@JsonProperty("end_reason")
+	private final String endReason;
 
-    @JsonProperty("game_info")
-    private final Map<String, Object> gameInfo;
+	@JsonProperty("game_info")
+	private final Map<String, Object> gameInfo;
 }

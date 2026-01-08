@@ -2,9 +2,12 @@ spring:
   application:
     name: PlayProbie
   profiles:
-    active: local # 기본적으로 local 프로필을 활성화
+    default: local
+    group:
+      local: common, local
+      dev: common, dev
+      prod: common, prod
 
-# Actuator 설정 (Health Check용)
 management:
   endpoints:
     web:
@@ -23,10 +26,3 @@ springdoc:
     operations-sorter: method
     disable-swagger-default-url: true
     display-request-duration: true
-
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:}
-
-playprobie:
-  base-url: ${PLAYPROBIE_BASE_URL:http://localhost:5173}
-

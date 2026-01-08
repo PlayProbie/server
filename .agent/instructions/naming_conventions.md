@@ -4,7 +4,7 @@
 
 | 유형          | 스타일       | 예시                   |
 | ------------- | ------------ | ---------------------- |
-| Java 클래스   | `PascalCase` | `UserApi.java`         |
+| Java 클래스   | `PascalCase` | `UserController.java`  |
 | 리소스 파일   | `kebab-case` | `application-dev.yml`  |
 | 테스트 클래스 | `[대상]Test` | `UserServiceTest.java` |
 
@@ -15,10 +15,9 @@
 ### Controller (API)
 
 ```java
-// 패턴: [도메인]Api 또는 [도메인]Controller
+// 패턴: [도메인]Controller
 @RestController
-public class UserApi { }        // REST API 명시적 표현
-public class UserController { } // 전통적인 방식
+public class UserController { }
 ```
 
 ### Service (Application)
@@ -152,9 +151,9 @@ boolean existsByEmail(String email);
 
 | 도메인      | Entity        | API              | Service              | DTO                   | Exception                      |
 | ----------- | ------------- | ---------------- | -------------------- | --------------------- | ------------------------------ |
-| User        | `User`        | `UserApi`        | `UserService`        | `CreateUserRequest`   | `UserNotFoundException`        |
-| Session     | `Session`     | `SessionApi`     | `SessionService`     | `JoinSessionRequest`  | `SessionExpiredException`      |
-| Participant | `Participant` | `ParticipantApi` | `ParticipantService` | `ParticipantResponse` | `ParticipantNotFoundException` |
+| User        | `User`        | `UserController`        | `UserService`        | `CreateUserRequest`   | `UserNotFoundException`        |
+| Session     | `Session`     | `SessionController`     | `SessionService`     | `JoinSessionRequest`  | `SessionExpiredException`      |
+| Participant | `Participant` | `ParticipantController` | `ParticipantService` | `ParticipantResponse` | `ParticipantNotFoundException` |
 
 ---
 
@@ -169,7 +168,7 @@ public void processUser() { }       // 모호한 동작
 public void handleUser() { }        // 너무 일반적
 
 // ✅ Good
-public class UserController { }     // 또는 UserApi
+public class UserController { }
 public record UserResponse() { }
 public class User { }
 public void createUser() { }
