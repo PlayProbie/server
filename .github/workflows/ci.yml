@@ -40,3 +40,7 @@ jobs:
         if: always()
         with:
           files: "build/test-results/**/*.xml"
+          comment_title: "🚀 CI 테스트 결과 리포트" # 사용자화된 리포트 제목
+          comment_mode: "update last"         # 이전 코멘트를 업데이트하여 PR 타임라인 관리
+          test_changes_limit: 10              # 상세 변경 내역 행 제한 (접기 기능 활용)
+          report_individual_runs: "true"      # 개별 실행 결과 포함
