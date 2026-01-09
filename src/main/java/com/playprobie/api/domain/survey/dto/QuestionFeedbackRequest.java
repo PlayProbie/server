@@ -21,7 +21,11 @@ public record QuestionFeedbackRequest(
 
 		@Schema(description = "설문 이름", example = "출시 전 테스트 설문", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "설문 이름은 필수입니다") @JsonProperty("survey_name") String surveyName,
 
-		@Schema(description = "테마 우선순위 (1~3개)", example = "[\"gameplay\", \"ui_ux\"]", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty(message = "테마 우선순위는 필수입니다") @Size(min = 1, max = 3, message = "테마 우선순위는 1~3개여야 합니다") @JsonProperty("theme_priorities") List<String> themePriorities,
+	@Schema(description = "테마 우선순위 (1~3개)", example = "[\"gameplay\", \"ui_ux\"]", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty(message = "테마 우선순위는 필수입니다") @Size(min = 1, max = 3, message = "테마 우선순위는 1~3개여야 합니다") @JsonProperty("theme_priorities")
+	List<String> themePriorities,
+
+	@Schema(description = "테마별 세부 항목 (선택)", example = "{\"gameplay\": [\"core_loop\", \"fun\"]}", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @JsonProperty("theme_details")
+	Map<String, List<String>> themeDetails,
 
 		@Schema(description = "테마별 세부 항목 (선택)", example = "{\"gameplay\": [\"core_loop\", \"fun\"]}", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @JsonProperty("theme_details") Map<String, List<String>> themeDetails,
 

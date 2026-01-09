@@ -143,6 +143,37 @@ public class StreamingResource extends BaseTimeEntity {
 		this.status = StreamingResourceStatus.ACTIVE;
 	}
 
+	// [New Methods for Two-Phase Transaction]
+
+	public void markScalingUp(int targetCapacity) {
+		if (!this.status.canScale() && this.status != StreamingResourceStatus.SCALING_UP) {
+			throw new IllegalStateException("스케일링을 시작할 수 없는 상태입니다: " + this.status);
+		}
+		this.status = StreamingResourceStatus.SCALING_UP;
+		this.currentCapacity = targetCapacity;
+	}
+
+	public void markScalingDown() {
+		this.status = StreamingResourceStatus.SCALING_DOWN;
+		this.currentCapacity = 0;
+	}
+
+	public void confirmStartTest() {
+		this.status = StreamingResourceStatus.TESTING;
+		this.currentCapacity = 1;
+	}
+
+	public void confirmStopTest() {
+		this.status = StreamingResourceStatus.READY;
+		this.currentCapacity = 0;
+	}
+
+	public void rollbackScaling() {
+		// 이전 상태로 복원 (기본적으로 READY로 복원, 복잡한 경우 History 필요)
+		this.status = StreamingResourceStatus.READY;
+		this.currentCapacity = 0;
+	}
+
 	/**
 	 * 리소스 정리 시작 시 호출합니다.
 	 */
@@ -158,7 +189,7 @@ public class StreamingResource extends BaseTimeEntity {
 		this.currentCapacity = 0;
 	}
 
-	@Column(name = "error_message")
+	@Column(name = "error_message", columnDefinition = "TEXT")
 	private String errorMessage;
 
 	public void markError(String errorMessage) {

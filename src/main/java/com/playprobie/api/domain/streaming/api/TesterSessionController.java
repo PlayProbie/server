@@ -20,11 +20,10 @@ import com.playprobie.api.domain.streaming.dto.TerminateSessionRequest;
 import com.playprobie.api.domain.streaming.dto.TerminateSessionResponse;
 import com.playprobie.api.global.common.response.CommonResponse;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/surveys/{surveyUuid}")

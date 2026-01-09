@@ -17,7 +17,6 @@ import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.SurveyStatus;
-import com.playprobie.api.domain.survey.domain.TestPurpose;
 import com.playprobie.api.domain.survey.domain.TestStage;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
@@ -58,7 +57,6 @@ public class SurveyService {
 		Game game = gameService.getGameEntity(request.gameUuid(), user);
 		// Security check is done inside getGameEntity
 
-		TestPurpose testPurpose = parseTestPurpose(request.testPurpose());
 		TestStage testStage = parseTestStage(request.testStage());
 
 		Survey survey = Survey.builder()
@@ -198,17 +196,6 @@ public class SurveyService {
 	}
 
 	// ========== Private ==========
-
-	private TestPurpose parseTestPurpose(String code) {
-		if (code == null)
-			return null;
-		for (TestPurpose tp : TestPurpose.values()) {
-			if (tp.getCode().equals(code)) {
-				return tp;
-			}
-		}
-		throw new IllegalArgumentException("Invalid test purpose code: " + code);
-	}
 
 	private TestStage parseTestStage(String code) {
 		if (code == null)

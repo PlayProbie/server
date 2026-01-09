@@ -1,25 +1,19 @@
 package com.playprobie.api.domain.analytics.application;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
-import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.infra.ai.AiClient;
@@ -154,7 +148,6 @@ public class AnalyticsService {
 			.map(sse -> {
 				String resultJson = sse.data();
 				if (resultJson != null) {
-					resultJson = convertAnswerIdsToTexts(resultJson);
 					saveOrUpdateResultWithTransaction(question, resultJson, currentCount);
 				}
 				return QuestionResponseAnalysisWrapper.builder()
@@ -162,127 +155,6 @@ public class AnalyticsService {
 					.resultJson(resultJson)
 					.build();
 			});
-	}
-
-	private String convertAnswerIdsToTexts(String resultJson) {
-		try {
-			JsonNode root = objectMapper.readTree(resultJson);
-			if (!root.has("clusters")) {
-				return resultJson;
-			}
-
-			ObjectNode rootNode = (ObjectNode)root;
-			ArrayNode clusters = (ArrayNode)root.get("clusters");
-
-			for (int i = 0; i < clusters.size(); i++) {
-				ObjectNode cluster = (ObjectNode)clusters.get(i);
-				if (cluster.has("representative_answer_ids")) {
-					ArrayNode answerIds = (ArrayNode)cluster.get("representative_answer_ids");
-					List<String> answerTexts = new ArrayList<>();
-
-					for (JsonNode idNode : answerIds) {
-						String answerId = idNode.asText();
-						String answerText = fetchAnswerText(answerId);
-						if (answerText != null) {
-							answerTexts.add(answerText);
-						}
-					}
-
-					// representative_answer_ids를 representative_answers로 교체
-					cluster.remove("representative_answer_ids");
-					ArrayNode answersArray = objectMapper.createArrayNode();
-					answerTexts.forEach(answersArray::add);
-					cluster.set("representative_answers", answersArray);
-				}
-			}
-
-			// outliers 섹션도 처리
-			if (root.has("outliers") && root.get("outliers").has("answer_ids")) {
-				ObjectNode outliers = (ObjectNode)root.get("outliers");
-				ArrayNode answerIds = (ArrayNode)outliers.get("answer_ids");
-				List<String> answerTexts = new ArrayList<>();
-
-				// outliers는 최대 5개만 변환 (너무 많으면 성능 이슈)
-				int limit = Math.min(answerIds.size(), 5);
-				for (int i = 0; i < limit; i++) {
-					String answerId = answerIds.get(i).asText();
-					String answerText = fetchAnswerText(answerId);
-					if (answerText != null) {
-						answerTexts.add(answerText);
-					}
-				}
-
-				ArrayNode answersArray = objectMapper.createArrayNode();
-				answerTexts.forEach(answersArray::add);
-				outliers.set("sample_answers", answersArray);
-			}
-
-			return objectMapper.writeValueAsString(rootNode);
-		} catch (Exception e) {
-			log.warn("Failed to convert answer IDs to texts: {}", e.getMessage());
-			return resultJson; // 변환 실패 시 원본 반환
-		}
-	}
-
-	/**
-	 * answer_id로부터 실제 답변 텍스트 조회
-	 *
-	 * @param answerId 형식: {session_uuid}_{fixed_question_id}_{hash}
-	 *                 UUID는 하이픈 포함 36자 (예:
-	 *                 ac1565f9-9b91-1346-819b-91c352bf002d_1_82c7e975)
-	 * @return 포맷팅된 대화 텍스트 (Q&A 형식)
-	 */
-	private String fetchAnswerText(String answerId) {
-		try {
-			// answer_id 형식: {uuid}_{fixedQuestionId}_{hash}
-			// UUID는 하이픈을 포함하므로 단순 split("_")으로는 파싱 불가
-			// UUID 형식: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36자)
-
-			// 방법: 마지막 2개의 '_' 위치를 찾아서 파싱
-			int lastUnderscore = answerId.lastIndexOf('_');
-			if (lastUnderscore < 0) {
-				log.debug("Invalid answer_id format (no underscore): {}", answerId);
-				return null;
-			}
-
-			int secondLastUnderscore = answerId.lastIndexOf('_', lastUnderscore - 1);
-			if (secondLastUnderscore < 0) {
-				log.debug("Invalid answer_id format (need at least 2 underscores): {}", answerId);
-				return null;
-			}
-
-			// UUID 추출 (처음부터 secondLastUnderscore까지)
-			String sessionUuidStr = answerId.substring(0, secondLastUnderscore);
-			// fixedQuestionId 추출 (secondLastUnderscore+1부터 lastUnderscore까지)
-			String fixedQIdStr = answerId.substring(secondLastUnderscore + 1, lastUnderscore);
-			// hash는 무시 (lastUnderscore+1부터 끝까지)
-
-			Long fixedQuestionId = Long.parseLong(fixedQIdStr);
-			UUID sessionUuid = UUID.fromString(sessionUuidStr);
-
-			// UUID로 InterviewLog 조회
-			List<InterviewLog> logs = interviewLogRepository
-				.findBySessionUuidAndFixedQuestionIdOrderByTurnNumAsc(sessionUuid, fixedQuestionId);
-
-			if (logs.isEmpty()) {
-				log.debug("No logs found for session_uuid={}, fixed_question_id={}", sessionUuid, fixedQuestionId);
-				return null;
-			}
-
-			// Q&A 형식으로 포맷팅
-			return logs.stream()
-				.filter(l -> l.getAnswerText() != null)
-				.map(l -> String.format("Q: %s\nA: %s",
-					l.getQuestionText(),
-					l.getAnswerText()))
-				.collect(Collectors.joining("\n\n"));
-		} catch (IllegalArgumentException e) {
-			log.debug("Failed to parse answer_id (invalid UUID or number): {}", answerId);
-			return null;
-		} catch (Exception e) {
-			log.warn("Unexpected error fetching answer text for id={}: {}", answerId, e.getMessage());
-			return null;
-		}
 	}
 
 	/**
