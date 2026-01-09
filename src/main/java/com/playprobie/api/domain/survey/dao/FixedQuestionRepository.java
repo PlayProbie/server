@@ -25,18 +25,20 @@ public interface FixedQuestionRepository extends JpaRepository<FixedQuestion, Lo
 	 * N+1 최적화: 여러 설문의 첫 번째 질문 일괄 조회
 	 */
 	@Query("""
-		SELECT fq FROM FixedQuestion fq
-		WHERE fq.surveyId IN :surveyIds
-		AND fq.order = (
-			SELECT MIN(fq2.order) FROM FixedQuestion fq2
-			WHERE fq2.surveyId = fq.surveyId
-		)
-		""")
-	List<FixedQuestion> findFirstQuestionsBySurveyIds(@Param("surveyIds")
-	Set<Long> surveyIds);
+			SELECT fq FROM FixedQuestion fq
+			WHERE fq.surveyId IN :surveyIds
+			AND fq.order = (
+				SELECT MIN(fq2.order) FROM FixedQuestion fq2
+				WHERE fq2.surveyId = fq.surveyId
+			)
+			""")
+	List<FixedQuestion> findFirstQuestionsBySurveyIds(@Param("surveyIds") Set<Long> surveyIds);
 
 	List<FixedQuestion> findAllByIdIn(Set<Long> ids);
 
 	// 현재 order보다 큰 다음 질문 조회
 	Optional<FixedQuestion> findFirstBySurveyIdAndOrderGreaterThanOrderByOrderAsc(Long surveyId, Integer order);
+
+	// 전체 질문 수 조회 (Option A)
+	long countBySurveyId(Long surveyId);
 }

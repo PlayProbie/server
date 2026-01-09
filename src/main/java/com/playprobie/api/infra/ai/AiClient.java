@@ -28,7 +28,7 @@ public interface AiClient {
 	 * @return 생성된 질문 목록 (최대 5개)
 	 */
 	List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
-		List<String> themePriorities, Map<String, List<String>> themeDetails);
+			List<String> themePriorities, Map<String, List<String>> themeDetails);
 
 	/**
 	 * 질문 피드백 기반 대안 생성
