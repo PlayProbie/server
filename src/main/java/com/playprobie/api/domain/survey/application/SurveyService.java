@@ -17,6 +17,7 @@ import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.SurveyStatus;
+import com.playprobie.api.domain.survey.domain.TestPurpose;
 import com.playprobie.api.domain.survey.domain.TestStage;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
@@ -58,19 +59,20 @@ public class SurveyService {
 		// Security check is done inside getGameEntity
 
 		TestStage testStage = parseTestStage(request.testStage());
+		TestPurpose testPurpose = parseTestPurpose(request.testPurpose());
 
 		Survey survey = Survey.builder()
-				.game(game)
-				.name(request.surveyName())
-				.testPurpose(testPurpose)
-				.startAt(request.startedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
-				.endAt(request.endedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
-				// 신규 필드 (feat/#47)
-				.testStage(testStage)
-				.themePriorities(request.themePriorities())
-				.themeDetails(request.themeDetails())
-				.versionNote(request.versionNote())
-				.build();
+			.game(game)
+			.name(request.surveyName())
+			.testPurpose(testPurpose)
+			.startAt(request.startedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
+			.endAt(request.endedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
+			// 신규 필드 (feat/#47)
+			.testStage(testStage)
+			.themePriorities(request.themePriorities())
+			.themeDetails(request.themeDetails())
+			.versionNote(request.versionNote())
+			.build();
 
 		Survey savedSurvey = surveyRepository.save(survey);
 		return SurveyResponse.from(savedSurvey);
@@ -81,27 +83,27 @@ public class SurveyService {
 			// Validate access via GameService
 			gameService.getGameEntity(gameUuid, user);
 			return surveyRepository.findByGameUuid(gameUuid)
-					.stream()
-					.map(SurveyResponse::forList)
-					.toList();
-		}
-
-		return surveyRepository.findAll()
 				.stream()
 				.map(SurveyResponse::forList)
 				.toList();
+		}
+
+		return surveyRepository.findAll()
+			.stream()
+			.map(SurveyResponse::forList)
+			.toList();
 	}
 
 	public SurveyResponse getSurveyByUuid(UUID surveyUuid, User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
-				.orElseThrow(EntityNotFoundException::new);
+			.orElseThrow(EntityNotFoundException::new);
 		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
 		return SurveyResponse.from(survey);
 	}
 
 	public Survey getSurveyEntity(UUID surveyUuid, User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
-				.orElseThrow(EntityNotFoundException::new);
+			.orElseThrow(EntityNotFoundException::new);
 		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
 		return survey;
 	}
@@ -111,9 +113,9 @@ public class SurveyService {
 	 */
 	@Transactional
 	public UpdateSurveyStatusResponse updateSurveyStatus(UUID surveyUuid, UpdateSurveyStatusRequest request,
-			User user) {
+		User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
-				.orElseThrow(EntityNotFoundException::new);
+			.orElseThrow(EntityNotFoundException::new);
 		securityManager.validateWriteAccess(survey.getGame().getWorkspace(), user);
 
 		SurveyStatus newStatus = SurveyStatus.valueOf(request.status());
@@ -136,49 +138,49 @@ public class SurveyService {
 
 	public List<String> generateAiQuestions(AiQuestionsRequest request) {
 		return aiClient.generateQuestions(
-				request.gameName(),
-				String.join(", ", request.gameGenre()),
-				request.gameContext(),
-				request.themePriorities(),
-				request.themeDetails());
+			request.gameName(),
+			String.join(", ", request.gameGenre()),
+			request.gameContext(),
+			request.themePriorities(),
+			request.themeDetails());
 	}
 
 	public QuestionFeedbackResponse getQuestionFeedback(
-			com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
+		com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
 		// Data extraction and processing logic moved from controller
 		String question = request.questions().get(0);
 
 		GenerateFeedbackRequest aiRequest = GenerateFeedbackRequest.builder()
-				.gameName(request.gameName())
-				.gameGenre(String.join(", ", request.gameGenre()))
-				.gameContext(request.gameContext())
-				.themePriorities(request.themePriorities())
-				.themeDetails(request.themeDetails())
-				.originalQuestion(question)
-				.build();
+			.gameName(request.gameName())
+			.gameGenre(String.join(", ", request.gameGenre()))
+			.gameContext(request.gameContext())
+			.themePriorities(request.themePriorities())
+			.themeDetails(request.themeDetails())
+			.originalQuestion(question)
+			.build();
 
 		GenerateFeedbackResponse aiResponse = aiClient.getQuestionFeedback(aiRequest);
 
 		return new QuestionFeedbackResponse(
-				question,
-				aiResponse.getFeedback(),
-				aiResponse.getCandidates());
+			question,
+			aiResponse.getFeedback(),
+			aiResponse.getCandidates());
 	}
 
 	@Transactional
 	public FixedQuestionsCountResponse createFixedQuestions(CreateFixedQuestionsRequest request, User user) {
 		Survey survey = surveyRepository.findByUuid(request.surveyUuid())
-				.orElseThrow(EntityNotFoundException::new);
+			.orElseThrow(EntityNotFoundException::new);
 		securityManager.validateWriteAccess(survey.getGame().getWorkspace(), user);
 
 		List<FixedQuestion> questions = request.questions().stream()
-				.map(item -> FixedQuestion.builder()
-						.surveyId(survey.getId())
-						.content(item.qContent())
-						.order(item.qOrder())
-						.status(QuestionStatus.CONFIRMED)
-						.build())
-				.toList();
+			.map(item -> FixedQuestion.builder()
+				.surveyId(survey.getId())
+				.content(item.qContent())
+				.order(item.qOrder())
+				.status(QuestionStatus.CONFIRMED)
+				.build())
+			.toList();
 
 		fixedQuestionRepository.saveAll(questions);
 
@@ -187,12 +189,12 @@ public class SurveyService {
 
 	public List<FixedQuestionResponse> getConfirmedQuestions(UUID surveyUuid, User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
-				.orElseThrow(EntityNotFoundException::new);
+			.orElseThrow(EntityNotFoundException::new);
 		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
 		return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(survey.getId(), QuestionStatus.CONFIRMED)
-				.stream()
-				.map(FixedQuestionResponse::from)
-				.toList();
+			.stream()
+			.map(FixedQuestionResponse::from)
+			.toList();
 	}
 
 	// ========== Private ==========
@@ -206,5 +208,16 @@ public class SurveyService {
 			}
 		}
 		throw new IllegalArgumentException("Invalid test stage code: " + code);
+	}
+
+	private TestPurpose parseTestPurpose(String code) {
+		if (code == null)
+			return null;
+		for (TestPurpose tp : TestPurpose.values()) {
+			if (tp.getCode().equals(code) || tp.name().equals(code)) {
+				return tp;
+			}
+		}
+		return null;
 	}
 }
