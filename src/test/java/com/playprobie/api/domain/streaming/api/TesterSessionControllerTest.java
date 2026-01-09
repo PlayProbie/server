@@ -72,7 +72,7 @@ import software.amazon.awssdk.services.gameliftstreams.model.StartStreamSessionR
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 @Import(TesterSessionControllerTest.TestAsyncConfig.class)
 @org.springframework.test.context.TestPropertySource(properties = "spring.main.allow-bean-definition-overriding=true")
 class TesterSessionControllerTest {
