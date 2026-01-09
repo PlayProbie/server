@@ -35,6 +35,22 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build --no-daemon
 
+      - name: Calculate Build Duration
+        id: duration
+        if: always()
+        run: |
+          START_TIME="${{ github.event.repository.pushed_at }}"
+          if [ -z "$START_TIME" ]; then
+            START_TIME=$(date -u +%s)
+          else
+             START_TIME=$(date -d "$START_TIME" +%s)
+          fi
+          END_TIME=$(date -u +%s)
+          DURATION=$((END_TIME - START_TIME))
+          MINUTES=$((DURATION / 60))
+          SECONDS=$((DURATION % 60))
+          echo "formatted_duration=${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
+
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v2
         if: always()
@@ -48,7 +64,7 @@ jobs:
             
             ### 📊 Test Results
             - ${{ job.status == 'success' && '✅ All tests passed' || '❌ Some tests failed' }}
-            - ⏱️ Duration: ⚠️ Check logs
+            - ⏱️ Duration: ${{ steps.duration.outputs.formatted_duration }}
             
             ### 📦 Build Info
             - **Commit**: `${{ github.sha }}`
