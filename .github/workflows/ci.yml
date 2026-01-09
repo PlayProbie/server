@@ -41,7 +41,28 @@ jobs:
         with:
           files: "build/test-results/**/*.xml"
           comment_title: "🚀 CI 테스트 결과 리포트"
-          comment_mode: "always" 
-          hide_comments: "all but last" 
+          comment_mode: "update last" 
           test_changes_limit: 10
           report_individual_runs: "true"
+
+      - name: Comment Build Summary
+        uses: thollander/actions-comment-pull-request@v2
+        if: always()
+        with:
+          comment_tag: build_summary
+          mode: recreate
+          message: |
+            ## ${{ job.status == 'success' && '✅ CI Build Successful' || '❌ CI Build Failed' }}
+            
+            **Build #${{ github.run_number }}** ${{ job.status == 'success' && 'completed successfully!' || 'encountered errors.' }}
+            
+            ### 📦 Build Info
+            - **Commit**: `${{ github.sha }}`
+            - **Branch**: `${{ github.head_ref }}`
+            - **Author**: @${{ github.actor }}
+            - **Java Version**: 21 (Temurin)
+            
+            ### 📊 Status
+            - **Build Utility**: ${{ job.status }}
+            
+            [View detailed logs →](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
