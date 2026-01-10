@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
@@ -34,7 +33,6 @@ public class AnalyticsService {
 	private final AiClient aiClient;
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
-	private final ObjectMapper objectMapper;
 	private final TransactionTemplate transactionTemplate;
 
 	// 동시성 제어: 동일 surveyId에 대한 중복 분석 방지
