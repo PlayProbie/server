@@ -14,5 +14,8 @@ public record TerminateSessionRequest(
 	UUID surveySessionUuid,
 
 	@Schema(description = "종료 사유 (user_exit, timeout, error)", example = "user_exit") @JsonProperty("reason")
-	String reason) {
+	String reason,
+
+	@Schema(description = "인터뷰 진행 여부 (true: 스트리밍만 종료하고 세션 유지, false: 세션 완전 종료)", defaultValue = "false") @JsonProperty("proceed_to_interview")
+	boolean proceedToInterview) {
 }

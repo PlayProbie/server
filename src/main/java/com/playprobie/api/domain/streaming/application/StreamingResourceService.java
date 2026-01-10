@@ -524,15 +524,15 @@ public class StreamingResourceService {
 	 * @param reason            종료 사유
 	 */
 	@Transactional
-	public void terminateSession(UUID surveyUuid, UUID surveySessionUuid, String reason) {
-		log.info("Terminating session: surveyUuid={}, sessionUuid={}, reason={}",
-			surveyUuid, surveySessionUuid, reason);
+	public void terminateSession(UUID surveyUuid, UUID surveySessionUuid, String reason, boolean proceedToInterview) {
+		log.info("Terminating session: surveyUuid={}, sessionUuid={}, reason={}, proceedToInterview={}",
+			surveyUuid, surveySessionUuid, reason, proceedToInterview);
 
 		SurveySession session = surveySessionRepository.findByUuid(surveySessionUuid)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SURVEY_SESSION_NOT_FOUND));
 
 		// 이미 종료된 세션인지 확인
-		if (session.getStatus().isTerminated()) {
+		if (session.getStatus().isFinished()) {
 			return;
 		}
 
@@ -547,10 +547,15 @@ public class StreamingResourceService {
 				session.getAwsSessionId());
 		}
 
-		session.terminate();
+		if (proceedToInterview) {
+			session.disconnectStream(); // 세션 유지, 상태 IN_PROGRESS로 변경
+		} else {
+			session.terminate(); // 세션 완전 종료
+		}
+
 		surveySessionRepository.save(session);
 
-		log.info("Session terminated: sessionUuid={}", surveySessionUuid);
+		log.info("Session terminated: sessionUuid={}, nextState={}", surveySessionUuid, session.getStatus());
 	}
 
 	/**

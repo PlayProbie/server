@@ -75,7 +75,8 @@ public class TesterSessionController {
 		@Valid @RequestBody
 		TerminateSessionRequest request) {
 
-		streamingResourceService.terminateSession(surveyUuid, request.surveySessionUuid(), request.reason());
+		streamingResourceService.terminateSession(surveyUuid, request.surveySessionUuid(), request.reason(),
+			request.proceedToInterview());
 		return ResponseEntity.ok(CommonResponse.of(TerminateSessionResponse.ok()));
 	}
 }

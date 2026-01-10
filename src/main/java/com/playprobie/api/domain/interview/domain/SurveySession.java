@@ -162,6 +162,17 @@ public class SurveySession {
 	}
 
 	/**
+	 * 스트리밍 세션 연결만 종료하고, 인터뷰 진행을 위해 세션을 유지합니다.
+	 * (CONNECTED -> IN_PROGRESS)
+	 */
+	public void disconnectStream() {
+		if (this.status == SessionStatus.CONNECTED) {
+			this.status = SessionStatus.IN_PROGRESS;
+			this.awsSessionId = null;
+		}
+	}
+
+	/**
 	 * 스트리밍 세션을 종료합니다.
 	 */
 	public void terminate() {
