@@ -17,6 +17,7 @@ import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.QuestionStatus;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.domain.SurveyStatus;
+import com.playprobie.api.domain.survey.domain.TestPurpose;
 import com.playprobie.api.domain.survey.domain.TestStage;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
@@ -58,6 +59,7 @@ public class SurveyService {
 		// Security check is done inside getGameEntity
 
 		TestStage testStage = parseTestStage(request.testStage());
+		TestPurpose testPurpose = parseTestPurpose(request.testPurpose());
 
 		Survey survey = Survey.builder()
 			.game(game)
@@ -94,6 +96,7 @@ public class SurveyService {
 	public SurveyResponse getSurveyByUuid(UUID surveyUuid, User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
+			.orElseThrow(EntityNotFoundException::new);
 		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
 		return SurveyResponse.from(survey);
 	}
@@ -110,6 +113,7 @@ public class SurveyService {
 	 */
 	@Transactional
 	public UpdateSurveyStatusResponse updateSurveyStatus(UUID surveyUuid, UpdateSurveyStatusRequest request,
+		User user) {
 		User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
@@ -143,6 +147,7 @@ public class SurveyService {
 	}
 
 	public QuestionFeedbackResponse getQuestionFeedback(
+		com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
 		com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
 		// Data extraction and processing logic moved from controller
 		String question = request.questions().get(0);
@@ -205,5 +210,16 @@ public class SurveyService {
 			}
 		}
 		throw new IllegalArgumentException("Invalid test stage code: " + code);
+	}
+
+	private TestPurpose parseTestPurpose(String code) {
+		if (code == null)
+			return null;
+		for (TestPurpose tp : TestPurpose.values()) {
+			if (tp.getCode().equals(code) || tp.name().equals(code)) {
+				return tp;
+			}
+		}
+		return null;
 	}
 }
