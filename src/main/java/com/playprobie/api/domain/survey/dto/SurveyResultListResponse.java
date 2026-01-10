@@ -29,6 +29,7 @@ public class SurveyResultListResponse {
 
 	@Getter
 	@Builder
+	@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 	public static class SessionItem {
 		private java.util.UUID sessionUuid;
 		private String surveyName;
