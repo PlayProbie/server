@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -13,6 +14,7 @@ import com.playprobie.api.domain.analytics.domain.AnalysisStatus;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 import com.playprobie.api.domain.analytics.dto.AnalyticsResponse;
 import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
+import com.playprobie.api.domain.analytics.event.AnalyticsUpdatedEvent;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
@@ -38,6 +40,8 @@ public class AnalyticsService {
 	private final AiClient aiClient;
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final SurveyRepository surveyRepository;
+
+	private final ApplicationEventPublisher eventPublisher;
 
 	private final TransactionTemplate transactionTemplate;
 
@@ -79,7 +83,11 @@ public class AnalyticsService {
 		else {
 			log.info(" 재분석 시작: {}개 질문", questions.size());
 			return Flux.fromIterable(questions)
-				.flatMap(question -> analyzeAndSave(survey.getUuid(), surveyId, question));
+				.flatMap(question -> analyzeAndSave(surveyUuid, surveyId, question))
+				.doOnComplete(() -> {
+					log.info("📢 모든 질문 분석 완료, SSE 이벤트 발행: surveyUuid={}", surveyUuid);
+					eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
+				});
 		}
 	}
 
@@ -194,7 +202,7 @@ public class AnalyticsService {
 			.map(sse -> {
 				String resultJson = sse.data();
 				if (resultJson != null) {
-					saveOrUpdateResultWithTransaction(question, resultJson, currentCount);
+					saveOrUpdateResultWithTransaction(surveyUuid, question, resultJson, currentCount);
 				}
 				return QuestionResponseAnalysisWrapper.builder()
 					.fixedQuestionId(question.getId())
@@ -228,7 +236,7 @@ public class AnalyticsService {
 	/**
 	 * TransactionTemplate을 사용하여 별도 트랜잭션에서 결과 저장
 	 */
-	private void saveOrUpdateResultWithTransaction(FixedQuestion question, String json, int count) {
+	private void saveOrUpdateResultWithTransaction(UUID surveyUuid, FixedQuestion question, String json, int count) {
 		transactionTemplate.executeWithoutResult(status -> {
 			log.info("Saving analysis result for surveyId={}, questionId={}, count={}", question.getSurveyId(),
 				question.getId(), count);
@@ -244,6 +252,7 @@ public class AnalyticsService {
 						question.getSurveyId(),
 						json,
 						count)));
+			// 이벤트 발행은 triggerAnalytics()의 doOnComplete()에서 설문 단위로 한 번만 수행
 		});
 	}
 }

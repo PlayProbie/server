@@ -2,13 +2,16 @@ package com.playprobie.api.domain.analytics.api;
 
 import java.util.UUID;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.playprobie.api.domain.analytics.application.AnalyticsService;
+import com.playprobie.api.domain.analytics.application.AnalyticsSseService;
 import com.playprobie.api.domain.analytics.dto.AnalyticsResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AnalyticsController {
 
 	private final AnalyticsService analyticsService;
+	private final AnalyticsSseService analyticsSseService;
 
 	/**
 	 * 설문 분석 결과 조회 (REST API)
@@ -39,5 +43,12 @@ public class AnalyticsController {
 		AnalyticsResponse response = analyticsService.getSurveyAnalysis(surveyUuid);
 
 		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping(value = "/{surveyUuid}/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@Operation(summary = "분석 업데이트 구독 (SSE)")
+	public SseEmitter subscribeToUpdates(@PathVariable
+	UUID surveyUuid) {
+		return analyticsSseService.subscribe(surveyUuid);
 	}
 }
