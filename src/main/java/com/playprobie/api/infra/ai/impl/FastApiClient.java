@@ -159,7 +159,7 @@ public class FastApiClient implements AiClient {
 		log.info("📋 [QUESTION INFO] sessionId={}, surveyId={}, currentOrder={}, totalQuestions={}",
 			sessionId, surveyId, currentQuestionOrder, totalQuestions);
 
-		// AI 서버에 보낼 요청 DTO 생성 (질문 정보 포함)
+		// AI 서버에 보낼 요청 DTO 생성 (질문 정보 + 꼬리질문 제어 정보 포함)
 		AiInteractionRequest aiInteractionRequest = AiInteractionRequest.of(
 			sessionId, // 세션 ID
 			userAnswerRequest.getAnswerText(), // 사용자 답변
@@ -168,7 +168,11 @@ public class FastApiClient implements AiClient {
 			null, // conversation_history (미사용)
 			surveyId, // 설문 ID
 			currentQuestionOrder, // 현재 질문 순서
-			totalQuestions); // 전체 질문 수
+			totalQuestions, // 전체 질문 수
+			fixedQId, // 고정 질문 ID
+			userAnswerRequest.getTurnNum(), // 현재 턴 번호
+			currentTailCount, // 현재까지 진행된 꼬리질문 횟수
+			maxTailQuestions); // 최대 허용 꼬리질문 횟수
 
 		// AI 서버에 SSE 스트리밍 요청 전송
 		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
@@ -293,7 +297,8 @@ public class FastApiClient implements AiClient {
 				tailQuestionGenerated.set(true);
 				String content = dataNode.path("content").asText();
 				// AI 서버가 주는 turn_num 대신 계산된 nextTurnNum 사용
-				QuestionPayload questionPayload = QuestionPayload.of(null, "TAIL", content, nextTurnNum);
+				// ⭐ fixedQId를 전달하여 클라이언트가 어떤 질문의 꼬리질문인지 알 수 있도록 함
+				QuestionPayload questionPayload = QuestionPayload.of(fixedQId, "TAIL", content, nextTurnNum);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 				break;
 
