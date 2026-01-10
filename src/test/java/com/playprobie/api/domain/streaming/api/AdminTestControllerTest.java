@@ -52,7 +52,7 @@ import com.playprobie.api.infra.gamelift.GameLiftService;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 class AdminTestControllerTest {
 
 	@Autowired

@@ -74,7 +74,7 @@ import software.amazon.awssdk.services.gameliftstreams.model.StreamGroupStatus;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 @Import(StreamingResourceControllerTest.TestAsyncConfig.class)
 @org.springframework.test.context.TestPropertySource(properties = "spring.main.allow-bean-definition-overriding=true")
 class StreamingResourceControllerTest {
