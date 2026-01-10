@@ -15,10 +15,10 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
  */
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record AnalyticsResponse(
-		List<QuestionResponseAnalysisWrapper> analyses,
-		String status,
-		int totalQuestions,
-		int completedQuestions) {
+	List<QuestionResponseAnalysisWrapper> analyses,
+	String status,
+	int totalQuestions,
+	int completedQuestions) {
 
 	/**
 	 * 분석 상태 (3가지)
