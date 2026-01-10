@@ -163,6 +163,19 @@ Content-Type: application/json
 - `TAIL_QUESTION`: 꼬리 질문 생성
 - `PASS_TO_NEXT`: 다음 고정 질문으로 이동
 
+#### 3-2-1. `reaction` 이벤트 (선택적)
+```json
+{
+  "event": "reaction",
+  "data": {
+    "reaction_text": "좋은 의견이네요! 👍"
+  }
+}
+```
+- AI가 사용자 답변에 대한 반응 (칭찬, 공감, 격려 등)
+- DB 저장 없음, 클라이언트에게만 전달
+- 선택적 이벤트 (필요시에만 전송)
+
 #### 3-3. `continue` 이벤트 (꼬리 질문 생성 시)
 ```json
 {

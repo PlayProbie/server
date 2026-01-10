@@ -17,6 +17,7 @@ public final class AiConstants {
 	public static final String EVENT_INTERVIEW_COMPLETE = "interview_complete";
 	public static final String EVENT_ERROR = "error";
 	public static final String EVENT_PROGRESS = "progress";
+	public static final String EVENT_REACTION = "reaction"; // AI reactions to user answers
 	// Opening Phase Events (인사말/첫번째 질문 분리)
 	public static final String EVENT_GREETING_CONTINUE = "greeting_continue";
 	public static final String EVENT_GREETING_DONE = "greeting_done";
