@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository;
+import com.playprobie.api.domain.analytics.domain.AnalysisStatus;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 import com.playprobie.api.domain.analytics.dto.AnalyticsResponse;
 import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
@@ -133,14 +134,14 @@ public class AnalyticsService {
 		List<QuestionResponseAnalysisWrapper> analyses,
 		int totalQuestions) {
 
-		AnalyticsResponse.Status status;
+		AnalysisStatus status;
 
 		if (analyses.isEmpty()) {
-			status = AnalyticsResponse.Status.NO_DATA;
+			status = AnalysisStatus.NO_DATA;
 		} else if (analyses.size() >= totalQuestions) {
-			status = AnalyticsResponse.Status.COMPLETED;
+			status = AnalysisStatus.COMPLETED;
 		} else {
-			status = AnalyticsResponse.Status.INSUFFICIENT_DATA;
+			status = AnalysisStatus.INSUFFICIENT_DATA;
 		}
 
 		return new AnalyticsResponse(analyses, status.name(), totalQuestions, analyses.size());
