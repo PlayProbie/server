@@ -1,0 +1,71 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  sql:
+    init:
+      mode: never
+
+  h2:
+    console:
+      enabled: true
+
+# Logging settings for tests
+logging:
+  level:
+    com.playprobie: DEBUG
+    org.springframework: INFO
+
+# Dummy AWS Config for Tests
+aws:
+  region: ap-northeast-2
+  access-key: test-access-key
+  secret-key: test-secret-key
+  s3:
+    region: ap-northeast-1
+    bucket-name: test-bucket
+    credentials-duration: 3600s
+    role-arn: arn:aws:iam::000000000000:role/TestRole
+  gamelift:
+    region: ap-northeast-1
+    provisioning-timeout: 2s
+    polling-interval: 100ms
+    role-arn: arn:aws:iam::000000000000:role/TestRole
+
+# AI Server Config for Tests
+ai:
+  server:
+    url: http://localhost:8000
+  client:
+    connect-timeout: 1000ms
+    read-timeout: 1000ms
+  interview:
+    max-tail-questions: 2
+  sse:
+    timeout: 10000ms
+
+# JWT Config for Tests (Fixed secret for reproducible tests)
+jwt:
+  secret: LVq17LYxud7bJ+9g7yoYPEjzfl5+BHoEfmd9PPORdwIr3Il4e56PZFsE8YpH3yUu8i+T1zTplX0YuZ0uBsV0uw==
+  access-token-expiration: 3600000
+
+# CORS Config
+cors:
+  allowed-origins:
+    - http://localhost:5173
