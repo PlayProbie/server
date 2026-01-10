@@ -8,6 +8,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.playprobie.api.global.error.exception.BusinessException;
@@ -17,6 +18,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+	/**
+	 * SSE 연결 중 클라이언트 연결 종료 시 발생하는 예외 처리
+	 * 이 예외는 정상적인 연결 종료이므로 로깅만 하고 응답하지 않음
+	 */
+	@ExceptionHandler(AsyncRequestNotUsableException.class)
+	protected void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
+		log.debug("SSE connection closed by client: {}", e.getMessage());
+		// 응답 없음 (이미 연결이 끊어진 상태)
+	}
 
 	/**
 	 * HttpMediaTypeNotAcceptableException 처리

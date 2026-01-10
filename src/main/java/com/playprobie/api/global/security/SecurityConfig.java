@@ -48,6 +48,8 @@ public class SecurityConfig {
 			.sessionManagement(session -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
+				// SSE Async Dispatch 허용 (Heartbeat/Event 전송 시 필요)
+				.dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
 				// Whitelist: 인증 없이 접근 가능한 Public URL
 				.requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
 				// 그 외 모든 요청은 인증 필요
