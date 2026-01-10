@@ -177,8 +177,7 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM) // SSE 응답 타입
 			.bodyValue(aiInteractionRequest)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
-			});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
 
 		// AI 응답에서 추출한 action 저장 (TAIL_QUESTION 또는 PASS_TO_NEXT)
 		final AtomicReference<String> nextAction = new AtomicReference<>(null);
@@ -512,8 +511,7 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
-			});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
 	}
 
 	/**
@@ -555,8 +553,7 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
-			});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
 
 		eventStream.subscribe(
 			sse -> handleOpeningEvent(sessionId, sse.data()),
@@ -587,8 +584,7 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
-			});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
 
 		eventStream.subscribe(
 			sse -> handleClosingEvent(sessionId, sse.data()),
