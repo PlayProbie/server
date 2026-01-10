@@ -33,6 +33,7 @@ import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
 import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
+import com.playprobie.api.infra.sse.dto.payload.ReactionPayload;
 import com.playprobie.api.infra.sse.dto.payload.StatusPayload;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
@@ -316,6 +317,12 @@ public class FastApiClient implements AiClient {
 				String errMessage = dataNode.path("message").asText();
 				ErrorPayload errorPayload = ErrorPayload.builder().message(errMessage).build();
 				sseEmitterService.send(sessionId, eventType, errorPayload);
+				break;
+
+			case AiConstants.EVENT_REACTION: // AI 반응 (칭찬, 공감 등)
+				String reactionText = dataNode.path("reaction_text").asText();
+				ReactionPayload reactionPayload = ReactionPayload.builder().reactionText(reactionText).build();
+				sseEmitterService.send(sessionId, AiConstants.EVENT_REACTION, reactionPayload);
 				break;
 
 			default:

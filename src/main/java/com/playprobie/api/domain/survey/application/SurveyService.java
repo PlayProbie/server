@@ -64,7 +64,6 @@ public class SurveyService {
 		Survey survey = Survey.builder()
 			.game(game)
 			.name(request.surveyName())
-			.testPurpose(testPurpose)
 			.startAt(request.startedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
 			.endAt(request.endedAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime())
 			// 신규 필드 (feat/#47)
@@ -86,17 +85,20 @@ public class SurveyService {
 				.stream()
 				.map(SurveyResponse::forList)
 				.toList();
+
 		}
 
 		return surveyRepository.findAll()
 			.stream()
 			.map(SurveyResponse::forList)
 			.toList();
+
 	}
 
 	public SurveyResponse getSurveyByUuid(UUID surveyUuid, User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
+
 		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
 		return SurveyResponse.from(survey);
 	}
@@ -104,6 +106,7 @@ public class SurveyService {
 	public Survey getSurveyEntity(UUID surveyUuid, User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
+
 		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
 		return survey;
 	}
@@ -114,8 +117,10 @@ public class SurveyService {
 	@Transactional
 	public UpdateSurveyStatusResponse updateSurveyStatus(UUID surveyUuid, UpdateSurveyStatusRequest request,
 		User user) {
+
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
+
 		securityManager.validateWriteAccess(survey.getGame().getWorkspace(), user);
 
 		SurveyStatus newStatus = SurveyStatus.valueOf(request.status());
@@ -143,10 +148,12 @@ public class SurveyService {
 			request.gameContext(),
 			request.themePriorities(),
 			request.themeDetails());
+
 	}
 
 	public QuestionFeedbackResponse getQuestionFeedback(
 		com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
+
 		// Data extraction and processing logic moved from controller
 		String question = request.questions().get(0);
 
@@ -165,12 +172,14 @@ public class SurveyService {
 			question,
 			aiResponse.getFeedback(),
 			aiResponse.getCandidates());
+
 	}
 
 	@Transactional
 	public FixedQuestionsCountResponse createFixedQuestions(CreateFixedQuestionsRequest request, User user) {
 		Survey survey = surveyRepository.findByUuid(request.surveyUuid())
 			.orElseThrow(EntityNotFoundException::new);
+
 		securityManager.validateWriteAccess(survey.getGame().getWorkspace(), user);
 
 		List<FixedQuestion> questions = request.questions().stream()
@@ -190,11 +199,13 @@ public class SurveyService {
 	public List<FixedQuestionResponse> getConfirmedQuestions(UUID surveyUuid, User user) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
+
 		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
 		return fixedQuestionRepository.findBySurveyIdAndStatusOrderByOrderAsc(survey.getId(), QuestionStatus.CONFIRMED)
 			.stream()
 			.map(FixedQuestionResponse::from)
 			.toList();
+
 	}
 
 	// ========== Private ==========
