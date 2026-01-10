@@ -27,7 +27,7 @@ public record AiInteractionRequest(
 	@Schema(description = "대화 내역 리스트", example = "[{\"role\": \"user\", \"content\": \"hello\"}]") @JsonProperty("conversation_history")
 	List<Map<String, String>> conversationHistory,
 
-	// ===== 질문 정보 추가 (마지막 질문 여부 판단에 사용) =====
+	// ===== 질문 정보 (마지막 질문 여부 판단에 사용) =====
 	@Schema(description = "설문 ID", example = "123") @JsonProperty("survey_id")
 	Long surveyId,
 
@@ -35,7 +35,20 @@ public record AiInteractionRequest(
 	Integer currentQuestionOrder,
 
 	@Schema(description = "전체 질문 수", example = "5") @JsonProperty("total_questions")
-	Integer totalQuestions) {
+	Integer totalQuestions,
+
+	// ===== 꼬리질문 제어 정보 (신규 추가) =====
+	@Schema(description = "고정 질문 ID", example = "1") @JsonProperty("fixed_q_id")
+	Long fixedQId,
+
+	@Schema(description = "현재 턴 번호 (1=고정질문, 2+=꼬리질문)", example = "1") @JsonProperty("turn_num")
+	Integer turnNum,
+
+	@Schema(description = "현재까지 진행된 꼬리질문 횟수", example = "2") @JsonProperty("current_tail_count")
+	Integer currentTailCount,
+
+	@Schema(description = "최대 허용 꼬리질문 횟수", example = "3") @JsonProperty("max_tail_questions")
+	Integer maxTailQuestions) {
 
 	public static AiInteractionRequest of(
 		String sessionId,
@@ -45,8 +58,12 @@ public record AiInteractionRequest(
 		List<Map<String, String>> history,
 		Long surveyId,
 		Integer currentQuestionOrder,
-		Integer totalQuestions) {
+		Integer totalQuestions,
+		Long fixedQId,
+		Integer turnNum,
+		Integer currentTailCount,
+		Integer maxTailQuestions) {
 		return new AiInteractionRequest(sessionId, userAnswer, currentQuestion, gameInfo, history,
-			surveyId, currentQuestionOrder, totalQuestions);
+			surveyId, currentQuestionOrder, totalQuestions, fixedQId, turnNum, currentTailCount, maxTailQuestions);
 	}
 }
