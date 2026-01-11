@@ -201,8 +201,12 @@ public class GameLiftService {
 		for (int attempt = 1; attempt <= maxRetries; attempt++) {
 			try {
 				return operation.get();
+			} catch (software.amazon.awssdk.services.gameliftstreams.model.ServiceQuotaExceededException e) {
+				log.error("AWS Service Quota Exceeded on {}: {}", operationName, e.getMessage());
+				throw new com.playprobie.api.infra.gamelift.exception.GameLiftQuotaExceededException(
+					com.playprobie.api.global.error.ErrorCode.GAMELIFT_QUOTA_EXCEEDED.getMessage(),
+					com.playprobie.api.global.error.ErrorCode.GAMELIFT_QUOTA_EXCEEDED);
 			} catch (software.amazon.awssdk.services.gameliftstreams.model.ThrottlingException
-				| software.amazon.awssdk.services.gameliftstreams.model.ServiceQuotaExceededException
 				| software.amazon.awssdk.core.exception.SdkClientException e) {
 
 				lastErrorMessage = e.getMessage();
