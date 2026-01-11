@@ -46,26 +46,16 @@ public class InterviewService {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
 
-		// [Modified] Check if sessionUuid is provided for upsert
 		if (profileRequest != null && profileRequest.getSessionUuid() != null) {
 			Optional<SurveySession> existingSession = surveySessionRepository
 				.findByUuid(profileRequest.getSessionUuid());
 			if (existingSession.isPresent()) {
 				SurveySession session = existingSession.get();
-				// Validate if the session belongs to the same survey (Optional strict check)
 				if (!session.getSurvey().getId().equals(survey.getId())) {
 					log.warn("Session {} does not belong to survey {}", profileRequest.getSessionUuid(), surveyUuid);
-					// Decide: Throw error or just create new?
-					// Let's assume we proceed to create new if mismatch, OR just update profile.
-					// For now, let's update profile and return existing session.
 				}
-
-				// Update logic: currently TesterProfile is immutable in entity or replaceable?
-				// SurveySession has @Setter or builder? Let's check entity.
-				// Assuming we can update the profile.
 				session.updateTesterProfile(profileRequest.toEntity());
-				// If transaction is active, dirty checking might work if method exists, otherwise save.
-				surveySessionRepository.save(session); // Explicit save for safety
+				surveySessionRepository.save(session);
 
 				log.info("Updated existing session: {}", session.getUuid());
 				return InterviewCreateResponse.builder()
