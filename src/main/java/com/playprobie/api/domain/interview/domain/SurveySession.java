@@ -29,14 +29,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * 인터뷰 세션 Entity
- *
- * <p>
- * <b>[BaseTimeEntity 미상속 이유]</b>
- * <ul>
- * <li>startedAt/endedAt이 비즈니스적으로 더 중요</li>
- * <li>createdAt = startedAt으로 대체 가능</li>
- * <li>updatedAt은 세션 특성상 의미 없음 (상태 전이만 발생)</li>
- * </ul>
  */
 @Entity
 @Table(name = "survey_session")
@@ -108,6 +100,10 @@ public class SurveySession {
 	 * @desc 설문이 종료 후 tester정보를 업데이트
 	 */
 	public void registerTesterProfile(TesterProfile testerProfile) {
+		this.testerProfile = testerProfile;
+	}
+
+	public void updateTesterProfile(TesterProfile testerProfile) {
 		this.testerProfile = testerProfile;
 	}
 

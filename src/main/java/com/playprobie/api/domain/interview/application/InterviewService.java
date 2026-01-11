@@ -46,6 +46,26 @@ public class InterviewService {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
 
+		if (profileRequest != null && profileRequest.getSessionUuid() != null) {
+			Optional<SurveySession> existingSession = surveySessionRepository
+				.findByUuid(profileRequest.getSessionUuid());
+			if (existingSession.isPresent()) {
+				SurveySession session = existingSession.get();
+				if (!session.getSurvey().getId().equals(survey.getId())) {
+					log.warn("Session {} does not belong to survey {}", profileRequest.getSessionUuid(), surveyUuid);
+				}
+				session.updateTesterProfile(profileRequest.toEntity());
+				surveySessionRepository.save(session);
+
+				log.info("Updated existing session: {}", session.getUuid());
+				return InterviewCreateResponse.builder()
+					.session(SessionInfo.from(session))
+					.sseUrl(InterviewUrlProvider.getStreamUrl(session.getUuid()))
+					.build();
+			}
+		}
+
+		// Create New Session (Default)
 		SurveySession surveySession = SurveySession.builder()
 			.survey(survey)
 			.testerProfile(profileRequest != null ? profileRequest.toEntity() : null)
