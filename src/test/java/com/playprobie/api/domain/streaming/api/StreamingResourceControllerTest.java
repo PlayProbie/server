@@ -286,4 +286,39 @@ class StreamingResourceControllerTest {
 		verify(gameLiftService, times(1)).deleteStreamGroup("arn:aws:gamelift:sg-123");
 		verify(gameLiftService, times(1)).deleteApplication("arn:aws:gamelift:app-123");
 	}
+
+	@Test
+	@DisplayName("POST /surveys/{surveyId}/streaming-resource - 할당량 초과 시 리소스 상태가 ERROR로 변경되는지 검증")
+	void createResource_ShouldMarkError_WhenQuotaExceeded() throws Exception {
+		// given
+		CreateStreamingResourceRequest request = new CreateStreamingResourceRequest(
+			testBuild.getUuid(),
+			"gen4n_win2022",
+			10);
+
+		String requestBody = objectMapper.writeValueAsString(request);
+
+		// Mock: createApplication success
+		given(gameLiftService.createApplication(anyString(), anyString(), anyString(), anyString()))
+			.willReturn(CreateApplicationResponse.builder().arn("arn:aws:gamelift:app-123").build());
+
+		// Mock: createStreamGroup throws QuotaExceededException
+		given(gameLiftService.createStreamGroup(anyString(), anyString()))
+			.willThrow(new com.playprobie.api.infra.gamelift.exception.GameLiftQuotaExceededException(
+				com.playprobie.api.global.error.ErrorCode.GAMELIFT_QUOTA_EXCEEDED));
+
+		// when
+		mockMvc.perform(post("/surveys/{surveyId}/streaming-resource", testSurvey.getUuid())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(requestBody))
+			.andExpect(status().isAccepted()); // 비동기 작업이므로 202 응답은 동일
+
+		// then - DB에서 리소스 상태가 ERROR인지 검증
+		// SyncTaskExecutor로 인해 비동기 작업이 즉시 수행되었음
+		Optional<StreamingResource> savedResource = streamingResourceRepository.findBySurveyId(testSurvey.getId());
+		assertThat(savedResource).isPresent();
+		assertThat(savedResource.get().getStatus()).isEqualTo(StreamingResourceStatus.ERROR);
+		assertThat(savedResource.get().getErrorMessage()).contains(
+			com.playprobie.api.global.error.ErrorCode.GAMELIFT_QUOTA_EXCEEDED.getMessage());
+	}
 }
