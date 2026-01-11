@@ -36,6 +36,7 @@ import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.gamelift.GameLiftService;
+import com.playprobie.api.infra.gamelift.exception.GameLiftQuotaExceededException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -434,6 +435,8 @@ public class StreamingResourceService {
 
 			// 업데이트 성공 시 타임스탬프 갱신
 			lastCapacityUpdateMap.put(resourceId, now);
+		} catch (GameLiftQuotaExceededException e) {
+			log.error("Self-healing SKIPPED due to Quota Limit for resourceId={}: {}", resourceId, e.getMessage());
 		} catch (Exception e) {
 			log.error("Self-healing failed for resourceId={}: {}", resourceId, e.getMessage());
 		}

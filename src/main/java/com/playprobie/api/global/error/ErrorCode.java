@@ -55,6 +55,7 @@ public enum ErrorCode {
 	GAMELIFT_TRANSIENT_ERROR(503, "GL001", "GameLift 서비스 일시적 오류입니다. 잠시 후 재시도해주세요."),
 	GAMELIFT_RESOURCE_NOT_FOUND(404, "GL002", "AWS 리소스를 찾을 수 없습니다."),
 	GAMELIFT_CAPACITY_UPDATE_FAILED(500, "GL003", "용량 업데이트에 실패했습니다."),
+	GAMELIFT_QUOTA_EXCEEDED(503, "GL004", "AWS 서비스 할당량을 초과했습니다. 관리자에게 문의하세요."),
 
 	// Streaming Resource Transition
 	RESOURCE_ALREADY_IN_TRANSITION(409, "SR003", "리소스가 이미 상태 전환 중입니다."),
