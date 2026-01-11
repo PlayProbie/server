@@ -169,6 +169,9 @@ class TesterSessionControllerTest {
 		testResource.assignApplication("arn:aws:gamelift:streams:us-east-1:123456789012:application/app-test-123");
 		testResource.assignStreamGroup("arn:aws:gamelift:streams:us-east-1:123456789012:streamgroup/sg-test-123");
 		streamingResourceRepository.save(testResource);
+
+		// 6. Mock Reset
+		org.mockito.Mockito.reset(gameLiftService);
 	}
 
 	// === Helper Methods ===
@@ -191,7 +194,7 @@ class TesterSessionControllerTest {
 			.survey(testSurvey)
 			.build();
 		session.connect(awsSessionId);
-		return surveySessionRepository.save(session);
+		return surveySessionRepository.saveAndFlush(session);
 	}
 
 	@Nested
@@ -395,7 +398,8 @@ class TesterSessionControllerTest {
 
 			TerminateSessionRequest request = new TerminateSessionRequest(
 				session.getUuid(),
-				"user_exit");
+				"user_exit",
+				false);
 			String requestBody = objectMapper.writeValueAsString(request);
 
 			// when & then
@@ -418,6 +422,38 @@ class TesterSessionControllerTest {
 		}
 
 		@Test
+		@DisplayName("proceedToInterview=true 일 때, AWS 세션만 종료되고 DB 세션은 IN_PROGRESS 상태로 유지됨")
+		void shouldKeepSessionInProgress_WhenProceedToInterviewIsTrue() throws Exception {
+			// given - CONNECTED 상태의 세션 생성
+			SurveySession session = createConnectedSession(MOCK_AWS_SESSION_ARN);
+
+			TerminateSessionRequest request = new TerminateSessionRequest(
+				session.getUuid(),
+				"game_finished",
+				true); // proceedToInterview = true
+			String requestBody = objectMapper.writeValueAsString(request);
+
+			// when & then
+			mockMvc.perform(post("/surveys/{surveyUuid}/session/terminate", testSurvey.getUuid())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(requestBody))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.result.success").value(true));
+
+			// DB에서 세션 상태가 IN_PROGRESS로 변경되었는지 검증
+			Optional<SurveySession> updatedSession = surveySessionRepository.findByUuid(session.getUuid());
+			assertThat(updatedSession).isPresent();
+			assertThat(updatedSession.get().getStatus()).isEqualTo(SessionStatus.IN_PROGRESS);
+			assertThat(updatedSession.get().getAwsSessionId()).isNull(); // AWS ID는 제거됨
+			assertThat(updatedSession.get().getTerminatedAt()).isNull(); // 종료 시각은 기록되지 않음
+
+			// GameLiftService 종료 메서드는 여전히 호출되어야 함 (AWS 리소스 정리)
+			verify(gameLiftService, times(1)).terminateStreamSession(
+				testResource.getAwsStreamGroupId(),
+				MOCK_AWS_SESSION_ARN);
+		}
+
+		@Test
 		@DisplayName("이미 종료된 세션에 대한 종료 요청은 무시됨")
 		void shouldIgnore_WhenSessionIsAlreadyTerminated() throws Exception {
 			// given - 이미 종료된 세션
@@ -426,11 +462,12 @@ class TesterSessionControllerTest {
 				.build();
 			session.connect(MOCK_AWS_SESSION_ARN);
 			session.terminate();
-			surveySessionRepository.save(session);
+			surveySessionRepository.saveAndFlush(session);
 
 			TerminateSessionRequest request = new TerminateSessionRequest(
 				session.getUuid(),
-				"user_exit");
+				"user_exit",
+				false);
 			String requestBody = objectMapper.writeValueAsString(request);
 
 			// when & then - 성공 응답 반환 (멱등성)
@@ -452,7 +489,8 @@ class TesterSessionControllerTest {
 
 			TerminateSessionRequest request = new TerminateSessionRequest(
 				nonExistentSessionUuid,
-				"user_exit");
+				"user_exit",
+				false);
 			String requestBody = objectMapper.writeValueAsString(request);
 
 			// when & then
