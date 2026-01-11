@@ -111,6 +111,10 @@ public class SurveySession {
 		this.testerProfile = testerProfile;
 	}
 
+	public void updateTesterProfile(TesterProfile testerProfile) {
+		this.testerProfile = testerProfile;
+	}
+
 	/**
 	 * 세션을 정상 완료 처리합니다.
 	 * IN_PROGRESS 상태에서만 호출 가능합니다.

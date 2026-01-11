@@ -28,6 +28,10 @@ public class TesterProfileRequest {
 	@JsonProperty("prefer_genre")
 	private String preferGenre;
 
+	@Schema(description = "세션 UUID (기존 세션 이어하기 시)", example = "uuid-string")
+	@JsonProperty("session_uuid")
+	private java.util.UUID sessionUuid;
+
 	public TesterProfile toEntity() {
 		return TesterProfile.createAnonymous(ageGroup, gender, preferGenre);
 	}
