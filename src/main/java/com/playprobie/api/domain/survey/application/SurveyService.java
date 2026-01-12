@@ -127,10 +127,16 @@ public class SurveyService {
 		TestActionResponse streamingAction = null;
 		if (newStatus == SurveyStatus.ACTIVE) {
 			// JIT Provisioning: ACTIVE 시점에 Max Capacity로 확장
-			streamingAction = streamingResourceService.activateResource(surveyUuid, user);
+			// 리소스가 없으면 null 반환 (Safe Method)
+			streamingAction = streamingResourceService.activateResourceIfPresent(surveyUuid, user);
+
+			if (streamingAction == null) {
+				log.info("설문 활성화 완료 (스트리밍 리소스 없음). surveyUuid={}", surveyUuid);
+			}
 		} else if (newStatus == SurveyStatus.CLOSED) {
 			// 설문 종료 시 리소스 즉시 해제
-			streamingResourceService.deleteResource(surveyUuid, user);
+			// 리소스가 없으면 무시 (Safe Method)
+			streamingResourceService.deleteResourceIfPresent(surveyUuid, user);
 			streamingAction = TestActionResponse.stopTest("CLEANING", 0);
 		}
 
