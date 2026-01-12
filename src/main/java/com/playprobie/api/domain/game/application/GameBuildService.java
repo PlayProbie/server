@@ -207,13 +207,24 @@ public class GameBuildService {
 						.map(obj -> ObjectIdentifier.builder().key(obj.key()).build())
 						.toList();
 
+					log.info("Found {} objects to delete for prefix: {}", objectIds.size(), prefix);
+
 					DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
 						.bucket(awsProperties.s3().bucketName())
 						.delete(Delete.builder().objects(objectIds).build())
 						.build();
 
-					s3Client.deleteObjects(deleteRequest);
-					log.info("S3 objects deleted: count={}", objectIds.size());
+					var deleteResponse = s3Client.deleteObjects(deleteRequest);
+
+					if (deleteResponse.hasErrors()) {
+						log.error("Failed to delete some S3 objects. Errors: {}", deleteResponse.errors().stream()
+							.map(e -> String.format("[Key: %s, Code: %s, Message: %s]", e.key(), e.code(), e.message()))
+							.toList());
+					} else {
+						log.info("Successfully deleted {} objects", deleteResponse.deleted().size());
+					}
+				} else {
+					log.info("No objects found for prefix: {}", prefix);
 				}
 
 				continuationToken = listResponse.isTruncated() ? listResponse.nextContinuationToken() : null;
