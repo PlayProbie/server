@@ -269,8 +269,11 @@ public class AnalyticsService {
 					session -> session.getTesterProfile() != null ? session.getTesterProfile()
 						: TesterProfile.createAnonymous("Unknown", "Unknown", "Unknown")));
 
-			// 4. AnswerProfile 매핑 생성
+			// 4. AnswerProfile 매핑 생성 및 통계 집계
 			Map<String, AnswerProfile> answerProfiles = new HashMap<>();
+			Map<String, Integer> ageGroupStats = new HashMap<>();
+			Map<String, Integer> genderStats = new HashMap<>();
+			Map<String, Integer> genreStats = new HashMap<>();
 
 			// Helper to process answer IDs
 			java.util.function.Consumer<List<String>> processAnswerIds = (ids) -> {
@@ -285,6 +288,21 @@ public class AnalyticsService {
 								.gender(tester.getGender())
 								.preferGenre(tester.getPreferGenre())
 								.build());
+
+							// Age Group
+							String age = tester.getAgeGroup() != null ? tester.getAgeGroup() : "Unknown";
+							ageGroupStats.merge(age, 1, Integer::sum);
+
+							// Gender
+							String gender = tester.getGender() != null ? tester.getGender() : "Unknown";
+							genderStats.merge(gender, 1, Integer::sum);
+
+							// Genre (Comma separated)
+							if (tester.getPreferGenre() != null && !tester.getPreferGenre().isEmpty()) {
+								for (String genre : tester.getPreferGenre().split(",")) {
+									genreStats.merge(genre.trim(), 1, Integer::sum);
+								}
+							}
 						}
 					});
 				}
@@ -298,6 +316,11 @@ public class AnalyticsService {
 			}
 
 			output.setAnswerProfiles(answerProfiles);
+			output.setParticipantStats(QuestionAnalysisOutput.ParticipantStats.builder()
+				.ageGroups(ageGroupStats)
+				.genders(genderStats)
+				.genres(genreStats)
+				.build());
 
 			return objectMapper.writeValueAsString(output);
 		} catch (JsonProcessingException e) {

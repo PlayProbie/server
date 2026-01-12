@@ -34,4 +34,23 @@ public class QuestionAnalysisOutput {
 	@Setter
 	@JsonProperty("answer_profiles")
 	private Map<String, AnswerProfile> answerProfiles;
+
+	@Setter
+	@JsonProperty("participant_stats")
+	private ParticipantStats participantStats;
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class ParticipantStats {
+		@JsonProperty("age_groups")
+		private Map<String, Integer> ageGroups;
+
+		@JsonProperty("genders")
+		private Map<String, Integer> genders;
+
+		@JsonProperty("genres")
+		private Map<String, Integer> genres;
+	}
 }
