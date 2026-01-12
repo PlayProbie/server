@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.playprobie.api.domain.game.dao.GameBuildRepository;
 import com.playprobie.api.domain.game.domain.GameBuild;
@@ -111,8 +113,13 @@ public class StreamingResourceService {
 
 		streamingResourceRepository.save(resource);
 
-		// 6. 비동기 프로비저닝 시작
-		streamingProvisioner.provisionResourceAsync(resource.getId());
+		// 6. 비동기 프로비저닝 시작 (트랜잭션 커밋 후 실행)
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				streamingProvisioner.provisionResourceAsync(resource.getId());
+			}
+		});
 
 		log.info("Streaming resource creation initiated: resourceId={}, status={}",
 			resource.getId(), resource.getStatus());
