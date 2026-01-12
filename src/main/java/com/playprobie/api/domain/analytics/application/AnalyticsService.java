@@ -21,8 +21,21 @@ import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.global.error.ErrorCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.playprobie.api.domain.analytics.dto.analysis.AnswerProfile;
+import com.playprobie.api.domain.analytics.dto.analysis.ClusterInfo;
+import com.playprobie.api.domain.analytics.dto.analysis.QuestionAnalysisOutput;
+import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
+import com.playprobie.api.domain.interview.domain.SurveySession;
+import com.playprobie.api.domain.interview.domain.TesterProfile;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.ai.AiClient;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +53,8 @@ public class AnalyticsService {
 	private final AiClient aiClient;
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final SurveyRepository surveyRepository;
+	private final SurveySessionRepository surveySessionRepository;
+	private final ObjectMapper objectMapper;
 
 	private final ApplicationEventPublisher eventPublisher;
 
@@ -202,6 +217,12 @@ public class AnalyticsService {
 			.map(sse -> {
 				String resultJson = sse.data();
 				if (resultJson != null) {
+					try {
+						resultJson = enrichAnalysisResult(resultJson);
+					} catch (Exception e) {
+						log.error("Failed to enrich analysis result", e);
+						// 실패해도 원본 저장을 위해 진행
+					}
 					saveOrUpdateResultWithTransaction(surveyUuid, question, resultJson, currentCount);
 				}
 				return QuestionResponseAnalysisWrapper.builder()
@@ -209,6 +230,93 @@ public class AnalyticsService {
 					.resultJson(resultJson)
 					.build();
 			});
+	}
+
+	/**
+	 * AI 분석 결과(JSON)에 유저 세그먼트 정보(AnswerProfile)를 추가합니다.
+	 */
+	private String enrichAnalysisResult(String json) {
+		try {
+			QuestionAnalysisOutput output = objectMapper.readValue(json, QuestionAnalysisOutput.class);
+			Set<UUID> sessionUuids = new HashSet<>();
+
+			// 1. 모든 클러스터에서 answer_ids 추출하여 Session UUID 수집
+			if (output.getClusters() != null) {
+				for (ClusterInfo cluster : output.getClusters()) {
+					if (cluster.getAnswerIds() != null) {
+						for (String answerId : cluster.getAnswerIds()) {
+							extractSessionUuid(answerId).ifPresent(sessionUuids::add);
+						}
+					}
+				}
+			}
+
+			// 2. Outliers에서도 추출
+			if (output.getOutliers() != null && output.getOutliers().getAnswerIds() != null) {
+				for (String answerId : output.getOutliers().getAnswerIds()) {
+					extractSessionUuid(answerId).ifPresent(sessionUuids::add);
+				}
+			}
+
+			if (sessionUuids.isEmpty()) {
+				return json;
+			}
+
+			// 3. DB에서 Session 및 TesterProfile 조회
+			Map<UUID, TesterProfile> profileMap = surveySessionRepository.findAllByUuidIn(sessionUuids).stream()
+				.collect(Collectors.toMap(
+					SurveySession::getUuid,
+					session -> session.getTesterProfile() != null ? session.getTesterProfile()
+						: TesterProfile.createAnonymous("Unknown", "Unknown", "Unknown")));
+
+			// 4. AnswerProfile 매핑 생성
+			Map<String, AnswerProfile> answerProfiles = new HashMap<>();
+
+			// Helper to process answer IDs
+			java.util.function.Consumer<List<String>> processAnswerIds = (ids) -> {
+				if (ids == null)
+					return;
+				for (String answerId : ids) {
+					extractSessionUuid(answerId).ifPresent(uuid -> {
+						TesterProfile tester = profileMap.get(uuid);
+						if (tester != null) {
+							answerProfiles.put(answerId, AnswerProfile.builder()
+								.ageGroup(tester.getAgeGroup())
+								.gender(tester.getGender())
+								.preferGenre(tester.getPreferGenre())
+								.build());
+						}
+					});
+				}
+			};
+
+			if (output.getClusters() != null) {
+				output.getClusters().forEach(c -> processAnswerIds.accept(c.getAnswerIds()));
+			}
+			if (output.getOutliers() != null) {
+				processAnswerIds.accept(output.getOutliers().getAnswerIds());
+			}
+
+			output.setAnswerProfiles(answerProfiles);
+
+			return objectMapper.writeValueAsString(output);
+		} catch (JsonProcessingException e) {
+			log.error("Error parsing/writing analysis JSON", e);
+			throw new RuntimeException(e);
+		}
+	}
+
+	private Optional<UUID> extractSessionUuid(String answerId) {
+		try {
+			// answerId format: {session_uuid}_{fixed_question_id}_{hash}
+			String[] parts = answerId.split("_");
+			if (parts.length >= 1) {
+				return Optional.of(UUID.fromString(parts[0]));
+			}
+		} catch (IllegalArgumentException e) {
+			log.warn("Invalid UUID in answerId: {}", answerId);
+		}
+		return Optional.empty();
 	}
 
 	/**
