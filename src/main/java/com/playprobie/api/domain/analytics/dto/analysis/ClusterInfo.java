@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Builder
@@ -36,4 +37,8 @@ public class ClusterInfo {
 
 	@JsonProperty("representative_answer_ids")
 	private List<String> representativeAnswerIds;
+
+	@Setter
+	@JsonProperty("representative_answers")
+	private List<String> representativeAnswers;
 }
