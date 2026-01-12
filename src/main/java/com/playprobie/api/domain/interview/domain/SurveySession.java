@@ -86,6 +86,22 @@ public class SurveySession {
 	@Column(name = "terminated_at")
 	private LocalDateTime terminatedAt;
 
+	// ========== Interview State Management (Server-Side Authority) ==========
+
+	/** 현재 진행 중인 고정 질문 ID */
+	@Column(name = "current_fixed_q_id")
+	private Long currentFixedQId;
+
+	/** 현재 진행 중인 고정 질문의 순서 (Order) */
+	@Column(name = "current_fixed_q_order")
+	private Integer currentFixedQOrder;
+
+	/** 현재 턴 번호 (1부터 시작, 꼬리질문 시 증가) */
+	@Column(name = "current_turn_num")
+	private Integer currentTurnNum;
+
+	// ======================================================================
+
 	@Builder
 	public SurveySession(Survey survey, TesterProfile testerProfile) {
 		this.survey = Objects.requireNonNull(survey, "SurveySession 생성 시 Survey는 필수입니다");
@@ -177,5 +193,34 @@ public class SurveySession {
 		}
 		this.status = SessionStatus.TERMINATED;
 		this.terminatedAt = LocalDateTime.now();
+	}
+
+	/**
+	 * 인터뷰 상태를 강제로 업데이트합니다. (초기화 또는 동기화용)
+	 */
+	public void updateInterviewState(Long fixedQId, Integer order, Integer turnNum) {
+		this.currentFixedQId = fixedQId;
+		this.currentFixedQOrder = order;
+		this.currentTurnNum = turnNum;
+	}
+
+	/**
+	 * 현재 턴 번호를 1 증가시킵니다.
+	 * (사용자 답변 저장 직후 호출)
+	 */
+	public void incrementTurnNum() {
+		if (this.currentTurnNum != null) {
+			this.currentTurnNum++;
+		}
+	}
+
+	/**
+	 * 다음 고정 질문으로 상태를 전이합니다.
+	 * 턴 번호는 1로 초기화됩니다.
+	 */
+	public void moveToNextQuestion(Long nextFixedQId, Integer nextOrder) {
+		this.currentFixedQId = nextFixedQId;
+		this.currentFixedQOrder = nextOrder;
+		this.currentTurnNum = 1;
 	}
 }

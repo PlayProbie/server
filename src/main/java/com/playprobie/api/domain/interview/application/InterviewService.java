@@ -65,7 +65,7 @@ public class InterviewService {
 			}
 		}
 
-		// Create New Session (Default)
+		// 새 세션 생성 (Default)
 		SurveySession surveySession = SurveySession.builder()
 			.survey(survey)
 			.testerProfile(profileRequest != null ? profileRequest.toEntity() : null)
@@ -108,9 +108,18 @@ public class InterviewService {
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
 			.orElseThrow(SessionNotFoundException::new);
 
-		return fixedQuestionRepository.findFirstBySurveyIdOrderByOrderAsc(session.getSurvey().getId())
+		FixedQuestionResponse firstQuestion = fixedQuestionRepository
+			.findFirstBySurveyIdOrderByOrderAsc(session.getSurvey().getId())
 			.map(FixedQuestionResponse::from)
 			.orElseThrow(EntityNotFoundException::new);
+
+		// Initialize Session State
+		session.updateInterviewState(firstQuestion.fixedQId(), firstQuestion.qOrder(), 1);
+		surveySessionRepository.save(session);
+		log.info("Initialized session state: sessionId={}, fixedQId={}, order={}", sessionUuid,
+			firstQuestion.fixedQId(), firstQuestion.qOrder());
+
+		return firstQuestion;
 	}
 
 	public FixedQuestionResponse getQuestionById(Long fixedQId) {
@@ -132,10 +141,20 @@ public class InterviewService {
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
 			.orElseThrow(SessionNotFoundException::new);
 
-		return fixedQuestionRepository
+		Optional<FixedQuestionResponse> nextQuestionOpt = fixedQuestionRepository
 			.findFirstBySurveyIdAndOrderGreaterThanOrderByOrderAsc(
 				session.getSurvey().getId(), currentOrder)
 			.map(FixedQuestionResponse::from);
+
+		// 다음 질문 존재하면 session-state 업데이트
+		nextQuestionOpt.ifPresent(nextQuestion -> {
+			session.moveToNextQuestion(nextQuestion.fixedQId(), nextQuestion.qOrder());
+			surveySessionRepository.save(session);
+			log.info("Moved to next question: sessionId={}, nextFixedQId={}, nextOrder={}", sessionId,
+				nextQuestion.fixedQId(), nextQuestion.qOrder());
+		});
+
+		return nextQuestionOpt;
 	}
 
 	/**
@@ -171,72 +190,89 @@ public class InterviewService {
 	 * - 고정질문 응답(turnNum=1): 새 레코드 생성
 	 * - 꼬리질문 응답(turnNum>1): 기존 레코드 업데이트 또는 새 레코드 생성
 	 */
+	@Transactional
 	public UserAnswerResponse saveInterviewLog(String sessionId, UserAnswerRequest request,
 		FixedQuestionResponse currentQuestion) {
-		// 세션 UUID로 SurveySession 조회 (없으면 예외)
-		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+		UUID uuid = UUID.fromString(sessionId);
+		SurveySession session = surveySessionRepository.findByUuid(uuid)
 			.orElseThrow(() -> new RuntimeException("Session not found"));
 
-		// turnNum > 1이면 꼬리질문에 대한 응답임 (turnNum=1은 고정질문)
-		if (request.getTurnNum() > 1) {
-			// 해당 세션 + 고정질문 + 턴번호로 기존 꼬리질문 레코드 조회 시도
-			Optional<InterviewLog> existingLog = interviewLogRepository
-				.findBySessionIdAndFixedQuestionIdAndTurnNum(
-					surveySession.getId(), // 세션 ID
-					request.getFixedQId(), // 고정질문 ID
-					request.getTurnNum()); // 턴 번호
-
-			// 기존 레코드가 있으면 → AI가 먼저 꼬리질문을 저장해둔 정상 케이스
-			if (existingLog.isPresent()) {
-				InterviewLog tailLog = existingLog.get(); // 기존 레코드 가져오기
-				tailLog.updateAnswer(request.getAnswerText()); // 답변 텍스트 업데이트
-				InterviewLog savedLog = interviewLogRepository.save(tailLog); // DB 저장
-
-				// 응답 DTO 생성하여 반환
-				return UserAnswerResponse.of(
-					savedLog.getTurnNum(),
-					String.valueOf(savedLog.getType()),
-					savedLog.getFixedQuestionId(),
-					savedLog.getQuestionText(),
-					savedLog.getAnswerText());
-			}
-
-			// 기존 레코드가 없으면 → Race Condition 발생 (AI 저장보다 사용자 답변이 먼저 도착)
-			// 예외를 던지지 않고, 새 레코드를 직접 생성하여 오류 방지
-			log.warn("Tail question log not found for turnNum={}. Creating new record. sessionId={}, fixedQId={}",
-				request.getTurnNum(), sessionId, request.getFixedQId());
-
-			// 새 꼬리질문 레코드 생성 (답변과 함께)
-			InterviewLog newTailLog = InterviewLog.builder()
-				.session(surveySession) // 세션 연결
-				.fixedQuestionId(request.getFixedQId()) // 고정질문 ID
-				.turnNum(request.getTurnNum()) // 턴 번호
-				.type(QuestionType.TAIL) // 질문 유형: 꼬리질문
-				.questionText(request.getQuestionText()) // 클라이언트가 보낸 질문 텍스트
-				.answerText(request.getAnswerText()) // 사용자 답변
-				.build();
-
-			InterviewLog savedLog = interviewLogRepository.save(newTailLog); // DB 저장
-
-			return UserAnswerResponse.of(
-				savedLog.getTurnNum(),
-				String.valueOf(savedLog.getType()),
-				savedLog.getFixedQuestionId(),
-				savedLog.getQuestionText(),
-				savedLog.getAnswerText());
+		// 0. [Blocking] Check if session is already finished
+		if (session.getStatus().isFinished()) {
+			log.warn("Attempt to update finished session: {}", sessionId);
+			throw new com.playprobie.api.global.error.exception.SessionClosedException();
 		}
 
-		// turnNum == 1이면 고정질문에 대한 첫 응답 → 항상 새 레코드 생성
-		InterviewLog interviewLog = InterviewLog.builder()
-			.session(surveySession) // 세션 연결
-			.fixedQuestionId(currentQuestion.fixedQId()) // 고정질문 ID
-			.turnNum(request.getTurnNum()) // 턴 번호 (항상 1)
-			.type(QuestionType.FIXED) // 질문 유형: 고정질문
-			.questionText(currentQuestion.qContent()) // 고정질문 내용
-			.answerText(request.getAnswerText()) // 사용자 답변
-			.build();
+		// 1. [Server-Side Authority] Validate & Correct State
+		Long expectedFixedQId = session.getCurrentFixedQId();
+		Integer expectedTurnNum = session.getCurrentTurnNum();
 
-		InterviewLog savedLog = interviewLogRepository.save(interviewLog); // DB 저장
+		// [Legacy Support] If session state is null (old data), initialize it lazily
+		if (expectedFixedQId == null) {
+			log.warn("[LEGACY_SESSION] Initializing state for sessionId={}", sessionId);
+			// Assume the first question's ID as current if unknown, or rely on request context (risky but necessary for legacy)
+			// Better mitigation: Fetch 1st fixed question if not exists
+			if (request.getFixedQId() != null) {
+				expectedFixedQId = request.getFixedQId(); // Trust request for legacy fallback
+				expectedTurnNum = request.getTurnNum();
+				session.updateInterviewState(expectedFixedQId, 1, expectedTurnNum); // Order is unknown, assume 1? Or just don't set order
+				log.info("[LEGACY_INIT] Set state to fixedQId={}, turnNum={}", expectedFixedQId, expectedTurnNum);
+			}
+		}
+
+		Long actualFixedQId = request.getFixedQId();
+		Integer actualTurnNum = request.getTurnNum();
+
+		// FixedQId 불일치 수정
+		if (expectedFixedQId != null && !expectedFixedQId.equals(actualFixedQId)) {
+			log.warn("[STATE_MISMATCH] sessionId={}, fixedQId: client={}, server={}. Correcting to SERVER value.",
+				sessionId, actualFixedQId, expectedFixedQId);
+			actualFixedQId = expectedFixedQId;
+		}
+
+		// TurnNum 불일치 수정
+		if (expectedTurnNum != null && !expectedTurnNum.equals(actualTurnNum)) {
+			log.warn("[STATE_MISMATCH] sessionId={}, turnNum: client={}, server={}. Correcting to SERVER value.",
+				sessionId, actualTurnNum, expectedTurnNum);
+			actualTurnNum = expectedTurnNum;
+		}
+
+		log.info("[ANSWER_SAVE] sessionId={}, fixedQId={}, turnNum={}, answer={}", sessionId, actualFixedQId,
+			actualTurnNum, request.getAnswerText());
+
+		// 2.[멱등성] upsert 로직
+		Optional<InterviewLog> existingLog = interviewLogRepository.findBySessionIdAndFixedQuestionIdAndTurnNum(
+			session.getId(), actualFixedQId, actualTurnNum);
+
+		InterviewLog savedLog;
+		if (existingLog.isPresent()) {
+			// 로그 업데이트
+			InterviewLog tailLog = existingLog.get();
+			tailLog.updateAnswer(request.getAnswerText());
+			savedLog = interviewLogRepository.save(tailLog);
+			log.info("[LOG_UPDATE] Updated existing log: id={}, turnNum={}", savedLog.getId(), savedLog.getTurnNum());
+		} else {
+			// 새 로그 생성
+			QuestionType type = (actualTurnNum == 1) ? QuestionType.FIXED : QuestionType.TAIL;
+			String qText = (actualTurnNum == 1) ? currentQuestion.qContent() : request.getQuestionText();
+
+			InterviewLog newLog = InterviewLog.builder()
+				.session(session)
+				.fixedQuestionId(actualFixedQId)
+				.turnNum(actualTurnNum)
+				.type(type)
+				.questionText(qText)
+				.answerText(request.getAnswerText())
+				.build();
+			savedLog = interviewLogRepository.save(newLog);
+			log.info("[LOG_CREATE] Created new log: id={}, turnNum={}", savedLog.getId(), savedLog.getTurnNum());
+
+		}
+
+		// 3.[상태 업데이트] 유효한 답변 처리 후 항상 턴 번호를 증가시킵니다.
+		session.incrementTurnNum();
+		surveySessionRepository.save(session);
+		log.info("[STATE_UPDATE] Incremented session turnNum to {}", session.getCurrentTurnNum());
 
 		return UserAnswerResponse.of(
 			savedLog.getTurnNum(),

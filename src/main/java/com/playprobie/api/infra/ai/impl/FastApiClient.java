@@ -191,7 +191,8 @@ public class FastApiClient implements AiClient {
 		eventStream.subscribe(
 			sse -> {
 				String data = sse.data();
-				parseAndHandleEvent(sessionId, fixedQId, nextTurnNum, data, nextAction, tailQuestionGenerated);
+				parseAndHandleEvent(sessionId, fixedQId, nextTurnNum, data, nextAction, tailQuestionGenerated,
+					currentQuestionOrder, totalQuestions);
 			},
 			error -> {
 				log.error("Error connecting to AI Server: {}", error.getMessage());
@@ -203,7 +204,7 @@ public class FastApiClient implements AiClient {
 
 	private void parseAndHandleEvent(String sessionId, Long fixedQId, int nextTurnNum, String jsonStr,
 		AtomicReference<String> nextAction,
-		AtomicBoolean tailQuestionGenerated) {
+		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions) {
 		log.debug("📥 [SSE RAW] sessionId={}, rawJson={}", sessionId, jsonStr);
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
@@ -213,7 +214,8 @@ public class FastApiClient implements AiClient {
 			String eventType = rootNode.path("event").asText();
 			JsonNode dataNode = rootNode.path("data");
 			log.info("📨 [SSE PARSED] sessionId={}, eventType={}, data={}", sessionId, eventType, dataNode);
-			handleEvent(sessionId, fixedQId, nextTurnNum, eventType, dataNode, nextAction, tailQuestionGenerated);
+			handleEvent(sessionId, fixedQId, nextTurnNum, eventType, dataNode, nextAction, tailQuestionGenerated, order,
+				totalQuestions);
 		} catch (JsonProcessingException e) {
 			log.error("❌ Failed to parse JSON event. Data: {} | Error: {}", jsonStr, e.getMessage());
 		}
@@ -221,7 +223,7 @@ public class FastApiClient implements AiClient {
 
 	private void handleEvent(String sessionId, Long fixedQId, int nextTurnNum, String eventType, JsonNode dataNode,
 		AtomicReference<String> nextAction,
-		AtomicBoolean tailQuestionGenerated) {
+		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions) {
 		switch (eventType) {
 			case AiConstants.EVENT_START: // 스트리밍 처리 시작
 				StatusPayload startPayload = StatusPayload.builder().status(dataNode.path("status").asText()).build();
@@ -280,7 +282,9 @@ public class FastApiClient implements AiClient {
 				String qType = dataNode.path("q_type").asText();
 				String questionText = dataNode.path("question_text").asText();
 				int turnNum = dataNode.path("turn_num").asInt();
-				QuestionPayload fixedQuestionPayload = QuestionPayload.of(eventFixedQId, qType, questionText, turnNum);
+				// Note: event from AI usually doesn't have order/total, using passed values or defaults
+				QuestionPayload fixedQuestionPayload = QuestionPayload.of(eventFixedQId, qType, questionText, turnNum,
+					order, totalQuestions);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, fixedQuestionPayload);
 				break;
 
@@ -298,7 +302,8 @@ public class FastApiClient implements AiClient {
 				String content = dataNode.path("content").asText();
 				// AI 서버가 주는 turn_num 대신 계산된 nextTurnNum 사용
 				// ⭐ fixedQId를 전달하여 클라이언트가 어떤 질문의 꼬리질문인지 알 수 있도록 함
-				QuestionPayload questionPayload = QuestionPayload.of(fixedQId, "TAIL", content, nextTurnNum);
+				QuestionPayload questionPayload = QuestionPayload.of(fixedQId, "TAIL", content, nextTurnNum, order,
+					totalQuestions);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 				break;
 
@@ -310,6 +315,11 @@ public class FastApiClient implements AiClient {
 				interviewService.saveTailQuestionLog(sessionId, fixedQId, tailQuestionText, tailQuestionCount);
 				log.info("Tail question saved - sessionId: {}, fixedQId: {}, count: {}", sessionId, fixedQId,
 					tailQuestionCount);
+
+				// generate_tail_complete 함수를 클라이언트에 명시적인 상태와 함께 전송합니다.
+				QuestionPayload tailCompletePayload = QuestionPayload.of(fixedQId, "TAIL", tailQuestionText,
+					nextTurnNum, order, totalQuestions);
+				sseEmitterService.send(sessionId, AiConstants.EVENT_GENERATE_TAIL_COMPLETE, tailCompletePayload);
 				break;
 
 			case AiConstants.EVENT_INTERVIEW_COMPLETE: // 인터뷰 종료
@@ -336,11 +346,17 @@ public class FastApiClient implements AiClient {
 	}
 
 	private void sendNextQuestion(String sessionId, FixedQuestionResponse nextQuestion) {
+		// surveyId와 총 질문 수 Fetch
+		Long surveyId = interviewService.getSurveyIdBySession(sessionId);
+		int totalQuestions = interviewService.getTotalQuestionCount(surveyId);
+
 		QuestionPayload questionPayload = QuestionPayload.of(
 			nextQuestion.fixedQId(),
 			AiConstants.ACTION_FIXED,
 			nextQuestion.qContent(),
-			1);
+			1,
+			nextQuestion.qOrder(),
+			totalQuestions);
 		sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, questionPayload);
 	}
 
@@ -538,7 +554,7 @@ public class FastApiClient implements AiClient {
 				() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE)); // 🔧 종료 멘트 후 완료
 	}
 
-	// ========== Session Opening/Closing Methods (Phase 2, 5) ==========
+	// ========== 세션 Opening/Closing 방법 ==========
 
 	/**
 	 * AI 서버에 세션 시작(오프닝) 요청을 보내고 SSE 스트리밍 응답을 클라이언트로 전달합니다.
@@ -617,7 +633,8 @@ public class FastApiClient implements AiClient {
 				// ===== 인사말 스트리밍 (새 이벤트) =====
 				case AiConstants.EVENT_GREETING_CONTINUE:
 					String greetingToken = dataNode.path("content").asText();
-					QuestionPayload greetingPayload = QuestionPayload.of(null, "GREETING", greetingToken, 0);
+					QuestionPayload greetingPayload = QuestionPayload.of(null, "GREETING", greetingToken, 0, null,
+						null);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_GREETING_CONTINUE, greetingPayload);
 					break;
 
@@ -626,24 +643,32 @@ public class FastApiClient implements AiClient {
 					log.info("👋 [GREETING DONE] Sending first fixed question. sessionId={}", sessionId);
 					// DB에서 첫번째 고정질문 조회
 					FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
+					// Fetch total questions
+					Long surveyId = interviewService.getSurveyIdBySession(sessionId);
+					int totalQs = interviewService.getTotalQuestionCount(surveyId);
+
 					QuestionPayload questionPayload = QuestionPayload.of(
 						firstQuestion.fixedQId(),
 						AiConstants.ACTION_FIXED,
 						firstQuestion.qContent(),
-						1);
+						1,
+						firstQuestion.qOrder(),
+						totalQs);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, questionPayload);
 					break;
 
 				// ===== 레거시 호환: 기존 continue 이벤트 =====
 				case AiConstants.EVENT_CONTINUE:
 					String content = dataNode.path("content").asText();
-					QuestionPayload openingPayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, content, 0);
+					QuestionPayload openingPayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, content, 0,
+						null, null);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, openingPayload);
 					break;
 
 				case AiConstants.EVENT_DONE:
 					String questionText = dataNode.path("question_text").asText();
-					QuestionPayload donePayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, questionText, 0);
+					QuestionPayload donePayload = QuestionPayload.of(null, AiConstants.ACTION_OPENING, questionText, 0,
+						null, null);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 					break;
 
@@ -679,7 +704,8 @@ public class FastApiClient implements AiClient {
 					String content = dataNode.path("content").asText();
 					log.info("💬 [CLOSING CONTENT] Streaming closing remarks. sessionId={}, contentLength={}",
 						sessionId, content.length());
-					QuestionPayload questionPayload = QuestionPayload.of(null, AiConstants.ACTION_CLOSING, content, 0);
+					QuestionPayload questionPayload = QuestionPayload.of(null, AiConstants.ACTION_CLOSING, content, 0,
+						null, null);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 					break;
 
