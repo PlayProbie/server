@@ -81,16 +81,28 @@ public class InterviewController {
 		@RequestBody
 		UserAnswerRequest request) {
 		String sessionId = sessionUuid.toString();
+		log.info("[ANSWER_RECEIVED] sessionId={}, client: fixedQId={}, turnNum={}, answer={}",
+			sessionId, request.getFixedQId(), request.getTurnNum(), request.getAnswerText());
 
-		// 클라이언트가 전송한 질문 ID로 질문 정보 조회
+		// 클라이언트가 전송한 질문 ID로 질문 정보 조회 (Note: This might be invalid if client sent wrong ID, but service will handle correction)
 		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(request.getFixedQId());
 
+		// 1. [State Authority] 질문과 응답 저장 (여기서 검증 및 교정이 일어남)
+		UserAnswerResponse savedResponse = interviewService.saveInterviewLog(sessionId, request, currentQuestion);
+
+		log.info("[ANSWER_VALIDATED] sessionId={}, actual: fixedQId={}, turnNum={}",
+			sessionId, savedResponse.fixedQId(), savedResponse.turnNum());
+
+		// 2. [AI Streaming] 교정된 값으로 AI 스트리밍 요청
+		UserAnswerRequest correctedRequest = new UserAnswerRequest(
+			savedResponse.fixedQId(),
+			savedResponse.turnNum(),
+			request.getQuestionText(),
+			request.getAnswerText());
+
 		// AI 스트리밍 시작
-		fastApiClient.streamNextQuestion(sessionId, request);
+		fastApiClient.streamNextQuestion(sessionId, correctedRequest);
 
-		// 질문과 응답 저장
-		UserAnswerResponse userAnswerResponse = interviewService.saveInterviewLog(sessionId, request, currentQuestion);
-
-		return ResponseEntity.status(201).body(CommonResponse.of(userAnswerResponse));
+		return ResponseEntity.status(201).body(CommonResponse.of(savedResponse));
 	}
 }
