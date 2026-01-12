@@ -2,6 +2,7 @@ package com.playprobie.api.domain.streaming.application;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.streaming.dao.StreamingResourceRepository;
@@ -42,7 +43,7 @@ public class StreamingProvisioner {
 	 * @param resourceId StreamingResource PK
 	 */
 	@Async("taskExecutor")
-	@Transactional
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void provisionResourceAsync(Long resourceId) {
 		log.info("Starting async provisioning for resourceId={}", resourceId);
 

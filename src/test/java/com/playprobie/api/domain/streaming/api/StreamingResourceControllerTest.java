@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.game.dao.GameBuildRepository;
@@ -73,10 +73,13 @@ import software.amazon.awssdk.services.gameliftstreams.model.StreamGroupStatus;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Transactional
+// @Transactional // Removed to testing transaction synchronization
 @ActiveProfiles("test")
 @Import(StreamingResourceControllerTest.TestAsyncConfig.class)
-@org.springframework.test.context.TestPropertySource(properties = "spring.main.allow-bean-definition-overriding=true")
+@org.springframework.test.context.TestPropertySource(properties = {
+	"spring.main.allow-bean-definition-overriding=true",
+	"spring.jpa.open-in-view=false"
+})
 class StreamingResourceControllerTest {
 
 	@TestConfiguration
@@ -181,13 +184,26 @@ class StreamingResourceControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 
+	@AfterEach
+	void tearDown() {
+		// Clean up in reverse order of creation to avoid FK constraint violations
+		streamingResourceRepository.deleteAll();
+		surveyRepository.deleteAll();
+		gameBuildRepository.deleteAll();
+		gameRepository.deleteAll();
+		workspaceMemberRepository.deleteAll();
+		workspaceRepository.deleteAll();
+		userRepository.deleteAll();
+	}
+
 	@Test
 	@DisplayName("POST /surveys/{surveyId}/streaming-resource - 스트리밍 리소스 생성 시 202 응답과 실제 프로비저닝 로직 수행")
 	void createResource_ShouldReturn202AndExecuteProvisioning() throws Exception {
 		/*
-		 * 이 테스트는 `SyncTaskExecutor`를 사용하여 비동기 로직을 동기적으로 수행합니다.
-		 * 따라서 실제 환경(202 Accepted, CREATING)과 달리 응답 시점에 이미 리소스 할당이
-		 * 완료되어 상태가 `READY`로 반환됩니다.
+		 * TransactionSynchronizationManager를 사용하여 비동기 로직이 트랜잭션 커밋 "후"에 실행되므로,
+		 * API 응답 시점에는 아직 CREATING 상태입니다. (202 Accepted의 올바른 동작)
+		 * 하지만 테스트 환경에서는 SyncTaskExecutor를 사용하므로,
+		 * 트랜잭션 커밋 직후(afterCommit) 동기적으로 프로비저닝이 수행되어 DB 상태는 READY가 됩니다.
 		 */
 
 		// given
@@ -216,7 +232,7 @@ class StreamingResourceControllerTest {
 			.andExpect(status().isAccepted())
 			.andExpect(header().exists("Location"))
 			.andExpect(jsonPath("$.result.uuid").exists())
-			.andExpect(jsonPath("$.result.status").value("READY"));
+			.andExpect(jsonPath("$.result.status").value("CREATING"));
 
 		// then - DB에 실제로 리소스가 생성되고 상태가 업데이트 되었는지 검증
 		// SyncTaskExecutor로 인해 프로비저닝 로직이 동기적으로 실행되었으므로,
