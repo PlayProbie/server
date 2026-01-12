@@ -16,6 +16,10 @@ public interface SurveySessionRepository extends JpaRepository<SurveySession, Lo
 
 	Optional<SurveySession> findByUuid(UUID uuid);
 
+	@Query("SELECT ss FROM SurveySession ss JOIN FETCH ss.survey WHERE ss.uuid IN :uuids")
+	List<SurveySession> findAllByUuidIn(@Param("uuids")
+	java.util.Collection<UUID> uuids);
+
 	@Query("""
 		SELECT COUNT(ss) FROM SurveySession ss
 		JOIN ss.survey s
