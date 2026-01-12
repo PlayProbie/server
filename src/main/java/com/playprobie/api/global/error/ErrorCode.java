@@ -29,6 +29,7 @@ public enum ErrorCode {
 	QUESTION_NOT_FOUND(404, "S002", "질문을 찾을 수 없습니다."),
 	QUESTION_ALREADY_CONFIRMED(400, "S003", "이미 확정된 질문은 수정할 수 없습니다."),
 	SURVEY_SESSION_NOT_FOUND(404, "S004", "요청하신 설문 세션을 찾을 수 없습니다."),
+	SURVEY_SESSION_CLOSED(409, "S005", "이미 종료된 설문 세션입니다."),
 
 	// User
 	USER_NOT_FOUND(404, "U001", "사용자를 찾을 수 없습니다."),

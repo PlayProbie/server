@@ -197,6 +197,12 @@ public class InterviewService {
 		SurveySession session = surveySessionRepository.findByUuid(uuid)
 			.orElseThrow(() -> new RuntimeException("Session not found"));
 
+		// 0. [Blocking] Check if session is already finished
+		if (session.getStatus().isFinished()) {
+			log.warn("Attempt to update finished session: {}", sessionId);
+			throw new com.playprobie.api.global.error.exception.SessionClosedException();
+		}
+
 		// 1. [Server-Side Authority] Validate & Correct State
 		Long expectedFixedQId = session.getCurrentFixedQId();
 		Integer expectedTurnNum = session.getCurrentTurnNum();
