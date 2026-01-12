@@ -177,6 +177,23 @@ public class StreamingResourceService {
 		deleteResource(survey.getId(), user);
 	}
 
+	/**
+	 * 리소스가 존재할 경우에만 삭제를 수행합니다. (Safe Method)
+	 * <p>
+	 * 트랜잭션 롤백 방지를 위해 예외 대신 존재 여부를 확인합니다.
+	 */
+	@Transactional
+	public void deleteResourceIfPresent(java.util.UUID surveyUuid, User user) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(SurveyNotFoundException::new);
+
+		streamingResourceRepository.findBySurveyId(survey.getId())
+			.ifPresent(resource -> {
+				// 이미 조회된 Entity를 사용하여 삭제 수행 (Double Fetch 방지)
+				deleteResourceInternal(resource, user);
+			});
+	}
+
 	@Transactional
 	public void deleteResource(Long surveyId, User user) {
 		log.info("Deleting streaming resource for surveyId={}", surveyId);
@@ -184,6 +201,10 @@ public class StreamingResourceService {
 		StreamingResource resource = streamingResourceRepository.findBySurveyId(surveyId)
 			.orElseThrow(StreamingResourceNotFoundException::new);
 
+		deleteResourceInternal(resource, user);
+	}
+
+	private void deleteResourceInternal(StreamingResource resource, User user) {
 		securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
 		// AWS 리소스 삭제
@@ -249,7 +270,6 @@ public class StreamingResourceService {
 	/**
 	 * 설문을 활성화합니다 (Capacity 0 → Max Capacity).
 	 */
-	@Transactional
 	public TestActionResponse activateResource(java.util.UUID surveyUuid, User user) {
 		log.info("Activating resource for surveyUuid={}", surveyUuid);
 
@@ -258,6 +278,29 @@ public class StreamingResourceService {
 
 		StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId())
 			.orElseThrow(StreamingResourceNotFoundException::new);
+
+		return activateResourceInternal(resource, user);
+	}
+
+	/**
+	 * 리소스가 존재할 경우에만 활성화를 수행합니다. (Safe Method)
+	 * <p>
+	 * 트랜잭션 롤백 방지를 위해 예외 대신 null을 반환합니다.
+	 * @return TestActionResponse or null if resource not found
+	 */
+	@Transactional
+	public TestActionResponse activateResourceIfPresent(java.util.UUID surveyUuid, User user) {
+		log.info("Activating resource if present for surveyUuid={}", surveyUuid);
+
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(SurveyNotFoundException::new);
+
+		return streamingResourceRepository.findBySurveyId(survey.getId())
+			.map(resource -> activateResourceInternal(resource, user))
+			.orElse(null);
+	}
+
+	private TestActionResponse activateResourceInternal(StreamingResource resource, User user) {
 		securityManager.validateWriteAccess(resource.getSurvey().getGame().getWorkspace(), user);
 
 		// Capacity를 maxCapacity로 변경

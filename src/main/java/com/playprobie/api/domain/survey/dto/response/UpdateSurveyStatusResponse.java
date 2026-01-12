@@ -18,6 +18,6 @@ public record UpdateSurveyStatusResponse(
 	@Schema(description = "변경된 상태 (ACTIVE, CLOSED)", example = "ACTIVE") @JsonProperty("status")
 	String status,
 
-	@Schema(description = "스트리밍 리소스 상태 (ACTIVE 상태로 변경 시 포함)") @JsonProperty("streaming_resource")
+	@Schema(description = "스트리밍 리소스 상태 (ACTIVE 상태로 변경 시 포함)") @JsonProperty("streaming_resource") @JsonInclude(JsonInclude.Include.ALWAYS)
 	TestActionResponse streamingResource) {
 }
