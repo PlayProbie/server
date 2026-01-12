@@ -73,6 +73,10 @@ public class GameBuild extends BaseTimeEntity {
 		this.executablePath = executablePath;
 	}
 
+	public void markAsDeleted() {
+		this.status = BuildStatus.DELETED;
+	}
+
 	public String getS3Prefix() {
 		return String.format("%s/%s/", this.game.getUuid(), this.uuid);
 	}
