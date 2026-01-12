@@ -84,7 +84,7 @@ public class InterviewController {
 		log.info("[ANSWER_RECEIVED] sessionId={}, client: fixedQId={}, turnNum={}, answer={}",
 			sessionId, request.getFixedQId(), request.getTurnNum(), request.getAnswerText());
 
-		// 클라이언트가 전송한 질문 ID로 질문 정보 조회 (Note: This might be invalid if client sent wrong ID, but service will handle correction)
+		// 클라이언트가 전송한 질문 ID로 질문 정보 조회 (참고: 클라이언트가 잘못된 ID를 전송한 경우 유효하지 않을 수 있지만, 서비스에서 수정 처리를 진행합니다.)
 		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(request.getFixedQId());
 
 		// 1. [State Authority] 질문과 응답 저장 (여기서 검증 및 교정이 일어남)

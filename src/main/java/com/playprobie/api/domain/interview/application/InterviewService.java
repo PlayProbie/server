@@ -65,7 +65,7 @@ public class InterviewService {
 			}
 		}
 
-		// Create New Session (Default)
+		// 새 세션 생성 (Default)
 		SurveySession surveySession = SurveySession.builder()
 			.survey(survey)
 			.testerProfile(profileRequest != null ? profileRequest.toEntity() : null)
@@ -223,14 +223,14 @@ public class InterviewService {
 		Long actualFixedQId = request.getFixedQId();
 		Integer actualTurnNum = request.getTurnNum();
 
-		// Validation: Fix FixedQId Mismatch
+		// FixedQId 불일치 수정
 		if (expectedFixedQId != null && !expectedFixedQId.equals(actualFixedQId)) {
 			log.warn("[STATE_MISMATCH] sessionId={}, fixedQId: client={}, server={}. Correcting to SERVER value.",
 				sessionId, actualFixedQId, expectedFixedQId);
 			actualFixedQId = expectedFixedQId;
 		}
 
-		// Validation: Fix TurnNum Mismatch
+		// TurnNum 불일치 수정
 		if (expectedTurnNum != null && !expectedTurnNum.equals(actualTurnNum)) {
 			log.warn("[STATE_MISMATCH] sessionId={}, turnNum: client={}, server={}. Correcting to SERVER value.",
 				sessionId, actualTurnNum, expectedTurnNum);
@@ -240,19 +240,19 @@ public class InterviewService {
 		log.info("[ANSWER_SAVE] sessionId={}, fixedQId={}, turnNum={}, answer={}", sessionId, actualFixedQId,
 			actualTurnNum, request.getAnswerText());
 
-		// 2. [Idempotency] Upsert Logic
+		// 2.[멱등성] upsert 로직
 		Optional<InterviewLog> existingLog = interviewLogRepository.findBySessionIdAndFixedQuestionIdAndTurnNum(
 			session.getId(), actualFixedQId, actualTurnNum);
 
 		InterviewLog savedLog;
 		if (existingLog.isPresent()) {
-			// Update existing log
+			// 로그 업데이트
 			InterviewLog tailLog = existingLog.get();
 			tailLog.updateAnswer(request.getAnswerText());
 			savedLog = interviewLogRepository.save(tailLog);
 			log.info("[LOG_UPDATE] Updated existing log: id={}, turnNum={}", savedLog.getId(), savedLog.getTurnNum());
 		} else {
-			// Create new log
+			// 새 로그 생성
 			QuestionType type = (actualTurnNum == 1) ? QuestionType.FIXED : QuestionType.TAIL;
 			String qText = (actualTurnNum == 1) ? currentQuestion.qContent() : request.getQuestionText();
 
@@ -269,7 +269,7 @@ public class InterviewService {
 
 		}
 
-		// 3. [State Update] Always increment Turn Number after valid answer processing
+		// 3.[상태 업데이트] 유효한 답변 처리 후 항상 턴 번호를 증가시킵니다.
 		session.incrementTurnNum();
 		surveySessionRepository.save(session);
 		log.info("[STATE_UPDATE] Incremented session turnNum to {}", session.getCurrentTurnNum());

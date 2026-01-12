@@ -181,7 +181,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM) // SSE 응답 타입
 			.bodyValue(aiInteractionRequest)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		// AI 응답에서 추출한 action 저장 (TAIL_QUESTION 또는 PASS_TO_NEXT)
 		final AtomicReference<String> nextAction = new AtomicReference<>(null);
@@ -316,7 +317,7 @@ public class FastApiClient implements AiClient {
 				log.info("Tail question saved - sessionId: {}, fixedQId: {}, count: {}", sessionId, fixedQId,
 					tailQuestionCount);
 
-				// [New Requirement] Send generate_tail_complete to client with explicit state
+				// generate_tail_complete 함수를 클라이언트에 명시적인 상태와 함께 전송합니다.
 				QuestionPayload tailCompletePayload = QuestionPayload.of(fixedQId, "TAIL", tailQuestionText,
 					nextTurnNum, order, totalQuestions);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_GENERATE_TAIL_COMPLETE, tailCompletePayload);
@@ -346,7 +347,7 @@ public class FastApiClient implements AiClient {
 	}
 
 	private void sendNextQuestion(String sessionId, FixedQuestionResponse nextQuestion) {
-		// Fetch surveyId and totalQuestions
+		// surveyId와 총 질문 수 Fetch
 		Long surveyId = interviewService.getSurveyIdBySession(sessionId);
 		int totalQuestions = interviewService.getTotalQuestionCount(surveyId);
 
@@ -532,7 +533,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 	}
 
 	/**
@@ -554,7 +556,7 @@ public class FastApiClient implements AiClient {
 				() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE)); // 🔧 종료 멘트 후 완료
 	}
 
-	// ========== Session Opening/Closing Methods (Phase 2, 5) ==========
+	// ========== 세션 Opening/Closing 방법 ==========
 
 	/**
 	 * AI 서버에 세션 시작(오프닝) 요청을 보내고 SSE 스트리밍 응답을 클라이언트로 전달합니다.
@@ -574,7 +576,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleOpeningEvent(sessionId, sse.data()),
@@ -605,7 +608,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleClosingEvent(sessionId, sse.data()),
