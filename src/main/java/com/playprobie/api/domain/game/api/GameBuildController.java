@@ -67,9 +67,9 @@ public class GameBuildController {
 	@DeleteMapping("/{buildUuid}")
 	@Operation(summary = "빌드 삭제", description = "빌드와 S3의 모든 파일을 삭제합니다.")
 	public ResponseEntity<Void> deleteBuild(
-		@PathVariable
+		@PathVariable(name = "gameUuid")
 		UUID gameUuid,
-		@PathVariable
+		@PathVariable(name = "buildUuid")
 		UUID buildUuid) {
 		gameBuildService.deleteBuild(gameUuid, buildUuid);
 		return ResponseEntity.noContent().build();

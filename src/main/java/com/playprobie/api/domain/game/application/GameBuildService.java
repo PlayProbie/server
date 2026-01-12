@@ -139,10 +139,10 @@ public class GameBuildService {
 		// S3에서 prefix 하위 모든 파일 삭제
 		deleteS3Objects(gameBuild.getS3Prefix());
 
-		// DB에서 빌드 삭제
-		gameBuildRepository.delete(gameBuild);
+		// Soft Delete 처리 (DB Row 유지)
+		gameBuild.markAsDeleted();
 
-		log.info("Build deleted: buildId={}, s3Prefix={}", buildId, gameBuild.getS3Prefix());
+		log.info("Build soft-deleted: buildId={}, s3Prefix={}", buildId, gameBuild.getS3Prefix());
 	}
 
 	private Credentials getTemporaryCredentials(String s3Prefix) {
