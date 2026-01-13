@@ -310,4 +310,73 @@ public class InterviewService {
 
 		return session.getSurvey().getId();
 	}
+
+	/**
+	 * 재입력 요청(RETRY) 질문을 InterviewLog에 저장합니다.
+	 * AI 서버에서 retry_request 이벤트를 받았을 때 호출됩니다.
+	 */
+	@Transactional
+	public void saveRetryQuestionLog(String sessionId, Long fixedQId, String questionText) {
+		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		Integer maxTurnNum = interviewLogRepository.findMaxTurnNumBySessionIdAndFixedQId(
+			surveySession.getId(), fixedQId);
+		int nextTurnNum = (maxTurnNum != null ? maxTurnNum : 0) + 1;
+
+		InterviewLog interviewLog = InterviewLog.builder()
+			.session(surveySession)
+			.fixedQuestionId(fixedQId)
+			.turnNum(nextTurnNum)
+			.type(QuestionType.RETRY)
+			.questionText(questionText)
+			.answerText(null)
+			.build();
+
+		interviewLogRepository.save(interviewLog);
+		log.info("Saved RETRY question log for session: {}, fixedQId: {}, turnNum: {}", sessionId, fixedQId,
+			nextTurnNum);
+	}
+
+	/**
+	 * 특정 세션 + 고정질문 내에서의 RETRY 질문 횟수를 조회합니다.
+	 */
+	public int getRetryCount(String sessionId, Long fixedQId) {
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		List<InterviewLog> logs = interviewLogRepository.findBySessionIdAndFixedQuestionIdOrderByTurnNumAsc(
+			session.getId(), fixedQId);
+
+		return (int)logs.stream()
+			.filter(log -> log.getType() == QuestionType.RETRY)
+			.count();
+	}
+
+	/**
+	 * 현재 고정질문에 대한 대화 내역(History)을 조회합니다.
+	 * 포맷: [{"question": "Q", "answer": "A"}, ...]
+	 */
+	public List<Map<String, String>> getConversationHistory(String sessionId, Long fixedQId) {
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		List<InterviewLog> logs = interviewLogRepository.findBySessionIdAndFixedQuestionIdOrderByTurnNumAsc(
+			session.getId(), fixedQId);
+
+		List<Map<String, String>> history = new java.util.ArrayList<>();
+
+		for (InterviewLog log : logs) {
+			// 질문과 답변이 모두 있는 경우에만 히스토리에 추가 (또는 기획에 따라 답변이 없어도 질문만 추가 가능)
+			// 현재 Python 로직은 Q/A 쌍을 기대하므로 단순화하여 매핑
+			if (log.getQuestionText() != null) {
+				Map<String, String> qaPair = new java.util.HashMap<>();
+				qaPair.put("question", log.getQuestionText());
+				qaPair.put("answer", log.getAnswerText() != null ? log.getAnswerText() : "");
+				history.add(qaPair);
+			}
+		}
+
+		return history;
+	}
 }

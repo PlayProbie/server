@@ -164,16 +164,17 @@ public class FastApiClient implements AiClient {
 		AiInteractionRequest aiInteractionRequest = AiInteractionRequest.of(
 			sessionId, // 세션 ID
 			userAnswerRequest.getAnswerText(), // 사용자 답변
-			userAnswerRequest.getQuestionText(), // 현재 질문 텍스트
+			currentQuestion.qContent(), // 현재 질문 텍스트 (DB Source of Truth)
 			null, // game_info (미사용)
-			null, // conversation_history (미사용)
+			interviewService.getConversationHistory(sessionId, fixedQId), // 대화 내역 (RETRY 컨텍스트용)
 			surveyId, // 설문 ID
 			currentQuestionOrder, // 현재 질문 순서
 			totalQuestions, // 전체 질문 수
 			fixedQId, // 고정 질문 ID
 			userAnswerRequest.getTurnNum(), // 현재 턴 번호
 			currentTailCount, // 현재까지 진행된 꼬리질문 횟수
-			maxTailQuestions); // 최대 허용 꼬리질문 횟수
+			maxTailQuestions, // 최대 허용 꼬리질문 횟수
+			interviewService.getRetryCount(sessionId, fixedQId)); // 재입력 요청 횟수
 
 		// AI 서버에 SSE 스트리밍 요청 전송
 		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
@@ -182,7 +183,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM) // SSE 응답 타입
 			.bodyValue(aiInteractionRequest)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		// AI 응답에서 추출한 action 저장 (TAIL_QUESTION 또는 PASS_TO_NEXT)
 		final AtomicReference<String> nextAction = new AtomicReference<>(null);
@@ -231,6 +233,27 @@ public class FastApiClient implements AiClient {
 				sseEmitterService.send(sessionId, AiConstants.EVENT_START, startPayload);
 				break;
 
+			// ===== 새로 추가: 유효성 평가 결과 (로깅만) =====
+			case AiConstants.EVENT_VALIDITY_RESULT:
+				String validity = dataNode.path("validity").asText();
+				double confidence = dataNode.path("confidence").asDouble();
+				String reason = dataNode.path("reason").asText();
+				String source = dataNode.path("source").asText();
+				log.info("📋 [VALIDITY] sessionId={}, validity={}, confidence={}, reason={}, source={}",
+					sessionId, validity, confidence, reason, source);
+				// 클라이언트에 전송하지 않음 (내부 로깅용)
+				break;
+
+			// ===== 새로 추가: 품질 평가 결과 (로깅만) =====
+			case AiConstants.EVENT_QUALITY_RESULT:
+				String quality = dataNode.path("quality").asText();
+				String thickness = dataNode.path("thickness").asText();
+				String richness = dataNode.path("richness").asText();
+				log.info("📊 [QUALITY] sessionId={}, quality={}, thickness={}, richness={}",
+					sessionId, quality, thickness, richness);
+				// 클라이언트에 전송하지 않음 (내부 로깅용)
+				break;
+
 			case AiConstants.EVENT_DONE: // 모든 처리 완료
 				log.info("✅ [DONE EVENT] sessionId={}, action={}, tailQuestionGenerated={}",
 					sessionId, nextAction.get(), tailQuestionGenerated.get());
@@ -272,6 +295,9 @@ public class FastApiClient implements AiClient {
 				} else if (AiConstants.ACTION_TAIL_QUESTION.equals(action)) {
 					// TAIL_QUESTION: 꼬리질문 생성됨, 클라이언트 답변 대기
 					log.info("⏳ [TAIL_QUESTION] Waiting for user answer. sessionId={}", sessionId);
+				} else if (AiConstants.ACTION_RETRY_QUESTION.equals(action)) {
+					// RETRY_QUESTION: 재질문 생성됨, 클라이언트 답변 대기
+					log.info("🔄 [RETRY_QUESTION] Waiting for user retry. sessionId={}", sessionId);
 				} else {
 					// action이 null이거나 알 수 없는 값인 경우
 					log.warn("⚠️ [UNKNOWN ACTION] action={}, sessionId={}. Defaulting to wait.", action, sessionId);
@@ -299,12 +325,22 @@ public class FastApiClient implements AiClient {
 				break;
 
 			case AiConstants.EVENT_TOKEN: // 꼬리 질문 생성 중 (레거시 호환)
-			case AiConstants.EVENT_CONTINUE: // 토큰 스트리밍 진행 중 (신규 이벤트)
-				tailQuestionGenerated.set(true);
+			case AiConstants.EVENT_CONTINUE:
 				String content = dataNode.path("content").asText();
-				// AI 서버가 주는 turn_num 대신 계산된 nextTurnNum 사용
-				// ⭐ fixedQId를 전달하여 클라이언트가 어떤 질문의 꼬리질문인지 알 수 있도록 함
-				QuestionPayload questionPayload = QuestionPayload.of(fixedQId, "TAIL", content, nextTurnNum, order,
+				qType = dataNode.path("q_type").asText("TAIL"); // 기본값 TAIL (하위 호환)
+
+				if ("RETRY".equals(qType)) {
+					// RETRY는 tailQuestionGenerated 플래그 건드리지 않음
+				} else {
+					tailQuestionGenerated.set(true);
+				}
+
+				QuestionPayload questionPayload = QuestionPayload.of(
+					fixedQId,
+					qType, // FastAPI에서 받은 타입 사용
+					content,
+					nextTurnNum,
+					order,
 					totalQuestions);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_CONTINUE, questionPayload);
 				break;
@@ -342,6 +378,19 @@ public class FastApiClient implements AiClient {
 				sseEmitterService.send(sessionId, AiConstants.EVENT_REACTION, reactionPayload);
 				break;
 
+			case AiConstants.EVENT_RETRY_REQUEST: // 재입력 요청
+				String retryMessage = dataNode.path("message").asText();
+				// DB 저장 (RETRY Log)
+				interviewService.saveRetryQuestionLog(sessionId, fixedQId, retryMessage);
+				log.info("Saved RETRY question log: sessionId={}, fixedQId={}, msg={}", sessionId, fixedQId,
+					retryMessage);
+
+				// Client 전송
+				QuestionPayload retryPayload = QuestionPayload.of(fixedQId, "RETRY", retryMessage, nextTurnNum, order,
+					totalQuestions);
+				sseEmitterService.send(sessionId, AiConstants.EVENT_RETRY_REQUEST, retryPayload);
+				break;
+
 			default:
 				log.debug("Unknown event type received: {}", eventType);
 		}
@@ -360,6 +409,10 @@ public class FastApiClient implements AiClient {
 			nextQuestion.qOrder(),
 			totalQuestions);
 		sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, questionPayload);
+
+		// [FIX] 고정 질문 전송 후 done 이벤트 전송 (클라이언트 스트림 종료 처리용)
+		StatusPayload donePayload = StatusPayload.builder().status("completed").build();
+		sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 	}
 
 	private void sendInterviewComplete(String sessionId) {
@@ -490,7 +543,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 	}
 
 	/**
@@ -532,7 +586,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleOpeningEvent(sessionId, sse.data()),
@@ -563,7 +618,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleClosingEvent(sessionId, sse.data()),
@@ -613,6 +669,10 @@ public class FastApiClient implements AiClient {
 						firstQuestion.qOrder(),
 						totalQs);
 					sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, questionPayload);
+
+					// [FIX] 첫번째 고정 질문 전송 후 done 이벤트 전송
+					StatusPayload firstDonePayload = StatusPayload.builder().status("completed").build();
+					sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, firstDonePayload);
 					break;
 
 				// ===== 레거시 호환: 기존 continue 이벤트 =====
