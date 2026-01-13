@@ -15,6 +15,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.interview.application.InterviewService;
+import com.playprobie.api.domain.interview.domain.AnswerQuality;
+import com.playprobie.api.domain.interview.domain.AnswerValidity;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
@@ -190,12 +192,15 @@ public class FastApiClient implements AiClient {
 		final AtomicReference<String> nextAction = new AtomicReference<>(null);
 		// 꼬리질문이 실제로 생성되었는지 여부 추적
 		final AtomicBoolean tailQuestionGenerated = new AtomicBoolean(false);
+		// 유효성/품질 평가 결과 추적
+		final AtomicReference<AnswerValidity> validityRef = new AtomicReference<>(null);
+		final AtomicReference<AnswerQuality> qualityRef = new AtomicReference<>(null);
 
 		eventStream.subscribe(
 			sse -> {
 				String data = sse.data();
 				parseAndHandleEvent(sessionId, fixedQId, nextTurnNum, data, nextAction, tailQuestionGenerated,
-					currentQuestionOrder, totalQuestions);
+					currentQuestionOrder, totalQuestions, validityRef, qualityRef);
 			},
 			error -> {
 				log.error("Error connecting to AI Server: {}", error.getMessage());
@@ -207,7 +212,8 @@ public class FastApiClient implements AiClient {
 
 	private void parseAndHandleEvent(String sessionId, Long fixedQId, int nextTurnNum, String jsonStr,
 		AtomicReference<String> nextAction,
-		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions) {
+		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions,
+		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef) {
 		log.debug("📥 [SSE RAW] sessionId={}, rawJson={}", sessionId, jsonStr);
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
@@ -218,7 +224,7 @@ public class FastApiClient implements AiClient {
 			JsonNode dataNode = rootNode.path("data");
 			log.info("📨 [SSE PARSED] sessionId={}, eventType={}, data={}", sessionId, eventType, dataNode);
 			handleEvent(sessionId, fixedQId, nextTurnNum, eventType, dataNode, nextAction, tailQuestionGenerated, order,
-				totalQuestions);
+				totalQuestions, validityRef, qualityRef);
 		} catch (JsonProcessingException e) {
 			log.error("❌ Failed to parse JSON event. Data: {} | Error: {}", jsonStr, e.getMessage());
 		}
@@ -226,37 +232,54 @@ public class FastApiClient implements AiClient {
 
 	private void handleEvent(String sessionId, Long fixedQId, int nextTurnNum, String eventType, JsonNode dataNode,
 		AtomicReference<String> nextAction,
-		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions) {
+		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions,
+		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef) {
 		switch (eventType) {
 			case AiConstants.EVENT_START: // 스트리밍 처리 시작
 				StatusPayload startPayload = StatusPayload.builder().status(dataNode.path("status").asText()).build();
 				sseEmitterService.send(sessionId, AiConstants.EVENT_START, startPayload);
 				break;
 
-			// ===== 새로 추가: 유효성 평가 결과 (로깅만) =====
+			// ===== 유효성 평가 결과 → DB 저장용 저장 =====
 			case AiConstants.EVENT_VALIDITY_RESULT:
-				String validity = dataNode.path("validity").asText();
+				String validityStr = dataNode.path("validity").asText();
 				double confidence = dataNode.path("confidence").asDouble();
 				String reason = dataNode.path("reason").asText();
 				String source = dataNode.path("source").asText();
 				log.info("📋 [VALIDITY] sessionId={}, validity={}, confidence={}, reason={}, source={}",
-					sessionId, validity, confidence, reason, source);
-				// 클라이언트에 전송하지 않음 (내부 로깅용)
+					sessionId, validityStr, confidence, reason, source);
+				try {
+					validityRef.set(AnswerValidity.valueOf(validityStr));
+				} catch (IllegalArgumentException e) {
+					log.warn("Unknown validity value: {}", validityStr);
+				}
 				break;
 
-			// ===== 새로 추가: 품질 평가 결과 (로깅만) =====
+			// ===== 품질 평가 결과 → DB 저장용 저장 =====
 			case AiConstants.EVENT_QUALITY_RESULT:
-				String quality = dataNode.path("quality").asText();
+				String qualityStr = dataNode.path("quality").asText();
 				String thickness = dataNode.path("thickness").asText();
 				String richness = dataNode.path("richness").asText();
 				log.info("📊 [QUALITY] sessionId={}, quality={}, thickness={}, richness={}",
-					sessionId, quality, thickness, richness);
-				// 클라이언트에 전송하지 않음 (내부 로깅용)
+					sessionId, qualityStr, thickness, richness);
+				try {
+					qualityRef.set(AnswerQuality.valueOf(qualityStr));
+				} catch (IllegalArgumentException e) {
+					log.warn("Unknown quality value: {}", qualityStr);
+				}
 				break;
 
 			case AiConstants.EVENT_DONE: // 모든 처리 완료
 				log.info("✅ [DONE EVENT] sessionId={}, action={}, tailQuestionGenerated={}",
 					sessionId, nextAction.get(), tailQuestionGenerated.get());
+
+				// 유효성/품질 평가 결과 DB 저장 (값이 있는 경우에만)
+				// answerTurnNum = nextTurnNum - 1 (방금 답변한 턴)
+				if (validityRef.get() != null) {
+					int answerTurnNum = nextTurnNum - 1;
+					interviewService.updateLogValidityQuality(sessionId, fixedQId, answerTurnNum,
+						validityRef.get(), qualityRef.get());
+				}
 
 				// done 이벤트를 클라이언트로 전송
 				StatusPayload donePayload = StatusPayload.builder().status("completed").build();

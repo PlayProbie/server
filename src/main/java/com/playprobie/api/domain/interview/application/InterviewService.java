@@ -379,4 +379,37 @@ public class InterviewService {
 
 		return history;
 	}
+
+	/**
+	 * 특정 세션 + 고정질문 + 턴번호의 로그에 유효성/품질 평가 결과를 업데이트합니다.
+	 * AI 서버에서 validity_result, quality_result 이벤트를 받은 후 호출됩니다.
+	 *
+	 * @param answerTurnNum 답변이 저장된 로그의 턴 번호 (방금 답변한 턴)
+	 */
+	@Transactional
+	public void updateLogValidityQuality(String sessionId, Long fixedQId, int answerTurnNum,
+		com.playprobie.api.domain.interview.domain.AnswerValidity validity,
+		com.playprobie.api.domain.interview.domain.AnswerQuality quality) {
+
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		// 특정 턴 번호의 로그 조회 (답변이 저장된 로그)
+		java.util.Optional<InterviewLog> logOpt = interviewLogRepository.findBySessionIdAndFixedQuestionIdAndTurnNum(
+			session.getId(), fixedQId, answerTurnNum);
+
+		if (logOpt.isEmpty()) {
+			log.warn("[VALIDITY_QUALITY] Log not found for sessionId={}, fixedQId={}, turnNum={}. Skipping update.",
+				sessionId, fixedQId, answerTurnNum);
+			return;
+		}
+
+		InterviewLog targetLog = logOpt.get();
+		targetLog.updateValidityAndQuality(validity, quality);
+		interviewLogRepository.save(targetLog);
+
+		log.info(
+			"[VALIDITY_QUALITY] Updated log: sessionId={}, fixedQId={}, turnNum={}, logId={}, validity={}, quality={}",
+			sessionId, fixedQId, answerTurnNum, targetLog.getId(), validity, quality);
+	}
 }
