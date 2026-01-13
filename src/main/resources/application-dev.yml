@@ -38,7 +38,7 @@ ai:
     url: ${AI_SERVER_URL}
   client:
     connect-timeout: 5000ms
-    read-timeout: 10000ms
+    read-timeout: 10m
   interview:
     max-tail-questions: 2
   sse:
