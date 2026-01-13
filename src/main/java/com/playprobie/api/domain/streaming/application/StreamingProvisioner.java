@@ -57,7 +57,7 @@ public class StreamingProvisioner {
 
 			log.info("Creating AWS Application for resourceId={}", resourceId);
 			CreateApplicationResponse appResponse = gameLiftService.createApplication(
-				resource.getSurvey().getName() + SUFFIX_APP,
+				resource.getSurvey().getUuid() + SUFFIX_APP,
 				s3Uri,
 				resource.getBuild().getExecutablePath(),
 				resource.getBuild().getOsType());
@@ -68,7 +68,7 @@ public class StreamingProvisioner {
 			// 2. AWS StreamGroup 생성
 			log.info("Creating AWS StreamGroup for resourceId={}", resourceId);
 			CreateStreamGroupResponse groupResponse = gameLiftService.createStreamGroup(
-				resource.getSurvey().getName() + SUFFIX_GROUP,
+				resource.getSurvey().getUuid() + SUFFIX_GROUP,
 				resource.getInstanceType());
 
 			// 3. Application을 StreamGroup에 연결 (상태 안정화 대기)
