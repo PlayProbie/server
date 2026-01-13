@@ -282,7 +282,8 @@ public class FastApiClient implements AiClient {
 				String qType = dataNode.path("q_type").asText();
 				String questionText = dataNode.path("question_text").asText();
 				int turnNum = dataNode.path("turn_num").asInt();
-				// Note: event from AI usually doesn't have order/total, using passed values or defaults
+				// Note: event from AI usually doesn't have order/total, using passed values or
+				// defaults
 				QuestionPayload fixedQuestionPayload = QuestionPayload.of(eventFixedQId, qType, questionText, turnNum,
 					order, totalQuestions);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_QUESTION, fixedQuestionPayload);
@@ -731,6 +732,23 @@ public class FastApiClient implements AiClient {
 			log.error("❌ [CLOSING PARSE ERROR] Failed to parse closing event. sessionId={}, error={}",
 				sessionId, e.getMessage(), e);
 			sendInterviewComplete(sessionId);
+		}
+	}
+
+	@Override
+	public boolean checkHealth() {
+		try {
+			return Boolean.TRUE.equals(aiWebClient.get()
+				.uri("/health")
+				.retrieve()
+				.toBodilessEntity()
+				.map(response -> response.getStatusCode().is2xxSuccessful())
+				.timeout(java.time.Duration.ofSeconds(3))
+				.onErrorReturn(false)
+				.block());
+		} catch (Exception e) {
+			log.debug("AI Server Health Check Failed: {}", e.getMessage());
+			return false;
 		}
 	}
 }
