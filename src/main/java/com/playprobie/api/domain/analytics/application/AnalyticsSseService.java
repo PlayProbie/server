@@ -17,7 +17,7 @@ import java.util.UUID;
 public class AnalyticsSseService {
 
 	private final AnalyticsSseRepository analyticsSseRepository;
-	private static final Long DEFAULT_TIMEOUT = 60000L; // 60초
+	private static final Long DEFAULT_TIMEOUT = 600000L; // 10분
 
 	public SseEmitter subscribe(UUID surveyUuid) {
 		SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);

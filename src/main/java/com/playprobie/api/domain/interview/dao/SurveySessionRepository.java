@@ -43,4 +43,6 @@ public interface SurveySessionRepository extends JpaRepository<SurveySession, Lo
 		@Param("cursor")
 		Long cursor,
 		Pageable pageable);
+
+	long countBySurveyIdAndStatus(Long surveyId, SessionStatus status);
 }

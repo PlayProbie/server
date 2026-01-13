@@ -107,6 +107,35 @@ public class AnalyticsService {
 	}
 
 	/**
+	 * 단일 질문 분석 요청 (Event Listener 등에서 호출)
+	 */
+	@Transactional
+	public void analyzeSingleQuestion(UUID surveyUuid, Long fixedQuestionId) {
+		log.info("🔍 단일 질문 분석 요청: surveyUuid={}, fixedQuestionId={}", surveyUuid, fixedQuestionId);
+
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+
+		FixedQuestion question = fixedQuestionRepository.findById(fixedQuestionId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+
+		analyzeAndSave(surveyUuid, survey.getId(), question)
+			.doOnSuccess(result -> {
+				long totalCount = fixedQuestionRepository.countBySurveyId(survey.getId());
+				long completedCount = questionResponseAnalysisRepository.countBySurveyIdAndStatus(survey.getId(),
+					QuestionResponseAnalysis.AnalysisStatus.COMPLETED);
+
+				log.info("📊 분석 진행 상황: {}/{} (surveyUuid={})", completedCount, totalCount, surveyUuid);
+
+				if (completedCount >= totalCount) {
+					log.info("📢 모든 질문 분석 완료, SSE 이벤트 발행: surveyUuid={}", surveyUuid);
+					eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
+				}
+			})
+			.subscribe();
+	}
+
+	/**
 	 * 설문 분석 결과 동기 조회 (REST API용)
 	 * - DB에 캐시된 분석 결과만 반환
 	 * - AI 분석은 MockDataLoader에서 사전 수행됨
@@ -123,7 +152,7 @@ public class AnalyticsService {
 
 		if (questions.isEmpty()) {
 			log.warn("⚠️ surveyId={}에 대한 질문이 없습니다", surveyId);
-			return buildAnalyticsResponse(List.of(), 0);
+			return buildAnalyticsResponse(List.of(), 0, 0);
 		}
 
 		// DB에서 완료된 분석 결과만 조회
@@ -143,7 +172,10 @@ public class AnalyticsService {
 		log.info("📊 분석 결과 조회 완료: {}개 질문 중 {}개 완료",
 			questions.size(), analyses.size());
 
-		return buildAnalyticsResponse(analyses, questions.size());
+		int totalParticipants = (int)surveySessionRepository.countBySurveyIdAndStatus(surveyId,
+			com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED);
+
+		return buildAnalyticsResponse(analyses, questions.size(), totalParticipants);
 	}
 
 	/**
@@ -155,19 +187,20 @@ public class AnalyticsService {
 	 */
 	private AnalyticsResponse buildAnalyticsResponse(
 		List<QuestionResponseAnalysisWrapper> analyses,
-		int totalQuestions) {
+		int totalQuestions,
+		int totalParticipants) {
 
 		AnalysisStatus status;
 
 		if (analyses.isEmpty()) {
 			status = AnalysisStatus.NO_DATA;
-		} else if (analyses.size() >= totalQuestions) {
-			status = AnalysisStatus.COMPLETED;
-		} else {
+		} else if (analyses.size() < totalQuestions) {
 			status = AnalysisStatus.INSUFFICIENT_DATA;
+		} else {
+			status = AnalysisStatus.COMPLETED;
 		}
 
-		return new AnalyticsResponse(analyses, status.name(), totalQuestions, analyses.size());
+		return new AnalyticsResponse(analyses, status.name(), totalQuestions, analyses.size(), totalParticipants);
 	}
 
 	/**

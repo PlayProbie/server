@@ -18,5 +18,6 @@ public record AnalyticsResponse(
 	List<QuestionResponseAnalysisWrapper> analyses,
 	String status,
 	int totalQuestions,
-	int completedQuestions) {
+	int completedQuestions,
+	int totalParticipants) {
 }
