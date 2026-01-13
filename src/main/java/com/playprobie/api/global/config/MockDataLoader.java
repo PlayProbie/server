@@ -65,11 +65,11 @@ public class MockDataLoader implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		if (surveyRepository.count() > 0) {
-			log.info("⏩ 데이터가 이미 존재합니다. Mock 데이터 로딩을 건너뜠니다.");
+			log.info("⏩ 데이터가 이미 존재합니다. Mock 데이터 로딩을 건너뜁니다.");
 
 			// Analytics도 이미 존재하는지 확인
 			if (analysisRepository.count() > 0) {
-				log.info("⏩ Analytics 데이터도 이미 존재합니다. AI 처리를 건너뜠니다.");
+				log.info("⏩ Analytics 데이터도 이미 존재합니다. AI 처리를 건너뜁니다.");
 				return;
 			} else {
 				log.info("🔄 Analytics 데이터가 없습니다. AI 처리를 시작합니다...");
@@ -112,7 +112,7 @@ public class MockDataLoader implements CommandLineRunner {
 				.collect(Collectors.toList());
 
 			if (completedSessions.isEmpty()) {
-				log.info("⏩ 완료된 세션이 없습니다. AI 처리를 건너뜠니다.");
+				log.info("⏩ 완료된 세션이 없습니다. AI 처리를 건너뜁니다.");
 				return;
 			}
 
