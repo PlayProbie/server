@@ -116,14 +116,14 @@ public class InterviewService {
 		// Initialize Session State
 		session.updateInterviewState(firstQuestion.fixedQId(), firstQuestion.qOrder(), 1);
 		surveySessionRepository.save(session);
-		log.info("Initialized session state: sessionId={}, fixedQId={}, order={}", sessionUuid,
+		log.info("Initialized session state: sessionId={}, fixedQuestionId={}, order={}", sessionUuid,
 			firstQuestion.fixedQId(), firstQuestion.qOrder());
 
 		return firstQuestion;
 	}
 
-	public FixedQuestionResponse getQuestionById(Long fixedQId) {
-		return fixedQuestionRepository.findById(fixedQId)
+	public FixedQuestionResponse getQuestionById(Long fixedQuestionId) {
+		return fixedQuestionRepository.findById(fixedQuestionId)
 			.map(FixedQuestionResponse::from)
 			.orElseThrow(EntityNotFoundException::new);
 	}
@@ -162,18 +162,19 @@ public class InterviewService {
 	 * AI 서버에서 generate_tail_complete 이벤트를 받았을 때 호출됩니다.
 	 */
 	@Transactional
-	public void saveTailQuestionLog(String sessionId, Long fixedQId, String tailQuestionText, int tailQuestionCount) {
+	public void saveTailQuestionLog(String sessionId, Long fixedQuestionId, String tailQuestionText,
+		int tailQuestionCount) {
 		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
 			.orElseThrow(SessionNotFoundException::new);
 
 		// 해당 고정 질문 내에서의 최대 turnNum을 조회하여 +1
-		Integer maxTurnNum = interviewLogRepository.findMaxTurnNumBySessionIdAndFixedQId(
-			surveySession.getId(), fixedQId);
+		Integer maxTurnNum = interviewLogRepository.findMaxTurnNumBySessionIdAndFixedQuestionId(
+			surveySession.getId(), fixedQuestionId);
 		int nextTurnNum = (maxTurnNum != null ? maxTurnNum : 0) + 1;
 
 		InterviewLog interviewLog = InterviewLog.builder()
 			.session(surveySession)
-			.fixedQuestionId(fixedQId)
+			.fixedQuestionId(fixedQuestionId)
 			.turnNum(nextTurnNum)
 			.type(QuestionType.TAIL)
 			.questionText(tailQuestionText)
@@ -181,7 +182,8 @@ public class InterviewService {
 			.build();
 
 		interviewLogRepository.save(interviewLog);
-		log.info("Saved tail question log for session: {}, fixedQId: {}, turnNum: {}", sessionId, fixedQId,
+		log.info("Saved tail question log for session: {}, fixedQuestionId: {}, turnNum: {}", sessionId,
+			fixedQuestionId,
 			nextTurnNum);
 	}
 
@@ -216,7 +218,8 @@ public class InterviewService {
 				expectedFixedQId = request.getFixedQId(); // Trust request for legacy fallback
 				expectedTurnNum = request.getTurnNum();
 				session.updateInterviewState(expectedFixedQId, 1, expectedTurnNum); // Order is unknown, assume 1? Or just don't set order
-				log.info("[LEGACY_INIT] Set state to fixedQId={}, turnNum={}", expectedFixedQId, expectedTurnNum);
+				log.info("[LEGACY_INIT] Set state to fixedQuestionId={}, turnNum={}", expectedFixedQId,
+					expectedTurnNum);
 			}
 		}
 
@@ -225,7 +228,8 @@ public class InterviewService {
 
 		// FixedQId 불일치 수정
 		if (expectedFixedQId != null && !expectedFixedQId.equals(actualFixedQId)) {
-			log.warn("[STATE_MISMATCH] sessionId={}, fixedQId: client={}, server={}. Correcting to SERVER value.",
+			log.warn(
+				"[STATE_MISMATCH] sessionId={}, fixedQuestionId: client={}, server={}. Correcting to SERVER value.",
 				sessionId, actualFixedQId, expectedFixedQId);
 			actualFixedQId = expectedFixedQId;
 		}
@@ -237,7 +241,7 @@ public class InterviewService {
 			actualTurnNum = expectedTurnNum;
 		}
 
-		log.info("[ANSWER_SAVE] sessionId={}, fixedQId={}, turnNum={}, answer={}", sessionId, actualFixedQId,
+		log.info("[ANSWER_SAVE] sessionId={}, fixedQuestionId={}, turnNum={}, answer={}", sessionId, actualFixedQId,
 			actualTurnNum, request.getAnswerText());
 
 		// 2.[멱등성] upsert 로직
@@ -309,5 +313,109 @@ public class InterviewService {
 			.orElseThrow(SessionNotFoundException::new);
 
 		return session.getSurvey().getId();
+	}
+
+	/**
+	 * 재입력 요청(RETRY) 질문을 InterviewLog에 저장합니다.
+	 * AI 서버에서 retry_request 이벤트를 받았을 때 호출됩니다.
+	 */
+	@Transactional
+	public void saveRetryQuestionLog(String sessionId, Long fixedQuestionId, String questionText) {
+		SurveySession surveySession = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		Integer maxTurnNum = interviewLogRepository.findMaxTurnNumBySessionIdAndFixedQuestionId(
+			surveySession.getId(), fixedQuestionId);
+		int nextTurnNum = (maxTurnNum != null ? maxTurnNum : 0) + 1;
+
+		InterviewLog interviewLog = InterviewLog.builder()
+			.session(surveySession)
+			.fixedQuestionId(fixedQuestionId)
+			.turnNum(nextTurnNum)
+			.type(QuestionType.RETRY)
+			.questionText(questionText)
+			.answerText(null)
+			.build();
+
+		interviewLogRepository.save(interviewLog);
+		log.info("Saved RETRY question log for session: {}, fixedQuestionId: {}, turnNum: {}", sessionId,
+			fixedQuestionId,
+			nextTurnNum);
+	}
+
+	/**
+	 * 특정 세션 + 고정질문 내에서의 RETRY 질문 횟수를 조회합니다.
+	 */
+	public int getRetryCount(String sessionId, Long fixedQuestionId) {
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		List<InterviewLog> logs = interviewLogRepository.findBySessionIdAndFixedQuestionIdOrderByTurnNumAsc(
+			session.getId(), fixedQuestionId);
+
+		return (int)logs.stream()
+			.filter(log -> log.getType() == QuestionType.RETRY)
+			.count();
+	}
+
+	/**
+	 * 현재 고정질문에 대한 대화 내역(History)을 조회합니다.
+	 * 포맷: [{"question": "Q", "answer": "A"}, ...]
+	 */
+	public List<Map<String, String>> getConversationHistory(String sessionId, Long fixedQuestionId) {
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		List<InterviewLog> logs = interviewLogRepository.findBySessionIdAndFixedQuestionIdOrderByTurnNumAsc(
+			session.getId(), fixedQuestionId);
+
+		List<Map<String, String>> history = new java.util.ArrayList<>();
+
+		for (InterviewLog log : logs) {
+			// 질문과 답변이 모두 있는 경우에만 히스토리에 추가 (또는 기획에 따라 답변이 없어도 질문만 추가 가능)
+			// 현재 Python 로직은 Q/A 쌍을 기대하므로 단순화하여 매핑
+			if (log.getQuestionText() != null) {
+				Map<String, String> qaPair = new java.util.HashMap<>();
+				qaPair.put("question", log.getQuestionText());
+				qaPair.put("answer", log.getAnswerText() != null ? log.getAnswerText() : "");
+				history.add(qaPair);
+			}
+		}
+
+		return history;
+	}
+
+	/**
+	 * 특정 세션 + 고정질문 + 턴번호의 로그에 유효성/품질 평가 결과를 업데이트합니다.
+	 * AI 서버에서 validity_result, quality_result 이벤트를 받은 후 호출됩니다.
+	 *
+	 * @param answerTurnNum 답변이 저장된 로그의 턴 번호 (방금 답변한 턴)
+	 */
+	@Transactional
+	public void updateLogValidityQuality(String sessionId, Long fixedQuestionId, int answerTurnNum,
+		com.playprobie.api.domain.interview.domain.AnswerValidity validity,
+		com.playprobie.api.domain.interview.domain.AnswerQuality quality) {
+
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		// 특정 턴 번호의 로그 조회 (답변이 저장된 로그)
+		java.util.Optional<InterviewLog> logOpt = interviewLogRepository.findBySessionIdAndFixedQuestionIdAndTurnNum(
+			session.getId(), fixedQuestionId, answerTurnNum);
+
+		if (logOpt.isEmpty()) {
+			log.warn(
+				"[VALIDITY_QUALITY] Log not found for sessionId={}, fixedQuestionId={}, turnNum={}. Skipping update.",
+				sessionId, fixedQuestionId, answerTurnNum);
+			return;
+		}
+
+		InterviewLog targetLog = logOpt.get();
+		targetLog.updateValidityAndQuality(validity, quality);
+		interviewLogRepository.save(targetLog);
+
+		log.info(
+			"[VALIDITY_QUALITY] Updated log: sessionId={}, fixedQuestionId={}, turnNum={}, logId={}, validity={}, quality={}",
+			sessionId, fixedQuestionId, answerTurnNum, targetLog.getId(), validity, quality);
 	}
 }

@@ -81,4 +81,22 @@ public class InterviewLog extends BaseTimeEntity {
 	public void updateAnswer(String answerText) {
 		this.answerText = answerText;
 	}
+
+	// 유효성/품질 평가 결과 업데이트 (AI 분석 결과)
+	public void updateValidityAndQuality(AnswerValidity validity, AnswerQuality quality) {
+		if (this.analysis == null) {
+			this.analysis = LogAnalysis.builder()
+				.validity(validity)
+				.quality(quality)
+				.build();
+		} else {
+			// 기존 analysis가 있으면 새로 생성 (Immutable 패턴)
+			this.analysis = LogAnalysis.builder()
+				.sentiment(this.analysis.getSentiment())
+				.topicCluster(this.analysis.getTopicCluster())
+				.validity(validity)
+				.quality(quality)
+				.build();
+		}
+	}
 }

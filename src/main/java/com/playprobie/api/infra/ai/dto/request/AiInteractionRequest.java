@@ -48,7 +48,11 @@ public record AiInteractionRequest(
 	Integer currentTailCount,
 
 	@Schema(description = "최대 허용 꼬리질문 횟수", example = "3") @JsonProperty("max_tail_questions")
-	Integer maxTailQuestions) {
+	Integer maxTailQuestions,
+
+	// ===== 재입력 요청 관련 정보 (신규 추가) =====
+	@Schema(description = "현재 고정질문 내에서의 재입력 요청 횟수", example = "1") @JsonProperty("retry_count")
+	Integer retryCount) {
 
 	public static AiInteractionRequest of(
 		String sessionId,
@@ -62,8 +66,10 @@ public record AiInteractionRequest(
 		Long fixedQId,
 		Integer turnNum,
 		Integer currentTailCount,
-		Integer maxTailQuestions) {
+		Integer maxTailQuestions,
+		Integer retryCount) {
 		return new AiInteractionRequest(sessionId, userAnswer, currentQuestion, gameInfo, history,
-			surveyId, currentQuestionOrder, totalQuestions, fixedQId, turnNum, currentTailCount, maxTailQuestions);
+			surveyId, currentQuestionOrder, totalQuestions, fixedQId, turnNum, currentTailCount, maxTailQuestions,
+			retryCount);
 	}
 }

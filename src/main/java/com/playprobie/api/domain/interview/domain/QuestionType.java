@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum QuestionType {
 
 	FIXED("기획된 고정 질문"),
-	TAIL("AI 파생 꼬리 질문");
+	TAIL("AI 파생 꼬리 질문"),
+	RETRY("재확인 질문");
 
 	private final String description;
 
