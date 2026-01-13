@@ -96,7 +96,7 @@
       ],
       "profile": {
         "ageGroup": "20s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ADVENTURE"
       }
     },
@@ -172,7 +172,7 @@
       ],
       "profile": {
         "ageGroup": "40s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "SIMULATION"
       }
     },
@@ -241,7 +241,7 @@
       ],
       "profile": {
         "ageGroup": "10s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "RPG"
       }
     },
@@ -317,7 +317,7 @@
       ],
       "profile": {
         "ageGroup": "30s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ACTION"
       }
     },
@@ -393,7 +393,7 @@
       ],
       "profile": {
         "ageGroup": "50s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "FPS"
       }
     },
@@ -462,7 +462,7 @@
       ],
       "profile": {
         "ageGroup": "20s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ADVENTURE"
       }
     },
@@ -531,7 +531,7 @@
       ],
       "profile": {
         "ageGroup": "40s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "SIMULATION"
       }
     },
@@ -593,7 +593,7 @@
       ],
       "profile": {
         "ageGroup": "10s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "RPG"
       }
     },
@@ -662,7 +662,7 @@
       ],
       "profile": {
         "ageGroup": "30s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ACTION"
       }
     },
@@ -738,7 +738,7 @@
       ],
       "profile": {
         "ageGroup": "50s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "FPS"
       }
     },
@@ -800,7 +800,7 @@
       ],
       "profile": {
         "ageGroup": "20s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ADVENTURE"
       }
     },
@@ -869,7 +869,7 @@
       ],
       "profile": {
         "ageGroup": "40s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "SIMULATION"
       }
     },
@@ -931,7 +931,7 @@
       ],
       "profile": {
         "ageGroup": "10s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "RPG"
       }
     },
@@ -1000,7 +1000,7 @@
       ],
       "profile": {
         "ageGroup": "30s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ACTION"
       }
     },
@@ -1069,7 +1069,7 @@
       ],
       "profile": {
         "ageGroup": "50s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "FPS"
       }
     },
@@ -1131,7 +1131,7 @@
       ],
       "profile": {
         "ageGroup": "20s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ADVENTURE"
       }
     },
@@ -1193,7 +1193,7 @@
       ],
       "profile": {
         "ageGroup": "40s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "SIMULATION"
       }
     },
@@ -1262,7 +1262,7 @@
       ],
       "profile": {
         "ageGroup": "10s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "RPG"
       }
     },
@@ -1324,7 +1324,7 @@
       ],
       "profile": {
         "ageGroup": "30s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ACTION"
       }
     },
@@ -1400,7 +1400,7 @@
       ],
       "profile": {
         "ageGroup": "50s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "FPS"
       }
     },
@@ -1469,7 +1469,7 @@
       ],
       "profile": {
         "ageGroup": "20s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ADVENTURE"
       }
     },
@@ -1524,7 +1524,7 @@
       ],
       "profile": {
         "ageGroup": "40s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "SIMULATION"
       }
     },
@@ -1593,7 +1593,7 @@
       ],
       "profile": {
         "ageGroup": "10s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "RPG"
       }
     },
@@ -1662,7 +1662,7 @@
       ],
       "profile": {
         "ageGroup": "30s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "ACTION"
       }
     },
@@ -1731,7 +1731,7 @@
       ],
       "profile": {
         "ageGroup": "50s",
-        "gender": "F",
+        "gender": "FEMALE",
         "preferGenre": "FPS"
       }
     }
