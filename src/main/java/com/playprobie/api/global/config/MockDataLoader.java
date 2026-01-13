@@ -133,7 +133,7 @@ public class MockDataLoader implements CommandLineRunner {
 			}
 
 			if (!isAiServerReady) {
-				log.error("❌ AI 서버가 준비되지 않아 AI 처리를 건너뜠니다.");
+				log.error("❌ AI 서버가 준비되지 않아 AI 처리를 건너뜁니다.");
 				return;
 			}
 
