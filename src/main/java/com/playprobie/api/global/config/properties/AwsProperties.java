@@ -52,7 +52,19 @@ public record AwsProperties(
 		@DurationUnit(ChronoUnit.MILLIS) @NotNull
 		Duration pollingInterval,
 
+		@jakarta.validation.constraints.Min(value = 1, message = "Max polling attempts must be at least 1")
+		int maxPollingAttempts,
+
 		@NotBlank(message = "GameLift Role ARN must be defined")
 		String roleArn) {
+
+		/**
+		 * 기본값을 가진 생성자 (Compact Constructor).
+		 */
+		public GameLift {
+			if (maxPollingAttempts <= 0) {
+				maxPollingAttempts = 30; // 기본값
+			}
+		}
 	}
 }

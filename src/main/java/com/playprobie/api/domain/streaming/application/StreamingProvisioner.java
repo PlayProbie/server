@@ -92,12 +92,15 @@ public class StreamingProvisioner {
 	 * StreamGroup이 안정적인 상태(ACTIVATING이 아님)가 될 때까지 대기합니다.
 	 *
 	 * <p>
-	 * Polling 설정은 application.yml의 aws.gamelift.polling-interval에서 조절 가능합니다.
-	 * 기본값: 5초 간격, 30회 시도 (총 150초 대기)
+	 * Polling 설정은 application.yml의 aws.gamelift 섹션에서 조절 가능합니다:
+	 * - polling-interval: 폴링 간격 (기본값: 5초)
+	 * - max-polling-attempts: 최대 시도 횟수 (기본값: 30회)
+	 *
+	 * @throws BusinessException 타임아웃 시 AWS_PROVISIONING_TIMEOUT 예외 발생
 	 */
 	private void waitForStreamGroupStable(String streamGroupId) {
 		long pollingMillis = awsProperties.gamelift().pollingInterval().toMillis();
-		int maxAttempts = 30; // 총 대기시간 = pollingInterval × maxAttempts
+		int maxAttempts = awsProperties.gamelift().maxPollingAttempts();
 
 		for (int i = 0; i < maxAttempts; i++) {
 			GetStreamGroupResponse response = gameLiftService.getStreamGroupStatus(streamGroupId);
@@ -105,6 +108,7 @@ public class StreamingProvisioner {
 			log.info("Waiting for StreamGroup stable: status={}, attempt={}/{}", status, i + 1, maxAttempts);
 
 			if (status != StreamGroupStatus.ACTIVATING) {
+				log.info("StreamGroup is now stable: status={}", status);
 				return;
 			}
 
@@ -115,6 +119,9 @@ public class StreamingProvisioner {
 				throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
 			}
 		}
-		log.warn("StreamGroup stability wait timed out: {}", streamGroupId);
+
+		// Timeout 시 명시적 예외 발생
+		log.error("StreamGroup stability wait timed out after {} attempts: {}", maxAttempts, streamGroupId);
+		throw new BusinessException(ErrorCode.GAMELIFT_PROVISIONING_TIMEOUT);
 	}
 }

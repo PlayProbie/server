@@ -1,10 +1,10 @@
 package com.playprobie.api.domain.streaming.dto;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.playprobie.api.domain.streaming.domain.StreamingConstants;
 import com.playprobie.api.domain.streaming.domain.StreamingResource;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -37,6 +37,6 @@ public record StreamingResourceResponse(
 			resource.getCurrentCapacity(),
 			resource.getMaxCapacity(),
 			resource.getInstanceType(),
-			resource.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toOffsetDateTime());
+			resource.getCreatedAt().atZone(StreamingConstants.DEFAULT_TIMEZONE).toOffsetDateTime());
 	}
 }
