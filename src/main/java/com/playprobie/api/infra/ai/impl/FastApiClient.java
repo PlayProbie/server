@@ -53,6 +53,7 @@ public class FastApiClient implements AiClient {
 	private final InterviewService interviewService;
 	private final AiProperties aiProperties;
 	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
+	private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
@@ -471,53 +472,9 @@ public class FastApiClient implements AiClient {
 
 	@Override
 	public void triggerAnalysis(String surveyUuid, Long fixedQuestionId) {
-		try {
-			log.info("🔍 Question {} 분석 시작...", fixedQuestionId);
-			// Analysis를 비동기로 시작 (결과는 DB에 저장됨)
-			streamQuestionAnalysis(surveyUuid, fixedQuestionId)
-				.subscribe(
-					sse -> {
-						String event = sse.event();
-						String data = sse.data();
-
-						if (AiConstants.EVENT_PROGRESS.equals(event) && data != null) {
-							// JSON 데이터 파싱하여 의미있는 로그 출력
-							try {
-								JsonNode json = objectMapper.readTree(data);
-								String step = json.has("step") ? json.get("step").asText() : "unknown";
-								int progress = json.has("progress") ? json.get("progress").asInt() : 0;
-
-								String stepName = getStepName(step);
-								log.info("📊 Question {}: {} ({}%)", fixedQuestionId, stepName, progress);
-							} catch (Exception e) {
-								log.debug("Progress event: {}", data);
-							}
-						} else if (AiConstants.EVENT_ERROR.equals(event)) {
-							log.error("❌ Question {} 분석 에러 이벤트: {}", fixedQuestionId, data);
-						} else if (AiConstants.EVENT_DONE.equals(event)) {
-							log.info("✅ Question {} 분석 완료!", fixedQuestionId);
-						} else {
-							log.debug("Unknown event for Question {}: {} - {}", fixedQuestionId, event, data);
-						}
-					},
-					error -> log.error("❌ Question {} 분석 실패: {}", fixedQuestionId, error.getMessage()),
-					() -> log.info("✅ Question {} 분석 스트림 종료", fixedQuestionId));
-		} catch (Exception e) {
-			log.error("Failed to trigger analysis for survey: {}, question: {}", surveyUuid, fixedQuestionId, e);
-		}
-	}
-
-	private String getStepName(String step) {
-		return switch (step) {
-			case "loading" -> "로딩 중";
-			case "loaded" -> "데이터 로드 완료";
-			case "reducing" -> "차원 축소 중";
-			case "clustering" -> "클러스터링 중";
-			case "extracting_keywords" -> "키워드 추출 중";
-			case "analyzing" -> "감정 분석 중";
-			case "finalizing" -> "최종 처리 중";
-			default -> step;
-		};
+		log.info("triggerAnalysis called, publishing event for: {}", fixedQuestionId);
+		eventPublisher.publishEvent(
+			new com.playprobie.api.domain.analytics.event.AnalysisTriggerEvent(surveyUuid, fixedQuestionId));
 	}
 
 	@Override

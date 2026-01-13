@@ -13,4 +13,6 @@ public interface QuestionResponseAnalysisRepository
 	Optional<QuestionResponseAnalysis> findByFixedQuestionId(Long fixedQuestionId);
 
 	List<QuestionResponseAnalysis> findAllBySurveyId(Long surveyId);
+
+	long countBySurveyIdAndStatus(Long surveyId, QuestionResponseAnalysis.AnalysisStatus status);
 }

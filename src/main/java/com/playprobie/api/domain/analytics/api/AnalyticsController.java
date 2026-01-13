@@ -42,7 +42,9 @@ public class AnalyticsController {
 
 		AnalyticsResponse response = analyticsService.getSurveyAnalysis(surveyUuid);
 
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok()
+			.cacheControl(org.springframework.http.CacheControl.noCache())
+			.body(response);
 	}
 
 	@GetMapping(value = "/{surveyUuid}/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
