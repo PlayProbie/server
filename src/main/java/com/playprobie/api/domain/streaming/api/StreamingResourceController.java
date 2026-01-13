@@ -11,17 +11,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.playprobie.api.domain.streaming.application.StreamingResourceService;
+import com.playprobie.api.domain.streaming.application.StreamingResourceManager;
 import com.playprobie.api.domain.streaming.dto.CreateStreamingResourceRequest;
 import com.playprobie.api.domain.streaming.dto.StreamingResourceResponse;
 import com.playprobie.api.domain.user.domain.User;
 import com.playprobie.api.global.common.response.CommonResponse;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/surveys/{surveyId}/streaming-resource")
@@ -29,7 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Streaming Resource API", description = "스트리밍 리소스 관리 API (관리자용)")
 public class StreamingResourceController {
 
-	private final StreamingResourceService streamingResourceService;
+	private final StreamingResourceManager streamingResourceManager;
 
 	@PostMapping
 	@Operation(summary = "스트리밍 리소스 할당 (비동기)", description = "GameLift 스트리밍 리소스를 할당합니다. " +
@@ -43,7 +42,7 @@ public class StreamingResourceController {
 		@Valid @RequestBody
 		CreateStreamingResourceRequest request) {
 
-		StreamingResourceResponse response = streamingResourceService.createResource(surveyId, request, user);
+		StreamingResourceResponse response = streamingResourceManager.createResource(surveyId, request, user);
 
 		return ResponseEntity
 			.status(HttpStatus.ACCEPTED)
@@ -60,7 +59,7 @@ public class StreamingResourceController {
 		User user,
 		@PathVariable
 		java.util.UUID surveyId) {
-		StreamingResourceResponse response = streamingResourceService.getResourceByUuid(surveyId, user);
+		StreamingResourceResponse response = streamingResourceManager.getResourceByUuid(surveyId, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
@@ -71,7 +70,7 @@ public class StreamingResourceController {
 		User user,
 		@PathVariable
 		java.util.UUID surveyId) {
-		streamingResourceService.deleteResource(surveyId, user);
+		streamingResourceManager.deleteResource(surveyId, user);
 		return ResponseEntity.noContent().build();
 	}
 }
