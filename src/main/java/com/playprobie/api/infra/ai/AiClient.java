@@ -51,4 +51,12 @@ public interface AiClient {
 
 	// 질문 분석 요청 (SSE 스트리밍) - surveyUuid 사용
 	Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId);
+
+	/**
+	 * AI 서버 상태 확인
+	 * GET /health
+	 *
+	 * @return true if healthy, false otherwise
+	 */
+	boolean checkHealth();
 }
