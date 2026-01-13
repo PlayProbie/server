@@ -198,12 +198,12 @@ public class MockDataLoader implements CommandLineRunner {
 							.embedSessionData(request)
 							.doOnSuccess(result -> {
 								completedEmbeddings.incrementAndGet();
-								log.debug("✅ Embedding 완료: session={}, fixedQId={}",
+								log.debug("✅ Embedding 완료: session={}, fixedQuestionId={}",
 									sessionId, fixedQuestionId);
 							})
 							.doOnError(error -> {
 								failedEmbeddings.incrementAndGet();
-								log.error("❌ Embedding 실패: session={}, fixedQId={}, error={}",
+								log.error("❌ Embedding 실패: session={}, fixedQuestionId={}, error={}",
 									sessionId, fixedQuestionId,
 									error.getMessage());
 							})
@@ -397,11 +397,11 @@ public class MockDataLoader implements CommandLineRunner {
 			List<Map<String, Object>> logsData = objectMapper.convertValue(sData.get("logs"),
 				new TypeReference<List<Map<String, Object>>>() {});
 			for (Map<String, Object> lData : logsData) {
-				Long fixedQId = ((Number)lData.get("fixedQuestionId")).longValue();
+				Long fixedQuestionId = ((Number)lData.get("fixedQuestionId")).longValue();
 
 				interviewLogRepository.save(InterviewLog.builder()
 					.session(session)
-					.fixedQuestionId(fixedQId)
+					.fixedQuestionId(fixedQuestionId)
 					.turnNum((Integer)lData.get("turnNum"))
 					.type(QuestionType.valueOf((String)lData.get("type")))
 					.questionText((String)lData.get("questionText"))

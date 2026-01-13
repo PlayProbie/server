@@ -124,7 +124,7 @@ public class FastApiClient implements AiClient {
 	@Override
 	public void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest) {
 		// 현재 고정질문 ID 추출
-		Long fixedQId = userAnswerRequest.getFixedQId();
+		Long fixedQuestionId = userAnswerRequest.getFixedQId();
 		// 다음 턴 번호 계산 (현재 답변의 턴 + 1)
 		// 예: 사용자가 turnNum=2에서 답변 → 다음 꼬리질문은 turnNum=3
 		int nextTurnNum = userAnswerRequest.getTurnNum() + 1;
@@ -137,20 +137,20 @@ public class FastApiClient implements AiClient {
 
 		// 디버그 로그: 현재 꼬리질문 횟수와 최대 허용 횟수 출력
 		int maxTailQuestions = aiProperties.interview().maxTailQuestions();
-		log.info("📊 [TAIL COUNT] sessionId={}, fixedQId={}, currentTailCount={}, max={}",
-			sessionId, fixedQId, currentTailCount, maxTailQuestions);
+		log.info("📊 [TAIL COUNT] sessionId={}, fixedQuestionId={}, currentTailCount={}, max={}",
+			sessionId, fixedQuestionId, currentTailCount, maxTailQuestions);
 
 		// 꼬리질문 횟수 제한 체크 - 초과 시 AI 호출 없이 바로 다음 질문으로 이동
 		if (currentTailCount >= maxTailQuestions) {
 			log.info("🛑 [TAIL LIMIT EXCEEDED] Skipping AI call, proceeding to next question. sessionId={}", sessionId);
 			// AI 호출 없이 바로 다음 고정 질문으로 이동
-			handleTailLimitExceeded(sessionId, fixedQId);
+			handleTailLimitExceeded(sessionId, fixedQuestionId);
 			return;
 		}
 
 		// ===== Option A: 질문 정보 조회 =====
 		// 1. 현재 질문 정보 조회
-		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
 		int currentQuestionOrder = currentQuestion.qOrder();
 
 		// 2. Survey ID 조회
@@ -168,15 +168,15 @@ public class FastApiClient implements AiClient {
 			userAnswerRequest.getAnswerText(), // 사용자 답변
 			currentQuestion.qContent(), // 현재 질문 텍스트 (DB Source of Truth)
 			null, // game_info (미사용)
-			interviewService.getConversationHistory(sessionId, fixedQId), // 대화 내역 (RETRY 컨텍스트용)
+			interviewService.getConversationHistory(sessionId, fixedQuestionId), // 대화 내역 (RETRY 컨텍스트용)
 			surveyId, // 설문 ID
 			currentQuestionOrder, // 현재 질문 순서
 			totalQuestions, // 전체 질문 수
-			fixedQId, // 고정 질문 ID
+			fixedQuestionId, // 고정 질문 ID
 			userAnswerRequest.getTurnNum(), // 현재 턴 번호
 			currentTailCount, // 현재까지 진행된 꼬리질문 횟수
 			maxTailQuestions, // 최대 허용 꼬리질문 횟수
-			interviewService.getRetryCount(sessionId, fixedQId)); // 재입력 요청 횟수
+			interviewService.getRetryCount(sessionId, fixedQuestionId)); // 재입력 요청 횟수
 
 		// AI 서버에 SSE 스트리밍 요청 전송
 		Flux<ServerSentEvent<String>> eventStream = aiWebClient.post()
@@ -198,7 +198,7 @@ public class FastApiClient implements AiClient {
 		eventStream.subscribe(
 			sse -> {
 				String data = sse.data();
-				parseAndHandleEvent(sessionId, fixedQId, nextTurnNum, data, nextAction, tailQuestionGenerated,
+				parseAndHandleEvent(sessionId, fixedQuestionId, nextTurnNum, data, nextAction, tailQuestionGenerated,
 					currentQuestionOrder, totalQuestions, validityRef, qualityRef);
 			},
 			error -> {
@@ -209,7 +209,7 @@ public class FastApiClient implements AiClient {
 			() -> log.info("AI Stream completed for sessionId: {}", sessionId));
 	}
 
-	private void parseAndHandleEvent(String sessionId, Long fixedQId, int nextTurnNum, String jsonStr,
+	private void parseAndHandleEvent(String sessionId, Long fixedQuestionId, int nextTurnNum, String jsonStr,
 		AtomicReference<String> nextAction,
 		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions,
 		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef) {
@@ -222,14 +222,16 @@ public class FastApiClient implements AiClient {
 			String eventType = rootNode.path("event").asText();
 			JsonNode dataNode = rootNode.path("data");
 			log.info("📨 [SSE PARSED] sessionId={}, eventType={}, data={}", sessionId, eventType, dataNode);
-			handleEvent(sessionId, fixedQId, nextTurnNum, eventType, dataNode, nextAction, tailQuestionGenerated, order,
+			handleEvent(sessionId, fixedQuestionId, nextTurnNum, eventType, dataNode, nextAction, tailQuestionGenerated,
+				order,
 				totalQuestions, validityRef, qualityRef);
 		} catch (JsonProcessingException e) {
 			log.error("❌ Failed to parse JSON event. Data: {} | Error: {}", jsonStr, e.getMessage());
 		}
 	}
 
-	private void handleEvent(String sessionId, Long fixedQId, int nextTurnNum, String eventType, JsonNode dataNode,
+	private void handleEvent(String sessionId, Long fixedQuestionId, int nextTurnNum, String eventType,
+		JsonNode dataNode,
 		AtomicReference<String> nextAction,
 		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions,
 		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef) {
@@ -276,7 +278,7 @@ public class FastApiClient implements AiClient {
 				// answerTurnNum = nextTurnNum - 1 (방금 답변한 턴)
 				if (validityRef.get() != null) {
 					int answerTurnNum = nextTurnNum - 1;
-					interviewService.updateLogValidityQuality(sessionId, fixedQId, answerTurnNum,
+					interviewService.updateLogValidityQuality(sessionId, fixedQuestionId, answerTurnNum,
 						validityRef.get(), qualityRef.get());
 				}
 
@@ -307,7 +309,7 @@ public class FastApiClient implements AiClient {
 				if (AiConstants.ACTION_PASS_TO_NEXT.equals(action)) {
 					log.info("➡️ [PASS_TO_NEXT] Proceeding to next question. sessionId={}", sessionId);
 					// 다음 고정 질문 발송
-					FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
+					FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
 					int currentOrder = currentQuestion.qOrder();
 
 					interviewService.getNextQuestion(sessionId, currentOrder)
@@ -358,7 +360,7 @@ public class FastApiClient implements AiClient {
 				}
 
 				QuestionPayload questionPayload = QuestionPayload.of(
-					fixedQId,
+					fixedQuestionId,
 					qType, // FastAPI에서 받은 타입 사용
 					content,
 					nextTurnNum,
@@ -372,12 +374,13 @@ public class FastApiClient implements AiClient {
 				String tailQuestionText = dataNode.path("message").asText();
 				int tailQuestionCount = dataNode.path("tail_question_count").asInt();
 				// 꼬리 질문을 InterviewLog에 저장
-				interviewService.saveTailQuestionLog(sessionId, fixedQId, tailQuestionText, tailQuestionCount);
-				log.info("Tail question saved - sessionId: {}, fixedQId: {}, count: {}", sessionId, fixedQId,
+				interviewService.saveTailQuestionLog(sessionId, fixedQuestionId, tailQuestionText, tailQuestionCount);
+				log.info("Tail question saved - sessionId: {}, fixedQuestionId: {}, count: {}", sessionId,
+					fixedQuestionId,
 					tailQuestionCount);
 
 				// generate_tail_complete 함수를 클라이언트에 명시적인 상태와 함께 전송합니다.
-				QuestionPayload tailCompletePayload = QuestionPayload.of(fixedQId, "TAIL", tailQuestionText,
+				QuestionPayload tailCompletePayload = QuestionPayload.of(fixedQuestionId, "TAIL", tailQuestionText,
 					nextTurnNum, order, totalQuestions);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_GENERATE_TAIL_COMPLETE, tailCompletePayload);
 				break;
@@ -403,12 +406,14 @@ public class FastApiClient implements AiClient {
 			case AiConstants.EVENT_RETRY_REQUEST: // 재입력 요청
 				String retryMessage = dataNode.path("message").asText();
 				// DB 저장 (RETRY Log)
-				interviewService.saveRetryQuestionLog(sessionId, fixedQId, retryMessage);
-				log.info("Saved RETRY question log: sessionId={}, fixedQId={}, msg={}", sessionId, fixedQId,
+				interviewService.saveRetryQuestionLog(sessionId, fixedQuestionId, retryMessage);
+				log.info("Saved RETRY question log: sessionId={}, fixedQuestionId={}, msg={}", sessionId,
+					fixedQuestionId,
 					retryMessage);
 
 				// Client 전송
-				QuestionPayload retryPayload = QuestionPayload.of(fixedQId, "RETRY", retryMessage, nextTurnNum, order,
+				QuestionPayload retryPayload = QuestionPayload.of(fixedQuestionId, "RETRY", retryMessage, nextTurnNum,
+					order,
 					totalQuestions);
 				sseEmitterService.send(sessionId, AiConstants.EVENT_RETRY_REQUEST, retryPayload);
 				break;
@@ -572,13 +577,13 @@ public class FastApiClient implements AiClient {
 	 * 꼬리질문 횟수 제한 초과 시 호출
 	 * AI 호출 없이 바로 다음 고정 질문으로 이동
 	 */
-	private void handleTailLimitExceeded(String sessionId, Long fixedQId) {
+	private void handleTailLimitExceeded(String sessionId, Long fixedQuestionId) {
 		// done 이벤트를 클라이언트로 전송
 		StatusPayload donePayload = StatusPayload.builder().status("tail_limit_exceeded").build();
 		sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 
 		// 다음 고정 질문 발송
-		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQId);
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
 		int currentOrder = currentQuestion.qOrder();
 
 		interviewService.getNextQuestion(sessionId, currentOrder)

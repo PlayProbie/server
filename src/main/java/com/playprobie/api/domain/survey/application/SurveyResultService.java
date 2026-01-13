@@ -12,15 +12,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.playprobie.api.domain.game.application.GameService;
+import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.domain.SessionStatus;
 import com.playprobie.api.domain.interview.domain.SurveySession;
-import com.playprobie.api.domain.game.application.GameService;
-import com.playprobie.api.domain.game.domain.Game;
-import com.playprobie.api.domain.user.domain.User;
-import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
@@ -28,6 +26,8 @@ import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.SurveyResultDetailResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultListResponse;
 import com.playprobie.api.domain.survey.dto.SurveyResultSummaryResponse;
+import com.playprobie.api.domain.user.domain.User;
+import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -160,14 +160,14 @@ public class SurveyResultService {
 		}
 
 		// N+1 최적화: 모든 fixedQuestionId 일괄 조회
-		Set<Long> fixedQIds = groupedLogs.keySet();
-		Map<Long, String> questionTextMap = fixedQuestionRepository.findAllByIdIn(fixedQIds)
+		Set<Long> fixedQuestionIds = groupedLogs.keySet();
+		Map<Long, String> questionTextMap = fixedQuestionRepository.findAllByIdIn(fixedQuestionIds)
 			.stream()
 			.collect(Collectors.toMap(FixedQuestion::getId, FixedQuestion::getContent));
 
 		return groupedLogs.entrySet().stream()
 			.map(entry -> {
-				Long fixedQId = entry.getKey();
+				Long fixedQuestionId = entry.getKey();
 				List<InterviewLog> logList = entry.getValue();
 
 				List<SurveyResultDetailResponse.ExcerptItem> excerpt = logList.stream()
@@ -179,7 +179,7 @@ public class SurveyResultService {
 					.toList();
 
 				return SurveyResultDetailResponse.FixedQuestionGroup.builder()
-					.fixedQuestion(questionTextMap.getOrDefault(fixedQId,
+					.fixedQuestion(questionTextMap.getOrDefault(fixedQuestionId,
 						"Unknown Question"))
 					.excerpt(excerpt)
 					.build();

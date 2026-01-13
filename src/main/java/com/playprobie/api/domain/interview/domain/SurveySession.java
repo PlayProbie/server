@@ -198,8 +198,8 @@ public class SurveySession {
 	/**
 	 * 인터뷰 상태를 강제로 업데이트합니다. (초기화 또는 동기화용)
 	 */
-	public void updateInterviewState(Long fixedQId, Integer order, Integer turnNum) {
-		this.currentFixedQId = fixedQId;
+	public void updateInterviewState(Long fixedQuestionId, Integer order, Integer turnNum) {
+		this.currentFixedQId = fixedQuestionId;
 		this.currentFixedQOrder = order;
 		this.currentTurnNum = turnNum;
 	}

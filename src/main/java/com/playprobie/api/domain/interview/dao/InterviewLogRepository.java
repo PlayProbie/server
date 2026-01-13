@@ -17,12 +17,12 @@ public interface InterviewLogRepository extends JpaRepository<InterviewLog, Long
 	 * 특정 세션 + 고정질문에서 최대 turnNum 조회 (꼬리질문 순번 계산용)
 	 */
 	@org.springframework.data.jpa.repository.Query("SELECT COALESCE(MAX(il.turnNum), 0) FROM InterviewLog il " +
-		"WHERE il.session.id = :sessionId AND il.fixedQuestionId = :fixedQId")
-	Integer findMaxTurnNumBySessionIdAndFixedQId(
+		"WHERE il.session.id = :sessionId AND il.fixedQuestionId = :fixedQuestionId")
+	Integer findMaxTurnNumBySessionIdAndFixedQuestionId(
 		@org.springframework.data.repository.query.Param("sessionId")
 		Long sessionId,
-		@org.springframework.data.repository.query.Param("fixedQId")
-		Long fixedQId);
+		@org.springframework.data.repository.query.Param("fixedQuestionId")
+		Long fixedQuestionId);
 
 	/**
 	 * 꼬리질문 응답 업데이트를 위한 조회
