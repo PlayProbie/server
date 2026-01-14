@@ -29,7 +29,14 @@ public record SessionEmbeddingRequest(
 	Object metadata,
 
 	@Schema(description = "분석 자동 트리거 여부", example = "true") @com.fasterxml.jackson.annotation.JsonIgnore
-	Boolean autoTriggerAnalysis) {
+	Boolean autoTriggerAnalysis,
+
+	// === Quality Metadata ===
+	@Schema(description = "답변 유효성", example = "VALID") @JsonProperty("validity")
+	String validity,
+
+	@Schema(description = "답변 품질", example = "FULL") @JsonProperty("quality")
+	String quality) {
 
 	@Schema(description = "질문-답변 쌍")
 	@Builder
