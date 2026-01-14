@@ -29,16 +29,16 @@ public class SurveyResultApi {
 
 	private final SurveyResultService surveyResultService;
 
-	@GetMapping("/{gameUuid}")
-	@Operation(summary = "설문 결과 요약 조회", description = "게임별 설문 결과 요약 통계를 조회합니다.")
+	@GetMapping("/{surveyUuid}")
+	@Operation(summary = "설문 결과 요약 조회", description = "설문별 설문 결과 요약 통계를 조회합니다.")
 	public ResponseEntity<CommonResponse<SurveyResultSummaryResponse>> getSummary(
 		@AuthenticationPrincipal(expression = "user")
 		User user,
 		@PathVariable
-		java.util.UUID gameUuid,
+		java.util.UUID surveyUuid,
 		@RequestParam(required = false, defaultValue = "COMPLETED")
 		SessionStatus status) {
-		return ResponseEntity.ok(CommonResponse.of(surveyResultService.getSummary(gameUuid, status, user)));
+		return ResponseEntity.ok(CommonResponse.of(surveyResultService.getSummary(surveyUuid, status, user)));
 	}
 
 	@GetMapping("/{surveyUuid}/listup")

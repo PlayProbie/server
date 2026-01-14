@@ -12,8 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.playprobie.api.domain.game.application.GameService;
-import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
@@ -41,19 +39,20 @@ public class SurveyResultService {
 	private final SurveySessionRepository sessionRepository;
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final InterviewLogRepository interviewLogRepository;
-	private final GameService gameService;
 	private final WorkspaceSecurityManager securityManager;
 
-	// 전체 응답 요약
-	public SurveyResultSummaryResponse getSummary(long gameId, SessionStatus status) {
-		long surveyCount = surveyRepository.countByGameId(gameId);
-		long responseCount = sessionRepository.countByGameIdAndStatus(gameId, status);
+	// 전체 응답 요약 (설문 기준)
+	public SurveyResultSummaryResponse getSummary(long surveyId, SessionStatus status) {
+		long surveyCount = 1; // 단일 설문이므로 1
+		long responseCount = sessionRepository.countBySurveyIdAndStatus(surveyId, status);
 		return SurveyResultSummaryResponse.of(surveyCount, responseCount);
 	}
 
-	public SurveyResultSummaryResponse getSummary(java.util.UUID gameUuid, SessionStatus status, User user) {
-		Game game = gameService.getGameEntity(gameUuid, user);
-		return getSummary(game.getId(), status);
+	public SurveyResultSummaryResponse getSummary(java.util.UUID surveyUuid, SessionStatus status, User user) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(EntityNotFoundException::new);
+		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
+		return getSummary(survey.getId(), status);
 	}
 
 	// 전체 응답 리스트 (커서 페이징)
