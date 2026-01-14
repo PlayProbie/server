@@ -29,30 +29,31 @@ public class SurveyResultApi {
 
 	private final SurveyResultService surveyResultService;
 
-	@GetMapping("/{gameUuid}")
-	@Operation(summary = "설문 결과 요약 조회", description = "게임별 설문 결과 요약 통계를 조회합니다.")
+	@GetMapping("/{surveyUuid}")
+	@Operation(summary = "설문 결과 요약 조회", description = "설문별 설문 결과 요약 통계를 조회합니다.")
 	public ResponseEntity<CommonResponse<SurveyResultSummaryResponse>> getSummary(
 		@AuthenticationPrincipal(expression = "user")
 		User user,
 		@PathVariable
-		java.util.UUID gameUuid,
+		java.util.UUID surveyUuid,
 		@RequestParam(required = false, defaultValue = "COMPLETED")
 		SessionStatus status) {
-		return ResponseEntity.ok(CommonResponse.of(surveyResultService.getSummary(gameUuid, status, user)));
+		return ResponseEntity.ok(CommonResponse.of(surveyResultService.getSummary(surveyUuid, status, user)));
 	}
 
-	@GetMapping("/{gameUuid}/listup")
-	@Operation(summary = "설문 응답 목록 조회", description = "설문 응답 목록을 커서 기반 페이징으로 조회합니다.")
+	@GetMapping("/{surveyUuid}/listup")
+	@Operation(summary = "설문 응답 목록 조회", description = "설문별 응답 목록을 커서 기반 페이징으로 조회합니다.")
 	public ResponseEntity<CommonResponse<SurveyResultListResponse>> getResponseList(
 		@AuthenticationPrincipal(expression = "user")
 		User user,
 		@PathVariable
-		java.util.UUID gameUuid,
+		java.util.UUID surveyUuid,
 		@RequestParam(required = false)
 		Long cursor,
 		@RequestParam(defaultValue = "20")
 		int size) {
-		return ResponseEntity.ok(CommonResponse.of(surveyResultService.getResponseList(gameUuid, cursor, size, user)));
+		return ResponseEntity
+			.ok(CommonResponse.of(surveyResultService.getResponseList(surveyUuid, cursor, size, user)));
 	}
 
 	@GetMapping("/{surveyUuid}/details/{sessionUuid}")
