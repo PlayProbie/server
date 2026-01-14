@@ -57,9 +57,9 @@ public class SurveyResultService {
 	}
 
 	// 전체 응답 리스트 (커서 페이징)
-	public SurveyResultListResponse getResponseList(long gameId, Long cursor, int size) {
-		List<SurveySession> sessions = sessionRepository.findByGameIdWithCursor(
-			gameId, cursor, PageRequest.of(0, size + 1));
+	public SurveyResultListResponse getResponseList(long surveyId, Long cursor, int size) {
+		List<SurveySession> sessions = sessionRepository.findBySurveyIdWithCursor(
+			surveyId, cursor, PageRequest.of(0, size + 1));
 
 		boolean hasNext = sessions.size() > size;
 		if (hasNext) {
@@ -104,9 +104,11 @@ public class SurveyResultService {
 			.build();
 	}
 
-	public SurveyResultListResponse getResponseList(java.util.UUID gameUuid, Long cursor, int size, User user) {
-		Game game = gameService.getGameEntity(gameUuid, user);
-		return getResponseList(game.getId(), cursor, size);
+	public SurveyResultListResponse getResponseList(java.util.UUID surveyUuid, Long cursor, int size, User user) {
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(EntityNotFoundException::new);
+		securityManager.validateReadAccess(survey.getGame().getWorkspace(), user);
+		return getResponseList(survey.getId(), cursor, size);
 	}
 
 	// 응답 세부 내용

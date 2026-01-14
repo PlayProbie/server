@@ -45,4 +45,18 @@ public interface SurveySessionRepository extends JpaRepository<SurveySession, Lo
 		Pageable pageable);
 
 	long countBySurveyIdAndStatus(Long surveyId, SessionStatus status);
+
+	@Query("""
+		SELECT ss FROM SurveySession ss
+		JOIN FETCH ss.survey s
+		WHERE s.id = :surveyId
+		AND (:cursor IS NULL OR ss.id < :cursor)
+		ORDER BY ss.id DESC
+		""")
+	List<SurveySession> findBySurveyIdWithCursor(
+		@Param("surveyId")
+		Long surveyId,
+		@Param("cursor")
+		Long cursor,
+		Pageable pageable);
 }
