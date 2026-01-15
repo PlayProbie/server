@@ -92,6 +92,7 @@ jobs:
               "echo \"AWS_GAMELIFT_REGION=${{ secrets.DEV_AWS_GAMELIFT_REGION }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_GAMELIFT_ROLE_ARN=${{ secrets.DEV_AWS_GAMELIFT_ROLE_ARN }}\" >> /tmp/playprobie/.env",
               "echo \"AI_SERVER_URL=${{ secrets.DEV_AI_SERVER_URL }}\" >> /tmp/playprobie/.env",
+              "echo \"AI_CLIENT_READ_TIMEOUT=${{ secrets.AI_CLIENT_READ_TIMEOUT }}\" >> /tmp/playprobie/.env",
               "echo \"JWT_SECRET=${{ secrets.DEV_JWT_SECRET }}\" >> /tmp/playprobie/.env",
               "chmod 600 /tmp/playprobie/.env",
               "docker run -d --name playprobie-server-dev -p 8080:8080 --env-file /tmp/playprobie/.env ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}",
