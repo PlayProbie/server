@@ -19,5 +19,6 @@ public record AnalyticsResponse(
 	String status,
 	int totalQuestions,
 	int completedQuestions,
-	int totalParticipants) {
+	int totalParticipants,
+	String surveySummary) {
 }

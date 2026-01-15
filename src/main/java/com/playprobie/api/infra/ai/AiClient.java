@@ -53,6 +53,15 @@ public interface AiClient {
 	Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId);
 
 	/**
+	 * 설문 종합 평가 생성
+	 * POST /analytics/survey/summary
+	 *
+	 * @param questionSummaries 각 질문별 meta_summary 리스트
+	 * @return 설문 종합 평가 (1~2문장)
+	 */
+	Mono<String> generateSurveySummary(List<String> questionSummaries);
+
+	/**
 	 * AI 서버 상태 확인
 	 * GET /health
 	 *

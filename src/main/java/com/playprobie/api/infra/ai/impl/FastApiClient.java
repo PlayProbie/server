@@ -31,9 +31,11 @@ import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.GenerateQuestionRequest;
 import com.playprobie.api.infra.ai.dto.request.QuestionAnalysisRequest;
 import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
+import com.playprobie.api.infra.ai.dto.request.SurveySummaryRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
 import com.playprobie.api.infra.ai.dto.response.GenerateQuestionResponse;
 import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
+import com.playprobie.api.infra.ai.dto.response.SurveySummaryResponse;
 import com.playprobie.api.infra.sse.dto.QuestionPayload;
 import com.playprobie.api.infra.sse.dto.payload.ErrorPayload;
 import com.playprobie.api.infra.sse.dto.payload.ReactionPayload;
@@ -590,7 +592,31 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
+			.map(sse -> {
+				// data만 꺼내서 새로운 SSE 생성 (event 타입 유지)
+				String event = sse.event() != null ? sse.event() : "message";
+				String data = sse.data() != null ? (String)sse.data() : "";
+				return ServerSentEvent.builder(data).event(event).build();
+			});
+	}
+
+	@Override
+	public Mono<String> generateSurveySummary(List<String> questionSummaries) {
+		log.info("📝 설문 종합 평가 요청: {}개 질문", questionSummaries.size());
+
+		SurveySummaryRequest request = new SurveySummaryRequest(questionSummaries);
+
+		return aiWebClient.post()
+			.uri("/analytics/survey/summary")
+			.contentType(MediaType.APPLICATION_JSON)
+			.bodyValue(request)
+			.retrieve()
+			.bodyToMono(SurveySummaryResponse.class)
+			.map(SurveySummaryResponse::surveySummary)
+			.doOnSuccess(summary -> log.info("✅ 설문 종합 평가 완료: {}", summary))
+			.doOnError(e -> log.error("❌ 설문 종합 평가 실패", e))
+			.onErrorReturn("");
 	}
 
 	/**

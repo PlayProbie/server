@@ -77,6 +77,10 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "version_note")
 	private String versionNote;
 
+	// ===== 신규 필드 (feat/#49) =====
+	@Column(name = "survey_summary", columnDefinition = "TEXT")
+	private String surveySummary;
+
 	@Builder
 	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt,
 		TestStage testStage, java.util.List<String> themePriorities,
@@ -119,6 +123,10 @@ public class Survey extends BaseTimeEntity {
 		} else {
 			this.status = status;
 		}
+	}
+
+	public void updateSurveySummary(String summary) {
+		this.surveySummary = summary;
 	}
 
 	/**
