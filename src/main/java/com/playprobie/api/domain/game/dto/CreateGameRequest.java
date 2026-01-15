@@ -19,5 +19,8 @@ public record CreateGameRequest(
 	List<String> gameGenre,
 
 	@Schema(description = "게임 설명 (최대 2000자, 선택 사항)", example = "중세 판타지 배경의 오픈월드 RPG 게임입니다.") @Size(max = 2000, message = "게임 설명은 2000자 이하입니다") @JsonProperty("game_context")
-	String gameContext) {
+	String gameContext,
+
+	@Schema(description = "추출된 게임 요소 (JSON 문자열)", example = "{\"core_mechanic\": \"...\"}") @JsonProperty("extracted_elements")
+	String extractedElements) {
 }

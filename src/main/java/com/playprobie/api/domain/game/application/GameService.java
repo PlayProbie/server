@@ -10,6 +10,9 @@ import com.playprobie.api.domain.game.dao.GameRepository;
 import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.game.domain.GameGenre;
 import com.playprobie.api.domain.game.dto.CreateGameRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractResponse;
+import com.playprobie.api.domain.game.dto.GameElementExtractResult;
 import com.playprobie.api.domain.game.dto.GameResponse;
 import com.playprobie.api.domain.game.dto.UpdateGameRequest;
 import com.playprobie.api.domain.game.exception.GameNotFoundException;
@@ -18,6 +21,7 @@ import com.playprobie.api.domain.workspace.application.WorkspaceSecurityManager;
 import com.playprobie.api.domain.workspace.application.WorkspaceService;
 import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.global.error.exception.InvalidValueException;
+import com.playprobie.api.infra.ai.AiClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +33,12 @@ public class GameService {
 	private final GameRepository gameRepository;
 	private final WorkspaceSecurityManager securityManager;
 	private final WorkspaceService workspaceService;
+	private final AiClient aiClient;
+
+	public GameElementExtractResult extractElements(GameElementExtractRequest request) {
+		GameElementExtractResponse response = aiClient.extractGameElements(request);
+		return GameElementExtractResult.from(response);
+	}
 
 	@Transactional
 	public GameResponse createGame(UUID workspaceUuid, CreateGameRequest request, User user) {
@@ -44,6 +54,7 @@ public class GameService {
 			.name(request.gameName())
 			.genres(genres)
 			.context(request.gameContext())
+			.extractedElements(request.extractedElements())
 			.build();
 
 		Game savedGame = gameRepository.save(game);
@@ -101,7 +112,7 @@ public class GameService {
 			.map(this::parseGenre)
 			.toList();
 
-		game.update(request.gameName(), genres, request.gameContext());
+		game.update(request.gameName(), genres, request.gameContext(), game.getExtractedElements());
 		return GameResponse.from(game);
 	}
 
