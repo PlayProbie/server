@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.playprobie.api.domain.analytics.dao.FilteredQuestionAnalysisRepository;
+import com.playprobie.api.domain.analytics.domain.FilteredQuestionAnalysis;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -54,6 +56,7 @@ public class AnalyticsService {
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final SurveyRepository surveyRepository;
 	private final SurveySessionRepository surveySessionRepository;
+	private final FilteredQuestionAnalysisRepository filteredQuestionAnalysisRepository;
 	private final ObjectMapper objectMapper;
 
 	private final ApplicationEventPublisher eventPublisher;
@@ -154,7 +157,56 @@ public class AnalyticsService {
 	 * - DB에 캐시된 분석 결과만 반환
 	 * - AI 분석은 MockDataLoader에서 사전 수행됨
 	 */
+	public AnalyticsResponse getSurveyAnalysis(UUID surveyUuid, Map<String, String> filters) {
+		// 필터가 없거나 비어있으면 기존 로직 수행
+		if (filters == null || filters.isEmpty() || filters.values().stream().allMatch(v -> v == null || v.isBlank())) {
+			return getSurveyAnalysis(surveyUuid);
+		}
+
+		log.info("🔍 필터링된 분석 결과 조회: surveyUuid={}, filters={}", surveyUuid, filters);
+		String filterSignature = generateFilterSignature(filters);
+
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+		Long surveyId = survey.getId();
+
+		List<FixedQuestion> questions = fixedQuestionRepository
+			.findBySurveyIdOrderByOrderAsc(surveyId);
+
+		if (questions.isEmpty()) {
+			return buildAnalyticsResponse(List.of(), 0, 0);
+		}
+
+		// 필터링된 결과 조회 (Cache Look-aside)
+		List<QuestionResponseAnalysisWrapper> analyses = new java.util.ArrayList<>();
+
+		for (FixedQuestion question : questions) {
+			Optional<FilteredQuestionAnalysis> cached = filteredQuestionAnalysisRepository
+				.findByFixedQuestionIdAndFilterSignature(question.getId(), filterSignature);
+
+			if (cached.isPresent()) {
+				// Cache Hit
+				analyses.add(QuestionResponseAnalysisWrapper.builder()
+					.fixedQuestionId(cached.get().getFixedQuestionId())
+					.resultJson(cached.get().getResultJson())
+					.build());
+			} else {
+				// Cache Miss -> Async Trigger
+				triggerFilteredAnalysis(surveyUuid.toString(), question.getId(), filters, filterSignature);
+			}
+		}
+
+		int totalParticipants = (int)surveySessionRepository.countBySurveyIdAndStatus(surveyId,
+			com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED);
+
+		// 필터링된 결과의 상태 판단:
+		// 현재는 Cache Miss시 빈 리스트로 넘어갈 수 있음 -> INSUFFICIENT_DATA or NO_DATA
+		// 클라이언트는 SSE Refresh를 기다려야 함
+		return buildAnalyticsResponse(analyses, questions.size(), totalParticipants);
+	}
+
 	public AnalyticsResponse getSurveyAnalysis(UUID surveyUuid) {
+		// 기존 로직 유지 (Overloading)
 		log.info("🔍 분석 결과 조회 (Sync): surveyUuid={}", surveyUuid);
 
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
@@ -222,6 +274,16 @@ public class AnalyticsService {
 			surveySummary);
 	}
 
+	/**
+	 * Overloaded method without surveySummary parameter
+	 */
+	private AnalyticsResponse buildAnalyticsResponse(
+		List<QuestionResponseAnalysisWrapper> analyses,
+		int totalQuestions,
+		int totalParticipants) {
+		return buildAnalyticsResponse(analyses, totalQuestions, totalParticipants, "");
+	}
+
 	// ... (checkAnalysisStatus, AnalysisCheckResult methods remain same)
 
 	private AnalysisCheckResult checkAnalysisStatus(FixedQuestion question) {
@@ -262,7 +324,7 @@ public class AnalyticsService {
 		// 분석 시작 전에 IN_PROGRESS 상태로 변경 (별도 트랜잭션)
 		markAsInProgressWithTransaction(question, currentCount);
 
-		return aiClient.streamQuestionAnalysis(surveyUuid.toString(), question.getId())
+		return aiClient.streamQuestionAnalysis(surveyUuid.toString(), question.getId(), null)
 			.filter(sse -> "done".equals(sse.event()))
 			.next()
 			.map(sse -> {
@@ -472,6 +534,73 @@ public class AnalyticsService {
 						json,
 						count)));
 			// 이벤트 발행은 triggerAnalytics()의 doOnComplete()에서 설문 단위로 한 번만 수행
+		});
+	}
+
+	// ========================================================================
+	// Filtered Analysis Helpers
+	// ========================================================================
+
+	private String generateFilterSignature(Map<String, String> filters) {
+		return filters.entrySet().stream()
+			.sorted(Map.Entry.comparingByKey())
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.joining("|"));
+	}
+
+	/**
+	 * 비동기로 Filtered Analysis 트리거 (Fire-and-forget)
+	 */
+	private void triggerFilteredAnalysis(String surveyUuidStr, Long fixedQuestionId, Map<String, String> filters,
+		String filterSignature) {
+		log.info("🚀 Triggering Async Filtered Analysis: qId={}, filters={}", fixedQuestionId, filters);
+
+		aiClient.streamQuestionAnalysis(surveyUuidStr, fixedQuestionId, filters)
+			.filter(sse -> "done".equals(sse.event()))
+			.next()
+			.subscribe(sse -> {
+				String resultJson = sse.data();
+				if (resultJson != null) {
+					// Enrich (Filtered 결과도 AnswerProfile 추가 가능하나, 이미 필터링된 상태라 큰 의미 없을 수도 있음.
+					// 하지만 일관성을 위해 enrich 수행)
+					try {
+						resultJson = enrichAnalysisResult(resultJson);
+					} catch (Exception e) {
+						log.warn("Failed to enrich filtered result", e);
+					}
+					saveFilteredResult(fixedQuestionId, filterSignature, resultJson,
+						UUID.fromString(surveyUuidStr));
+				}
+			}, error -> {
+				log.error("❌ Filtered Analysis Failed: qId={}", fixedQuestionId, error);
+			});
+	}
+
+	private void saveFilteredResult(Long fixedQuestionId, String filterSignature, String resultJson, UUID surveyUuid) {
+		transactionTemplate.executeWithoutResult(status -> {
+			filteredQuestionAnalysisRepository.findByFixedQuestionIdAndFilterSignature(fixedQuestionId, filterSignature)
+				.ifPresentOrElse(
+					existing -> {
+						existing.updateResultJson(resultJson);
+						// Explicit save not strictly needed within transaction but good for clarity
+						filteredQuestionAnalysisRepository.save(existing);
+						log.debug("✅ Filtered Analysis Updated: qId={}, sig={}", fixedQuestionId,
+							filterSignature);
+					},
+					() -> {
+						filteredQuestionAnalysisRepository.save(
+							FilteredQuestionAnalysis.builder()
+								.fixedQuestionId(fixedQuestionId)
+								.filterSignature(filterSignature)
+								.resultJson(resultJson)
+								.build());
+						log.debug("✅ Filtered Analysis Created: qId={}, sig={}", fixedQuestionId,
+							filterSignature);
+					});
+
+			// SSE 알림 (Refresh)
+			log.info("📢 Filtered Analysis Saved -> Notify SSE: surveyUuid={}", surveyUuid);
+			eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
 		});
 	}
 }

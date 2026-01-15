@@ -58,6 +58,7 @@ public class FastApiClient implements AiClient {
 	private final InterviewService interviewService;
 	private final AiProperties aiProperties;
 	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
+	private final com.playprobie.api.domain.interview.dao.SurveySessionRepository surveySessionRepository;
 	private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
 	@Override
@@ -494,6 +495,28 @@ public class FastApiClient implements AiClient {
 					.toList();
 
 				if (!qaPairs.isEmpty()) {
+					// [NEW] Metadata 생성
+					java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+					try {
+						// surveySessionRepository를 통해 Session 조회
+						com.playprobie.api.domain.interview.domain.SurveySession session = surveySessionRepository
+							.findByUuid(java.util.UUID.fromString(sessionId))
+							.orElse(null);
+
+						if (session != null && session.getTesterProfile() != null) {
+							com.playprobie.api.domain.interview.domain.TesterProfile profile = session
+								.getTesterProfile();
+							if (profile.getGender() != null)
+								metadata.put("gender", profile.getGender());
+							if (profile.getAgeGroup() != null)
+								metadata.put("age_group", profile.getAgeGroup());
+							if (profile.getPreferGenre() != null)
+								metadata.put("prefer_genre", profile.getPreferGenre());
+						}
+					} catch (Exception e) {
+						log.warn("⚠️ Metadata extraction failed for session: {}", sessionId, e);
+					}
+
 					// === 추가: 가장 최근 FIXED 답변의 validity/quality 추출 ===
 					InterviewLog fixedLog = logs.stream()
 						.filter(l -> l.getType() == QuestionType.FIXED)
@@ -514,6 +537,7 @@ public class FastApiClient implements AiClient {
 						.surveyUuid(surveyUuid) // surveyUuid 사용
 						.fixedQuestionId(fixedQuestionId)
 						.qaPairs(qaPairs)
+						.metadata(metadata)
 						.autoTriggerAnalysis(true)
 						// === 추가: Quality Metadata ===
 						.validity(validity)
@@ -580,10 +604,12 @@ public class FastApiClient implements AiClient {
 	}
 
 	@Override
-	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId) {
+	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId,
+		Map<String, String> filters) {
 		QuestionAnalysisRequest request = QuestionAnalysisRequest.builder()
 			.surveyUuid(surveyUuid)
 			.fixedQuestionId(fixedQuestionId)
+			.filters(filters)
 			.build();
 
 		return aiWebClient.post()

@@ -37,10 +37,12 @@ public class AnalyticsController {
 	@Operation(summary = "설문 분석 결과 조회", description = "AI 분석 결과를 JSON으로 반환합니다.")
 	public ResponseEntity<AnalyticsResponse> getSurveyAnalysis(
 		@PathVariable
-		UUID surveyUuid) {
-		log.info("📊 분석 결과 조회 요청: surveyUuid={}", surveyUuid);
+		UUID surveyUuid,
+		@org.springframework.web.bind.annotation.RequestParam(required = false)
+		java.util.Map<String, String> filters) {
+		log.info("📊 분석 결과 조회 요청: surveyUuid={}, filters={}", surveyUuid, filters);
 
-		AnalyticsResponse response = analyticsService.getSurveyAnalysis(surveyUuid);
+		AnalyticsResponse response = analyticsService.getSurveyAnalysis(surveyUuid, filters);
 
 		return ResponseEntity.ok()
 			.cacheControl(org.springframework.http.CacheControl.noCache())

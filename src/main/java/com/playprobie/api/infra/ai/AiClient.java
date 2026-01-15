@@ -50,7 +50,8 @@ public interface AiClient {
 	void triggerAnalysis(String surveyUuid, Long fixedQuestionId);
 
 	// 질문 분석 요청 (SSE 스트리밍) - surveyUuid 사용
-	Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId);
+	Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId,
+		Map<String, String> filters);
 
 	/**
 	 * 설문 종합 평가 생성

@@ -13,5 +13,8 @@ public record QuestionAnalysisRequest(
 	String surveyUuid,
 
 	@Schema(description = "고정 질문 ID", example = "10") @JsonProperty("fixed_question_id")
-	Long fixedQuestionId) {
+	Long fixedQuestionId,
+
+	@Schema(description = "필터 조건", example = "{\"gender\": \"MALE\"}") @JsonProperty("filters")
+	java.util.Map<String, String> filters) {
 }

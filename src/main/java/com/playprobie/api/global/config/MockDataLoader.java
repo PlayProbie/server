@@ -183,13 +183,26 @@ public class MockDataLoader implements CommandLineRunner {
 					if (!qaPairs.isEmpty()) {
 						totalEmbeddings.incrementAndGet();
 
+						// Metadata 생성
+						Map<String, Object> metadata = new java.util.HashMap<>();
+						if (session.getTesterProfile() != null) {
+							TesterProfile profile = session.getTesterProfile();
+							if (profile.getGender() != null)
+								metadata.put("gender", profile.getGender());
+							if (profile.getAgeGroup() != null)
+								metadata.put("age_group", profile.getAgeGroup());
+							if (profile.getPreferGenre() != null)
+								metadata.put("prefer_genre", profile.getPreferGenre());
+						}
+
 						// autoTriggerAnalysis = false로 설정하여 자동 트리거 방지
 						com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest request = com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest
 							.builder()
 							.sessionId(sessionId)
-							.surveyUuid(surveyUuid)
+							.surveyUuid(surveyUuid) // surveyUuid 사용
 							.fixedQuestionId(fixedQuestionId)
 							.qaPairs(qaPairs)
+							.metadata(metadata) // Metadata 추가
 							.autoTriggerAnalysis(false) // 자동 트리거 방지!
 							.build();
 
