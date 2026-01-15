@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: PlayProbie
+  profiles:
+    default: local
+    group:
+      local: common, local
+      dev: common, dev
+      prod: common, prod
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    groups-order: DESC
+    operations-sorter: method
+    disable-swagger-default-url: true
+    display-request-duration: true

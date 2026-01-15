@@ -1,0 +1,55 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+logging:
+  level:
+    com.playprobie: WARN
+    org.springframework: WARN
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+aws:
+  region: ${AWS_REGION}
+  access-key: ${AWS_ACCESS_KEY}
+  secret-key: ${AWS_SECRET_KEY}
+  s3:
+    region: ${AWS_S3_REGION}
+    bucket-name: ${AWS_S3_BUCKET_NAME}
+    credentials-duration: 3600s
+    role-arn: ${AWS_S3_ROLE_ARN}
+  gamelift:
+    region: ${AWS_GAMELIFT_REGION}
+    provisioning-timeout: 60s
+    polling-interval: 10000ms
+    role-arn: ${AWS_GAMELIFT_ROLE_ARN}
+
+ai:
+  server:
+    url: ${AI_SERVER_URL}
+  client:
+    connect-timeout: 3000ms
+    read-timeout: ${AI_CLIENT_READ_TIMEOUT}
+  interview:
+    max-tail-questions: 2
+  sse:
+    timeout: 600000ms
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 3600000
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
