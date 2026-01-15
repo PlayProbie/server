@@ -95,10 +95,10 @@ jobs:
               "echo \"AI_CLIENT_READ_TIMEOUT=${{ secrets.AI_CLIENT_READ_TIMEOUT }}\" >> /tmp/playprobie-prod/.env",
               "echo \"JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}\" >> /tmp/playprobie-prod/.env",
               "chmod 600 /tmp/playprobie-prod/.env",
-              "docker run -d --name playprobie-server-prod -p 8081:8080 --env-file /tmp/playprobie-prod/.env ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}",
+              "docker run -d --name playprobie-server-prod -p 8080:8080 --env-file /tmp/playprobie-prod/.env ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}",
               "echo \"Waiting for application to start...\"",
               "sleep 30",
-              "curl -f http://localhost:8081/actuator/health || exit 1",
+              "curl -f http://localhost:8080/actuator/health || exit 1",
               "echo \"Deployment successful!\""
             ]' \
             --region ${{ env.AWS_REGION }} \
