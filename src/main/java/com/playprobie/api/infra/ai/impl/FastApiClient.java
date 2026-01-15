@@ -18,6 +18,7 @@ import com.playprobie.api.domain.interview.application.InterviewService;
 import com.playprobie.api.domain.interview.domain.AnswerQuality;
 import com.playprobie.api.domain.interview.domain.AnswerValidity;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
+import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.config.properties.AiProperties;
@@ -198,7 +199,8 @@ public class FastApiClient implements AiClient {
 		eventStream.subscribe(
 			sse -> {
 				String data = sse.data();
-				parseAndHandleEvent(sessionId, fixedQuestionId, nextTurnNum, data, nextAction, tailQuestionGenerated,
+				parseAndHandleEvent(sessionId, fixedQuestionId, nextTurnNum, data, nextAction,
+					tailQuestionGenerated,
 					currentQuestionOrder, totalQuestions, validityRef, qualityRef);
 			},
 			error -> {
@@ -490,12 +492,30 @@ public class FastApiClient implements AiClient {
 					.toList();
 
 				if (!qaPairs.isEmpty()) {
+					// === 추가: 가장 최근 FIXED 답변의 validity/quality 추출 ===
+					InterviewLog fixedLog = logs.stream()
+						.filter(l -> l.getType() == QuestionType.FIXED)
+						.findFirst()
+						.orElse(null);
+
+					String validity = null;
+					String quality = null;
+
+					if (fixedLog != null && fixedLog.getAnalysis() != null) {
+						com.playprobie.api.domain.interview.domain.LogAnalysis analysis = fixedLog.getAnalysis();
+						validity = analysis.getValidity() != null ? analysis.getValidity().name() : null;
+						quality = analysis.getQuality() != null ? analysis.getQuality().name() : null;
+					}
+
 					SessionEmbeddingRequest request = SessionEmbeddingRequest.builder()
 						.sessionId(sessionId)
 						.surveyUuid(surveyUuid) // surveyUuid 사용
 						.fixedQuestionId(fixedQuestionId)
 						.qaPairs(qaPairs)
 						.autoTriggerAnalysis(true)
+						// === 추가: Quality Metadata ===
+						.validity(validity)
+						.quality(quality)
 						.build();
 
 					// Embedding 요청 후 analysis 자동 트리거
