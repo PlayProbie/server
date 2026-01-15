@@ -88,7 +88,6 @@ public class AnalyticsService {
 				.findAllBySurveyId(surveyId);
 			log.info("💾 캐시된 분석 결과: {}개", cachedResults.size());
 			return Flux.fromIterable(cachedResults)
-
 				.map(entity -> QuestionResponseAnalysisWrapper.builder()
 					.fixedQuestionId(entity.getFixedQuestionId())
 					.resultJson(entity.getResultJson())
@@ -96,11 +95,26 @@ public class AnalyticsService {
 		}
 		// STALE인 경우에만 재분석
 		else {
-			log.info(" 재분석 시작: {}개 질문", questions.size());
+			log.info("📢 재분석 시작: {}개 질문", questions.size());
+			// 분석 결과 수집용 리스트
+			List<QuestionResponseAnalysisWrapper> analysisResults = java.util.Collections
+				.synchronizedList(new java.util.ArrayList<>());
+
 			return Flux.fromIterable(questions)
 				.flatMap(question -> analyzeAndSave(surveyUuid, surveyId, question))
+				.doOnNext(analysisResults::add) // 결과 수집
 				.doOnComplete(() -> {
-					log.info("📢 모든 질문 분석 완료, SSE 이벤트 발행: surveyUuid={}", surveyUuid);
+					log.info("📢 모든 질문 분석 완료. 설문 종합 평가 생성 시작: surveyUuid={}", surveyUuid);
+
+					List<String> metaSummaries = extractMetaSummaries(analysisResults);
+					if (!metaSummaries.isEmpty()) {
+						aiClient.generateSurveySummary(metaSummaries)
+							.doOnSuccess(summary -> saveSurveySummary(surveyUuid, summary))
+							.subscribe();
+					} else {
+						log.warn("⚠️ 메타 요약이 없어 설문 종합 평가를 건너뜁니다.");
+					}
+
 					eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
 				});
 		}
@@ -152,7 +166,7 @@ public class AnalyticsService {
 
 		if (questions.isEmpty()) {
 			log.warn("⚠️ surveyId={}에 대한 질문이 없습니다", surveyId);
-			return buildAnalyticsResponse(List.of(), 0, 0);
+			return buildAnalyticsResponse(List.of(), 0, 0, "");
 		}
 
 		// DB에서 완료된 분석 결과만 조회
@@ -175,7 +189,10 @@ public class AnalyticsService {
 		int totalParticipants = (int)surveySessionRepository.countBySurveyIdAndStatus(surveyId,
 			com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED);
 
-		return buildAnalyticsResponse(analyses, questions.size(), totalParticipants);
+		// 설문 종합 평가 포함
+		String surveySummary = survey.getSurveySummary();
+
+		return buildAnalyticsResponse(analyses, questions.size(), totalParticipants, surveySummary);
 	}
 
 	/**
@@ -188,7 +205,8 @@ public class AnalyticsService {
 	private AnalyticsResponse buildAnalyticsResponse(
 		List<QuestionResponseAnalysisWrapper> analyses,
 		int totalQuestions,
-		int totalParticipants) {
+		int totalParticipants,
+		String surveySummary) {
 
 		AnalysisStatus status;
 
@@ -200,12 +218,12 @@ public class AnalyticsService {
 			status = AnalysisStatus.COMPLETED;
 		}
 
-		return new AnalyticsResponse(analyses, status.name(), totalQuestions, analyses.size(), totalParticipants);
+		return new AnalyticsResponse(analyses, status.name(), totalQuestions, analyses.size(), totalParticipants,
+			surveySummary);
 	}
 
-	/**
-	 * 분석 상태 확인: FRESH(캐시 사용), IN_PROGRESS(진행중), STALE(재분석 필요)
-	 */
+	// ... (checkAnalysisStatus, AnalysisCheckResult methods remain same)
+
 	private AnalysisCheckResult checkAnalysisStatus(FixedQuestion question) {
 		int currentCount = interviewLogRepository.countByFixedQuestionIdAndAnswerTextIsNotNull(question.getId());
 		Optional<QuestionResponseAnalysis> cached = questionResponseAnalysisRepository.findByFixedQuestionId(
@@ -263,6 +281,43 @@ public class AnalyticsService {
 					.resultJson(resultJson)
 					.build();
 			});
+	}
+
+	/**
+	 * 각 질문 분석 결과(JSON)에서 meta_summary 추출
+	 */
+	private List<String> extractMetaSummaries(List<QuestionResponseAnalysisWrapper> results) {
+		return results.stream()
+			.map(QuestionResponseAnalysisWrapper::resultJson)
+			.map(json -> {
+				try {
+					com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+					if (node.has("meta_summary")) {
+						return node.get("meta_summary").asText();
+					}
+				} catch (JsonProcessingException e) {
+					log.error("Failed to parse meta_summary from json", e);
+				}
+				return null;
+			})
+			.filter(java.util.Objects::nonNull)
+			.toList();
+	}
+
+	/**
+	 * 설문 종합 평가 DB 저장 (별도 트랜잭션)
+	 */
+	private void saveSurveySummary(UUID surveyUuid, String summary) {
+		if (summary == null || summary.isBlank()) {
+			return;
+		}
+		transactionTemplate.executeWithoutResult(status -> {
+			Survey survey = surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+			survey.updateSurveySummary(summary);
+			surveyRepository.save(survey);
+			log.info("💾 설문 종합 평가 저장 완료: surveyUuid={}", surveyUuid);
+		});
 	}
 
 	/**
