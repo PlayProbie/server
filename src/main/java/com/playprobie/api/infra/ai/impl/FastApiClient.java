@@ -119,6 +119,29 @@ public class FastApiClient implements AiClient {
 		return result;
 	}
 
+	@Override
+	public com.playprobie.api.domain.game.dto.GameElementExtractResponse extractGameElements(
+		com.playprobie.api.domain.game.dto.GameElementExtractRequest request) {
+
+		return aiWebClient.post()
+			.uri("/game/extract-elements")
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON)
+			.bodyValue(request)
+			.retrieve()
+			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+				clientResponse -> clientResponse.bodyToMono(String.class)
+					.flatMap(body -> {
+						log.error("❌ AI 서버 에러: status={}, body={}", clientResponse.statusCode(), body);
+						return reactor.core.publisher.Mono.error(
+							new RuntimeException("AI Server Error: " + clientResponse.statusCode()
+								+ " - " + body));
+					}))
+			.bodyToMono(com.playprobie.api.domain.game.dto.GameElementExtractResponse.class)
+			.timeout(java.time.Duration.ofSeconds(60))
+			.block();
+	}
+
 	/**
 	 * AI 서버에 답변 분석 및 꼬리질문 생성 요청을 보냅니다.
 	 * SSE 스트리밍으로 응답을 받아 클라이언트에 전달합니다.
