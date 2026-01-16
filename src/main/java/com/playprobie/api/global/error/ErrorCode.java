@@ -57,6 +57,7 @@ public enum ErrorCode {
 	GAMELIFT_RESOURCE_NOT_FOUND(404, "GL002", "AWS 리소스를 찾을 수 없습니다."),
 	GAMELIFT_CAPACITY_UPDATE_FAILED(500, "GL003", "용량 업데이트에 실패했습니다."),
 	GAMELIFT_QUOTA_EXCEEDED(503, "GL004", "AWS 서비스 할당량을 초과했습니다. 관리자에게 문의하세요."),
+	GAMELIFT_PROVISIONING_TIMEOUT(504, "GL005", "AWS 리소스 프로비저닝 타임아웃"),
 
 	// Streaming Resource Transition
 	RESOURCE_ALREADY_IN_TRANSITION(409, "SR003", "리소스가 이미 상태 전환 중입니다."),
