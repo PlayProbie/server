@@ -59,6 +59,7 @@ public class FastApiClient implements AiClient {
 	private final AiProperties aiProperties;
 	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
 	private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+	private final com.playprobie.api.domain.replay.application.InsightQuestionService insightQuestionService;
 
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
@@ -188,7 +189,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM) // SSE 응답 타입
 			.bodyValue(aiInteractionRequest)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		// AI 응답에서 추출한 action 저장 (TAIL_QUESTION 또는 PASS_TO_NEXT)
 		final AtomicReference<String> nextAction = new AtomicReference<>(null);
@@ -319,7 +321,7 @@ public class FastApiClient implements AiClient {
 					interviewService.getNextQuestion(sessionId, currentOrder)
 						.ifPresentOrElse(
 							nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-							() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE));
+							() -> proceedToClosingOrInsight(sessionId, AiConstants.REASON_ALL_DONE));
 				} else if (AiConstants.ACTION_TAIL_QUESTION.equals(action)) {
 					// TAIL_QUESTION: 꼬리질문 생성됨, 클라이언트 답변 대기
 					log.info("⏳ [TAIL_QUESTION] Waiting for user answer. sessionId={}", sessionId);
@@ -592,7 +594,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			})
 			.map(sse -> {
 				// data만 꺼내서 새로운 SSE 생성 (event 타입 유지)
 				String event = sse.event() != null ? sse.event() : "message";
@@ -635,7 +638,28 @@ public class FastApiClient implements AiClient {
 		interviewService.getNextQuestion(sessionId, currentOrder)
 			.ifPresentOrElse(
 				nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-				() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE)); // 🔧 종료 멘트 후 완료
+				() -> proceedToClosingOrInsight(sessionId, AiConstants.REASON_ALL_DONE)); // 클로징 전 인사이트 체크
+	}
+
+	/**
+	 * 클로징 전 인사이트 질문 체크
+	 * 인사이트 태그가 있으면 인사이트 질문 Phase로 진입, 없으면 바로 클로징
+	 */
+	private void proceedToClosingOrInsight(String sessionId, String endReason) {
+		try {
+			if (insightQuestionService.hasUnaskedInsights(sessionId)) {
+				log.info("🔍 [INSIGHT CHECK] Found unasked insights. Starting insight phase. sessionId={}", sessionId);
+				boolean started = insightQuestionService.startInsightQuestionPhase(sessionId);
+				if (started) {
+					return; // 인사이트 질문 Phase로 진행
+				}
+			}
+		} catch (Exception e) {
+			log.warn("⚠️ [INSIGHT CHECK] Error checking insights, proceeding to closing. sessionId={}, error={}",
+				sessionId, e.getMessage());
+		}
+		// 인사이트 없으면 바로 클로징
+		streamClosing(sessionId, endReason);
 	}
 
 	// ========== 세션 Opening/Closing 방법 ==========
@@ -658,7 +682,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleOpeningEvent(sessionId, sse.data()),
@@ -689,7 +714,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleClosingEvent(sessionId, sse.data()),
