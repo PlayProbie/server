@@ -128,9 +128,9 @@ class ReplayControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.segment_id").value("seg_abc123"))
-				.andExpect(jsonPath("$.s3_url").value("https://s3.example.com/presigned-url"))
-				.andExpect(jsonPath("$.expires_in").value(300));
+				.andExpect(jsonPath("$.result.segment_id").value("seg_abc123"))
+				.andExpect(jsonPath("$.result.s3_url").value("https://s3.example.com/presigned-url"))
+				.andExpect(jsonPath("$.result.expires_in").value(300));
 		}
 	}
 
