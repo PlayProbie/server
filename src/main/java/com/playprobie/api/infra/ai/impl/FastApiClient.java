@@ -642,23 +642,41 @@ public class FastApiClient implements AiClient {
 			.onErrorReturn("");
 	}
 
+	// 꼬리질문 제한 초과 시 사용할 기본 리액션 메시지들
+	private static final String[] TAIL_LIMIT_REACTIONS = {
+		"좋은 의견 감사해요! 다음 주제로 넘어가볼게요 😊",
+		"충분히 이해했어요! 다른 부분도 여쭤볼게요",
+		"네, 잘 알겠어요! 그럼 다음 질문 드릴게요",
+		"좋아요, 이 부분은 충분한 것 같아요! 다음으로 넘어갈게요"
+	};
+
 	/**
 	 * 꼬리질문 횟수 제한 초과 시 호출
 	 * AI 호출 없이 바로 다음 고정 질문으로 이동
+	 * 중간 질문 전환 시에만 리액션 전송 (마지막→엔딩 시에는 리액션 없음)
 	 */
 	private void handleTailLimitExceeded(String sessionId, Long fixedQuestionId) {
+		// 다음 고정 질문 확인
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
+		int currentOrder = currentQuestion.qOrder();
+		var nextQuestionOpt = interviewService.getNextQuestion(sessionId, currentOrder);
+
+		// 다음 질문이 있을 때만 리액션 전송 (마지막→엔딩일 때는 리액션 없이 바로 종료)
+		if (nextQuestionOpt.isPresent()) {
+			String reactionText = TAIL_LIMIT_REACTIONS[(int)(Math.random() * TAIL_LIMIT_REACTIONS.length)];
+			ReactionPayload reactionPayload = ReactionPayload.builder().reactionText(reactionText).build();
+			sseEmitterService.send(sessionId, AiConstants.EVENT_REACTION, reactionPayload);
+			log.info("🎭 [TAIL LIMIT REACTION] sessionId={}, reaction={}", sessionId, reactionText);
+		}
+
 		// done 이벤트를 클라이언트로 전송
 		StatusPayload donePayload = StatusPayload.builder().status("tail_limit_exceeded").build();
 		sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 
-		// 다음 고정 질문 발송
-		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
-		int currentOrder = currentQuestion.qOrder();
-
-		interviewService.getNextQuestion(sessionId, currentOrder)
-			.ifPresentOrElse(
-				nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-				() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE)); // 🔧 종료 멘트 후 완료
+		// 다음 고정 질문 발송 또는 종료
+		nextQuestionOpt.ifPresentOrElse(
+			nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
+			() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE));
 	}
 
 	// ========== 세션 Opening/Closing 방법 ==========
@@ -750,7 +768,6 @@ public class FastApiClient implements AiClient {
 					log.info("👋 [GREETING DONE] Sending first fixed question. sessionId={}", sessionId);
 					// DB에서 첫번째 고정질문 조회
 					FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
-					// Fetch total questions
 					Long surveyId = interviewService.getSurveyIdBySession(sessionId);
 					int totalQs = interviewService.getTotalQuestionCount(surveyId);
 

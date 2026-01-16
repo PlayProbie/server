@@ -93,11 +93,12 @@ public class InterviewController {
 			sessionId, savedResponse.fixedQId(), savedResponse.turnNum());
 
 		// 2. [AI Streaming] 교정된 값으로 AI 스트리밍 요청
-		UserAnswerRequest correctedRequest = new UserAnswerRequest(
-			savedResponse.fixedQId(),
-			savedResponse.turnNum(),
-			request.getQuestionText(),
-			request.getAnswerText());
+		UserAnswerRequest correctedRequest = UserAnswerRequest.builder()
+			.fixedQId(savedResponse.fixedQId())
+			.turnNum(savedResponse.turnNum())
+			.questionText(request.getQuestionText())
+			.answerText(request.getAnswerText())
+			.build();
 
 		// AI 스트리밍 시작
 		fastApiClient.streamNextQuestion(sessionId, correctedRequest);
