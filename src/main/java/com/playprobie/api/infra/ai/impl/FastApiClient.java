@@ -21,11 +21,9 @@ import com.playprobie.api.domain.interview.application.InterviewService;
 import com.playprobie.api.domain.interview.domain.AnswerQuality;
 import com.playprobie.api.domain.interview.domain.AnswerValidity;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
-import com.playprobie.api.domain.interview.domain.LogAnalysis;
 import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.replay.application.InsightQuestionService;
-import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.config.properties.AiProperties;
@@ -64,7 +62,8 @@ public class FastApiClient implements AiClient {
 	private final ObjectMapper objectMapper;
 	private final InterviewService interviewService;
 	private final AiProperties aiProperties;
-	private final SurveyRepository surveyRepository;
+	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
+	private final com.playprobie.api.domain.interview.dao.SurveySessionRepository surveySessionRepository;
 	private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 	private final InsightQuestionService insightQuestionService;
 
@@ -525,19 +524,53 @@ public class FastApiClient implements AiClient {
 					.toList();
 
 				if (!qaPairs.isEmpty()) {
-					// === 추가: 가장 최근 FIXED 답변의 validity/quality 추출 ===
+					// [NEW] Metadata 생성
+					java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+					try {
+						// surveySessionRepository를 통해 Session 조회
+						com.playprobie.api.domain.interview.domain.SurveySession session = surveySessionRepository
+							.findByUuid(java.util.UUID.fromString(sessionId))
+							.orElse(null);
+
+						if (session != null && session.getTesterProfile() != null) {
+							com.playprobie.api.domain.interview.domain.TesterProfile profile = session
+								.getTesterProfile();
+							if (profile.getGender() != null)
+								metadata.put("gender", profile.getGender());
+							if (profile.getAgeGroup() != null)
+								metadata.put("age_group", profile.getAgeGroup());
+							if (profile.getPreferGenre() != null)
+								metadata.put("prefer_genre", profile.getPreferGenre());
+						}
+					} catch (Exception e) {
+						log.warn("⚠️ Metadata extraction failed for session: {}", sessionId, e);
+					}
+
+					// === 수정: 모든 로그 중 최고 품질 사용 (꼬리질문으로 품질 개선 반영) ===
+					String validity = null;
+					String quality = null;
+
+					// 1. validity는 FIXED 답변에서 추출
 					InterviewLog fixedLog = logs.stream()
 						.filter(l -> l.getType() == QuestionType.FIXED)
 						.findFirst()
 						.orElse(null);
 
-					String validity = null;
-					String quality = null;
-
 					if (fixedLog != null && fixedLog.getAnalysis() != null) {
-						LogAnalysis analysis = fixedLog.getAnalysis();
-						validity = analysis.getValidity() != null ? analysis.getValidity().name() : null;
-						quality = analysis.getQuality() != null ? analysis.getQuality().name() : null;
+						validity = fixedLog.getAnalysis().getValidity() != null
+							? fixedLog.getAnalysis().getValidity().name()
+							: null;
+					}
+
+					// 2. quality는 모든 로그 중 최고 품질 선택 (FULL > GROUNDED > FLOATING > EMPTY)
+					com.playprobie.api.domain.interview.domain.AnswerQuality bestQuality = logs.stream()
+						.filter(l -> l.getAnalysis() != null && l.getAnalysis().getQuality() != null)
+						.map(l -> l.getAnalysis().getQuality())
+						.max(java.util.Comparator.comparingInt(Enum::ordinal))
+						.orElse(null);
+
+					if (bestQuality != null) {
+						quality = bestQuality.name();
 					}
 
 					SessionEmbeddingRequest request = SessionEmbeddingRequest.builder()
@@ -545,6 +578,7 @@ public class FastApiClient implements AiClient {
 						.surveyUuid(surveyUuid) // surveyUuid 사용
 						.fixedQuestionId(fixedQuestionId)
 						.qaPairs(qaPairs)
+						.metadata(metadata)
 						.autoTriggerAnalysis(true)
 						// === 추가: Quality Metadata ===
 						.validity(validity)
@@ -611,10 +645,32 @@ public class FastApiClient implements AiClient {
 	}
 
 	@Override
-	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId) {
+	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId,
+		Map<String, String> filters) {
+		// AI 서비스는 snake_case 키를 사용하므로 변환 (ageGroup → age_group, preferGenre →
+		// prefer_genre)
+		Map<String, String> convertedFilters = null;
+		if (filters != null) {
+			convertedFilters = new java.util.HashMap<>();
+			for (Map.Entry<String, String> entry : filters.entrySet()) {
+				String key = entry.getKey();
+				String value = entry.getValue();
+				if (value == null || value.isBlank())
+					continue;
+
+				// camelCase → snake_case 변환
+				switch (key) {
+					case "ageGroup" -> convertedFilters.put("age_group", value);
+					case "preferGenre" -> convertedFilters.put("prefer_genre", value);
+					default -> convertedFilters.put(key, value); // gender 등은 그대로
+				}
+			}
+		}
+
 		QuestionAnalysisRequest request = QuestionAnalysisRequest.builder()
 			.surveyUuid(surveyUuid)
 			.fixedQuestionId(fixedQuestionId)
+			.filters(convertedFilters)
 			.build();
 
 		return aiWebClient.post()
