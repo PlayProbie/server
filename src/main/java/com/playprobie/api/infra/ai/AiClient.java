@@ -33,6 +33,16 @@ public interface AiClient {
 		List<String> themePriorities, Map<String, List<String>> themeDetails);
 
 	/**
+	 * QuestionBank 기반 질문 추천
+	 * POST /api/questions/recommend
+	 *
+	 * @param request 질문 추천 요청
+	 * @return 추천된 질문 목록
+	 */
+	com.playprobie.api.infra.ai.dto.response.QuestionRecommendResponse recommendQuestions(
+		com.playprobie.api.infra.ai.dto.request.QuestionRecommendRequest request);
+
+	/**
 	 * 질문 피드백 기반 대안 생성
 	 * POST /fixed-questions/feedback
 	 *

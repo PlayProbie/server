@@ -68,6 +68,34 @@ public class FastApiClient implements AiClient {
 	private final InsightQuestionService insightQuestionService;
 
 	@Override
+	public com.playprobie.api.infra.ai.dto.response.QuestionRecommendResponse recommendQuestions(
+		com.playprobie.api.infra.ai.dto.request.QuestionRecommendRequest request) {
+
+		log.info("📤 AI 질문 추천 요청: gameName={}, categories={}", request.gameName(), request.purposeCategories());
+
+		return aiWebClient.post()
+			.uri("/questions/recommend")
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON)
+			.bodyValue(request)
+			.retrieve()
+			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+				clientResponse -> clientResponse.bodyToMono(String.class)
+					.flatMap(body -> {
+						log.error("❌ AI 서버 에러: status={}, body={}", clientResponse.statusCode(), body);
+						return reactor.core.publisher.Mono.error(
+							new RuntimeException("AI Server Error: " + clientResponse.statusCode()
+								+ " - " + body));
+					}))
+			.bodyToMono(com.playprobie.api.infra.ai.dto.response.QuestionRecommendResponse.class)
+			.doOnNext(response -> log.info("📥 AI 질문 추천 응답: {} 개 질문 수신. 내용={}",
+				response.questions() != null ? response.questions().size() : 0,
+				response.questions()))
+			.timeout(java.time.Duration.ofSeconds(30))
+			.block();
+	}
+
+	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
 		List<String> themePriorities, Map<String, List<String>> themeDetails) {
 		GenerateQuestionRequest request = GenerateQuestionRequest.builder()
@@ -78,7 +106,8 @@ public class FastApiClient implements AiClient {
 			.themeDetails(themeDetails)
 			.build();
 
-		log.info("📤 AI 질문 생성 요청: gameName={}, gameGenre={}, themePriorities={}", gameName, gameGenre, themePriorities);
+		log.info("📤 AI 질문 생성 요청 (Legacy): gameName={}, gameGenre={}, themePriorities={}", gameName, gameGenre,
+			themePriorities);
 
 		try {
 			GenerateQuestionResponse result = aiWebClient.post()
