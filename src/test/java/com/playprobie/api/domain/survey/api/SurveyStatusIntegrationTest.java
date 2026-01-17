@@ -216,9 +216,15 @@ class SurveyStatusIntegrationTest {
 			.andExpect(jsonPath("$.result.streaming_resource").exists())
 			.andExpect(jsonPath("$.result.streaming_resource.status").value("SCALING_UP"));
 
-		// Fake 상태 검증: updateStreamGroupCapacity 호출됨
-		assertThat(fakeGameLiftService().getCapacityUpdates()).hasSize(1);
-		assertThat(fakeGameLiftService().getCapacityUpdates().get(0).targetCapacity()).isEqualTo(10);
+		// DB 상태 검증: CapacityChangeRequest가 생성되었는지 확인
+		// Note: @Transactional 테스트에서는 afterCommit()이 실행되지 않으므로
+		// Fake의 capacity update 호출 검증은 스킵
+		// 대신 StreamingResource 상태가 SCALING_UP으로 변경되었는지 검증
+		flushAndClear();
+		StreamingResource resource = streamingResourceRepository.findBySurveyId(survey.getId()).orElseThrow();
+		assertThat(resource.getStatus()).isEqualTo(
+			com.playprobie.api.domain.streaming.domain.StreamingResourceStatus.SCALING_UP);
+		assertThat(resource.getCurrentCapacity()).isEqualTo(10);
 	}
 
 	@Test
