@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.playprobie.api.domain.analytics.application.AnalyticsService;
+import com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository;
 import com.playprobie.api.domain.game.dao.GameRepository;
 import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.game.domain.GameGenre;
@@ -38,6 +40,8 @@ import com.playprobie.api.domain.workspace.dao.WorkspaceRepository;
 import com.playprobie.api.domain.workspace.domain.Workspace;
 import com.playprobie.api.domain.workspace.domain.WorkspaceMember;
 import com.playprobie.api.domain.workspace.domain.WorkspaceRole;
+import com.playprobie.api.infra.ai.AiClient;
+import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,13 +58,13 @@ public class MockDataLoader implements CommandLineRunner {
 	private final SurveySessionRepository surveySessionRepository;
 	private final InterviewLogRepository interviewLogRepository;
 	private final ObjectMapper objectMapper;
-	private final com.playprobie.api.infra.ai.AiClient aiClient;
-	private final com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository analysisRepository;
+	private final AiClient aiClient;
+	private final QuestionResponseAnalysisRepository analysisRepository;
 	private final UserRepository userRepository;
 	private final WorkspaceRepository workspaceRepository;
 	private final WorkspaceMemberRepository workspaceMemberRepository;
 	private final PasswordEncoder passwordEncoder;
-	private final com.playprobie.api.domain.analytics.application.AnalyticsService analyticsService;
+	private final AnalyticsService analyticsService;
 
 	@Override
 	public void run(String... args) throws Exception {
@@ -170,10 +174,10 @@ public class MockDataLoader implements CommandLineRunner {
 					List<InterviewLog> logs = entry.getValue();
 
 					// Q&A 쌍 생성
-					List<com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair> qaPairs = logs
+					List<SessionEmbeddingRequest.QaPair> qaPairs = logs
 						.stream()
 						.filter(l -> l.getAnswerText() != null)
-						.map(l -> com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair
+						.map(l -> SessionEmbeddingRequest.QaPair
 							.of(
 								l.getQuestionText(),
 								l.getAnswerText(),
@@ -184,7 +188,7 @@ public class MockDataLoader implements CommandLineRunner {
 						totalEmbeddings.incrementAndGet();
 
 						// autoTriggerAnalysis = false로 설정하여 자동 트리거 방지
-						com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest request = com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest
+						SessionEmbeddingRequest request = SessionEmbeddingRequest
 							.builder()
 							.sessionId(sessionId)
 							.surveyUuid(surveyUuid)

@@ -22,6 +22,7 @@ import com.playprobie.api.domain.survey.domain.TestStage;
 import com.playprobie.api.domain.survey.dto.CreateFixedQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionsCountResponse;
+import com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest;
 import com.playprobie.api.domain.survey.dto.QuestionFeedbackResponse;
 import com.playprobie.api.domain.survey.dto.request.AiQuestionsRequest;
 import com.playprobie.api.domain.survey.dto.request.CreateSurveyRequest;
@@ -158,7 +159,7 @@ public class SurveyService {
 	}
 
 	public QuestionFeedbackResponse getQuestionFeedback(
-		com.playprobie.api.domain.survey.dto.QuestionFeedbackRequest request) {
+		QuestionFeedbackRequest request) {
 
 		// Data extraction and processing logic moved from controller
 		String question = request.questions().get(0);

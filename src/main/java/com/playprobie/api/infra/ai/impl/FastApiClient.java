@@ -14,12 +14,19 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.playprobie.api.domain.analytics.event.AnalysisTriggerEvent;
+import com.playprobie.api.domain.game.dto.GameElementExtractRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractResponse;
 import com.playprobie.api.domain.interview.application.InterviewService;
 import com.playprobie.api.domain.interview.domain.AnswerQuality;
 import com.playprobie.api.domain.interview.domain.AnswerValidity;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
+import com.playprobie.api.domain.interview.domain.LogAnalysis;
 import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+import com.playprobie.api.domain.replay.application.InsightQuestionService;
+import com.playprobie.api.domain.survey.dao.SurveyRepository;
+import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.config.properties.AiProperties;
 import com.playprobie.api.global.constants.AiConstants;
@@ -57,9 +64,9 @@ public class FastApiClient implements AiClient {
 	private final ObjectMapper objectMapper;
 	private final InterviewService interviewService;
 	private final AiProperties aiProperties;
-	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
+	private final SurveyRepository surveyRepository;
 	private final org.springframework.context.ApplicationEventPublisher eventPublisher;
-	private final com.playprobie.api.domain.replay.application.InsightQuestionService insightQuestionService;
+	private final InsightQuestionService insightQuestionService;
 
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
@@ -121,8 +128,8 @@ public class FastApiClient implements AiClient {
 	}
 
 	@Override
-	public com.playprobie.api.domain.game.dto.GameElementExtractResponse extractGameElements(
-		com.playprobie.api.domain.game.dto.GameElementExtractRequest request) {
+	public GameElementExtractResponse extractGameElements(
+		GameElementExtractRequest request) {
 
 		return aiWebClient.post()
 			.uri("/game/extract-elements")
@@ -138,7 +145,7 @@ public class FastApiClient implements AiClient {
 							new RuntimeException("AI Server Error: " + clientResponse.statusCode()
 								+ " - " + body));
 					}))
-			.bodyToMono(com.playprobie.api.domain.game.dto.GameElementExtractResponse.class)
+			.bodyToMono(GameElementExtractResponse.class)
 			.timeout(java.time.Duration.ofSeconds(60))
 			.block();
 	}
@@ -504,7 +511,7 @@ public class FastApiClient implements AiClient {
 
 			Long surveyId = interviewService.getSurveyIdBySession(sessionId);
 			// Survey UUID 조회
-			com.playprobie.api.domain.survey.domain.Survey survey = surveyRepository.findById(surveyId)
+			Survey survey = surveyRepository.findById(surveyId)
 				.orElseThrow(() -> new RuntimeException("Survey not found: " + surveyId));
 			String surveyUuid = survey.getUuid().toString();
 
@@ -528,7 +535,7 @@ public class FastApiClient implements AiClient {
 					String quality = null;
 
 					if (fixedLog != null && fixedLog.getAnalysis() != null) {
-						com.playprobie.api.domain.interview.domain.LogAnalysis analysis = fixedLog.getAnalysis();
+						LogAnalysis analysis = fixedLog.getAnalysis();
 						validity = analysis.getValidity() != null ? analysis.getValidity().name() : null;
 						quality = analysis.getQuality() != null ? analysis.getQuality().name() : null;
 					}
@@ -600,7 +607,7 @@ public class FastApiClient implements AiClient {
 	public void triggerAnalysis(String surveyUuid, Long fixedQuestionId) {
 		log.info("triggerAnalysis called, publishing event for: {}", fixedQuestionId);
 		eventPublisher.publishEvent(
-			new com.playprobie.api.domain.analytics.event.AnalysisTriggerEvent(surveyUuid, fixedQuestionId));
+			new AnalysisTriggerEvent(surveyUuid, fixedQuestionId));
 	}
 
 	@Override

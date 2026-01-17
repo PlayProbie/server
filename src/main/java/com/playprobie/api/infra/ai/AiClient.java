@@ -5,7 +5,10 @@ import java.util.Map;
 
 import org.springframework.http.codec.ServerSentEvent;
 
+import com.playprobie.api.domain.game.dto.GameElementExtractRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractResponse;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+import com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest.TesterProfileDto;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
@@ -43,8 +46,8 @@ public interface AiClient {
 	 *
 	 * @return 추출된 게임 요소 정보
 	 */
-	com.playprobie.api.domain.game.dto.GameElementExtractResponse extractGameElements(
-		com.playprobie.api.domain.game.dto.GameElementExtractRequest request);
+	GameElementExtractResponse extractGameElements(
+		GameElementExtractRequest request);
 
 	/**
 	 * streaming 대화 토큰 전달
@@ -55,7 +58,7 @@ public interface AiClient {
 	 * 오프닝 스트리밍 (세션 시작)
 	 */
 	void streamOpening(String sessionId, Map<String, Object> gameInfo,
-		com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest.TesterProfileDto testerProfile);
+		TesterProfileDto testerProfile);
 
 	// 세션 완료 시 임베딩 요청 (비동기)
 	Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request);

@@ -3,6 +3,11 @@ package com.playprobie.api.infra.gamelift;
 import org.springframework.stereotype.Service;
 
 import com.playprobie.api.global.config.properties.AwsProperties;
+import com.playprobie.api.global.error.ErrorCode;
+import com.playprobie.api.global.error.exception.BusinessException;
+import com.playprobie.api.infra.gamelift.exception.GameLiftQuotaExceededException;
+import com.playprobie.api.infra.gamelift.exception.GameLiftResourceNotFoundException;
+import com.playprobie.api.infra.gamelift.exception.GameLiftTransientException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -203,9 +208,9 @@ public class GameLiftService {
 				return operation.get();
 			} catch (software.amazon.awssdk.services.gameliftstreams.model.ServiceQuotaExceededException e) {
 				log.error("AWS Service Quota Exceeded on {}: {}", operationName, e.getMessage());
-				throw new com.playprobie.api.infra.gamelift.exception.GameLiftQuotaExceededException(
-					com.playprobie.api.global.error.ErrorCode.GAMELIFT_QUOTA_EXCEEDED.getMessage(),
-					com.playprobie.api.global.error.ErrorCode.GAMELIFT_QUOTA_EXCEEDED);
+				throw new GameLiftQuotaExceededException(
+					ErrorCode.GAMELIFT_QUOTA_EXCEEDED.getMessage(),
+					ErrorCode.GAMELIFT_QUOTA_EXCEEDED);
 			} catch (software.amazon.awssdk.services.gameliftstreams.model.ThrottlingException
 				| software.amazon.awssdk.core.exception.SdkClientException e) {
 
@@ -216,28 +221,28 @@ public class GameLiftService {
 				if (attempt == maxRetries) {
 					// AWS 상세 에러는 로깅만 하고, 클라이언트에는 일반화된 메시지만 반환
 					log.error("AWS Transient Error (Max Retries): {}", lastErrorMessage);
-					throw new com.playprobie.api.infra.gamelift.exception.GameLiftTransientException(
-						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR.getMessage(),
-						com.playprobie.api.global.error.ErrorCode.GAMELIFT_TRANSIENT_ERROR);
+					throw new GameLiftTransientException(
+						ErrorCode.GAMELIFT_TRANSIENT_ERROR.getMessage(),
+						ErrorCode.GAMELIFT_TRANSIENT_ERROR);
 				}
 				try {
 					Thread.sleep(1000L * attempt);
 				} catch (InterruptedException ie) {
 					Thread.currentThread().interrupt();
-					throw new com.playprobie.api.global.error.exception.BusinessException(
-						com.playprobie.api.global.error.ErrorCode.INTERNAL_SERVER_ERROR);
+					throw new BusinessException(
+						ErrorCode.INTERNAL_SERVER_ERROR);
 				}
 			} catch (software.amazon.awssdk.services.gameliftstreams.model.ResourceNotFoundException e) {
-				throw new com.playprobie.api.infra.gamelift.exception.GameLiftResourceNotFoundException(
-					com.playprobie.api.global.error.ErrorCode.GAMELIFT_RESOURCE_NOT_FOUND);
+				throw new GameLiftResourceNotFoundException(
+					ErrorCode.GAMELIFT_RESOURCE_NOT_FOUND);
 			} catch (software.amazon.awssdk.awscore.exception.AwsServiceException e) {
 				log.error("AWS Service Exception on {}: {}", operationName, e.getMessage());
-				throw new com.playprobie.api.global.error.exception.BusinessException(
-					com.playprobie.api.global.error.ErrorCode.GAMELIFT_CAPACITY_UPDATE_FAILED);
+				throw new BusinessException(
+					ErrorCode.GAMELIFT_CAPACITY_UPDATE_FAILED);
 			}
 		}
-		throw new com.playprobie.api.global.error.exception.BusinessException(
-			com.playprobie.api.global.error.ErrorCode.GAMELIFT_CAPACITY_UPDATE_FAILED);
+		throw new BusinessException(
+			ErrorCode.GAMELIFT_CAPACITY_UPDATE_FAILED);
 	}
 	// ... existing methods ...
 
@@ -349,8 +354,8 @@ public class GameLiftService {
 		}
 
 		// 타임아웃 시 클라이언트에게 명시적 에러 반환
-		throw new com.playprobie.api.global.error.exception.BusinessException(
-			com.playprobie.api.global.error.ErrorCode.INTERNAL_SERVER_ERROR); // 적절한 Timeout ErrorCode가 있다면 교체 권장
+		throw new BusinessException(
+			ErrorCode.INTERNAL_SERVER_ERROR); // 적절한 Timeout ErrorCode가 있다면 교체 권장
 	}
 
 	private String extractSessionId(String arn) {
