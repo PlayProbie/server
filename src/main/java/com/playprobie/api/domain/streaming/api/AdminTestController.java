@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.playprobie.api.domain.streaming.application.StreamingResourceService;
+import com.playprobie.api.domain.streaming.application.StreamingResourceManager;
+import com.playprobie.api.domain.streaming.application.StreamingTestManager;
 import com.playprobie.api.domain.streaming.dto.ResourceStatusResponse;
 import com.playprobie.api.domain.streaming.dto.TestActionResponse;
 import com.playprobie.api.domain.user.domain.User;
@@ -29,7 +30,8 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Admin Test API", description = "관리자 테스트 API (스트리밍 실행/중지)")
 public class AdminTestController {
 
-	private final StreamingResourceService streamingResourceService;
+	private final StreamingTestManager streamingTestManager;
+	private final StreamingResourceManager streamingResourceManager;
 
 	@PostMapping("/start-test")
 	@Operation(summary = "관리자 테스트 시작", description = "스트리밍 Capacity를 0 → 1로 설정하여 테스트를 시작합니다.")
@@ -43,7 +45,7 @@ public class AdminTestController {
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
 
-		TestActionResponse response = streamingResourceService.startTest(surveyId, user);
+		TestActionResponse response = streamingTestManager.startTest(surveyId, user);
 
 		return ResponseEntity.ok()
 			.headers(buildAsyncHeaders(response))
@@ -62,7 +64,7 @@ public class AdminTestController {
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
 
-		TestActionResponse response = streamingResourceService.stopTest(surveyId, user);
+		TestActionResponse response = streamingTestManager.stopTest(surveyId, user);
 
 		return ResponseEntity.ok()
 			.headers(buildAsyncHeaders(response))
@@ -76,7 +78,7 @@ public class AdminTestController {
 		UUID surveyId,
 		@AuthenticationPrincipal(expression = "user")
 		User user) {
-		ResourceStatusResponse response = streamingResourceService.getResourceStatus(surveyId, user);
+		ResourceStatusResponse response = streamingResourceManager.getResourceStatus(surveyId, user);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 

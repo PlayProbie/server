@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.playprobie.api.domain.game.application.GameService;
 import com.playprobie.api.domain.game.dto.CreateGameRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractResult;
 import com.playprobie.api.domain.game.dto.GameResponse;
 import com.playprobie.api.domain.game.dto.UpdateGameRequest;
 import com.playprobie.api.domain.user.domain.User;
@@ -34,6 +36,16 @@ import lombok.RequiredArgsConstructor;
 public class GameController {
 
 	private final GameService gameService;
+
+	@PostMapping("/games/extract-elements")
+	@Operation(summary = "게임 요소 추출", description = "게임 설명에서 핵심 요소를 추출합니다.")
+	public ResponseEntity<GameElementExtractResult> extractElements(
+		@RequestBody
+		GameElementExtractRequest request) {
+
+		GameElementExtractResult result = gameService.extractElements(request);
+		return ResponseEntity.ok(result);
+	}
 
 	@PostMapping("/workspaces/{workspaceUuid}/games")
 	@Operation(summary = "게임 생성", description = "특정 워크스페이스 하위에 새 게임을 생성합니다.")

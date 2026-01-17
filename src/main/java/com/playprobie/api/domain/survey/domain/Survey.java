@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import com.playprobie.api.domain.game.domain.Game;
+import com.playprobie.api.global.converter.StringListConverter;
+import com.playprobie.api.global.converter.ThemeDetailsMapConverter;
 import com.playprobie.api.global.domain.BaseTimeEntity;
 
 import jakarta.persistence.Column;
@@ -65,11 +67,11 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "test_stage")
 	private TestStage testStage;
 
-	@Convert(converter = com.playprobie.api.global.converter.StringListConverter.class)
+	@Convert(converter = StringListConverter.class)
 	@Column(name = "theme_priorities", columnDefinition = "TEXT")
 	private java.util.List<String> themePriorities;
 
-	@Convert(converter = com.playprobie.api.global.converter.ThemeDetailsMapConverter.class)
+	@Convert(converter = ThemeDetailsMapConverter.class)
 	@Column(name = "theme_details", columnDefinition = "TEXT")
 	private java.util.Map<String, java.util.List<String>> themeDetails;
 

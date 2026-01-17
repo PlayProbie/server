@@ -14,12 +14,17 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.playprobie.api.domain.analytics.event.AnalysisTriggerEvent;
+import com.playprobie.api.domain.game.dto.GameElementExtractRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractResponse;
 import com.playprobie.api.domain.interview.application.InterviewService;
 import com.playprobie.api.domain.interview.domain.AnswerQuality;
 import com.playprobie.api.domain.interview.domain.AnswerValidity;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+import com.playprobie.api.domain.replay.application.InsightQuestionService;
+import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.config.properties.AiProperties;
 import com.playprobie.api.global.constants.AiConstants;
@@ -60,6 +65,7 @@ public class FastApiClient implements AiClient {
 	private final com.playprobie.api.domain.survey.dao.SurveyRepository surveyRepository;
 	private final com.playprobie.api.domain.interview.dao.SurveySessionRepository surveySessionRepository;
 	private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+	private final InsightQuestionService insightQuestionService;
 
 	@Override
 	public List<String> generateQuestions(String gameName, String gameGenre, String gameContext,
@@ -118,6 +124,29 @@ public class FastApiClient implements AiClient {
 		GenerateFeedbackResponse result = response.block();
 
 		return result;
+	}
+
+	@Override
+	public GameElementExtractResponse extractGameElements(
+		GameElementExtractRequest request) {
+
+		return aiWebClient.post()
+			.uri("/game/extract-elements")
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON)
+			.bodyValue(request)
+			.retrieve()
+			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+				clientResponse -> clientResponse.bodyToMono(String.class)
+					.flatMap(body -> {
+						log.error("❌ AI 서버 에러: status={}, body={}", clientResponse.statusCode(), body);
+						return reactor.core.publisher.Mono.error(
+							new RuntimeException("AI Server Error: " + clientResponse.statusCode()
+								+ " - " + body));
+					}))
+			.bodyToMono(GameElementExtractResponse.class)
+			.timeout(java.time.Duration.ofSeconds(60))
+			.block();
 	}
 
 	/**
@@ -320,7 +349,7 @@ public class FastApiClient implements AiClient {
 					interviewService.getNextQuestion(sessionId, currentOrder)
 						.ifPresentOrElse(
 							nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-							() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE));
+							() -> proceedToClosingOrInsight(sessionId, AiConstants.REASON_ALL_DONE));
 				} else if (AiConstants.ACTION_TAIL_QUESTION.equals(action)) {
 					// TAIL_QUESTION: 꼬리질문 생성됨, 클라이언트 답변 대기
 					log.info("⏳ [TAIL_QUESTION] Waiting for user answer. sessionId={}", sessionId);
@@ -481,7 +510,7 @@ public class FastApiClient implements AiClient {
 
 			Long surveyId = interviewService.getSurveyIdBySession(sessionId);
 			// Survey UUID 조회
-			com.playprobie.api.domain.survey.domain.Survey survey = surveyRepository.findById(surveyId)
+			Survey survey = surveyRepository.findById(surveyId)
 				.orElseThrow(() -> new RuntimeException("Survey not found: " + surveyId));
 			String surveyUuid = survey.getUuid().toString();
 
@@ -529,7 +558,8 @@ public class FastApiClient implements AiClient {
 
 					if (fixedLog != null && fixedLog.getAnalysis() != null) {
 						validity = fixedLog.getAnalysis().getValidity() != null
-							? fixedLog.getAnalysis().getValidity().name() : null;
+							? fixedLog.getAnalysis().getValidity().name()
+							: null;
 					}
 
 					// 2. quality는 모든 로그 중 최고 품질 선택 (FULL > GROUNDED > FLOATING > EMPTY)
@@ -611,7 +641,7 @@ public class FastApiClient implements AiClient {
 	public void triggerAnalysis(String surveyUuid, Long fixedQuestionId) {
 		log.info("triggerAnalysis called, publishing event for: {}", fixedQuestionId);
 		eventPublisher.publishEvent(
-			new com.playprobie.api.domain.analytics.event.AnalysisTriggerEvent(surveyUuid, fixedQuestionId));
+			new AnalysisTriggerEvent(surveyUuid, fixedQuestionId));
 	}
 
 	@Override
@@ -676,23 +706,62 @@ public class FastApiClient implements AiClient {
 			.onErrorReturn("");
 	}
 
+	// 꼬리질문 제한 초과 시 사용할 기본 리액션 메시지들
+	private static final String[] TAIL_LIMIT_REACTIONS = {
+		"좋은 의견 감사해요! 다음 주제로 넘어가볼게요 😊",
+		"충분히 이해했어요! 다른 부분도 여쭤볼게요",
+		"네, 잘 알겠어요! 그럼 다음 질문 드릴게요",
+		"좋아요, 이 부분은 충분한 것 같아요! 다음으로 넘어갈게요"
+	};
+
 	/**
 	 * 꼬리질문 횟수 제한 초과 시 호출
 	 * AI 호출 없이 바로 다음 고정 질문으로 이동
+	 * 중간 질문 전환 시에만 리액션 전송 (마지막→엔딩 시에는 리액션 없음)
 	 */
 	private void handleTailLimitExceeded(String sessionId, Long fixedQuestionId) {
+		// 다음 고정 질문 확인
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
+		int currentOrder = currentQuestion.qOrder();
+		var nextQuestionOpt = interviewService.getNextQuestion(sessionId, currentOrder);
+
+		// 다음 질문이 있을 때만 리액션 전송 (마지막→엔딩일 때는 리액션 없이 바로 종료)
+		if (nextQuestionOpt.isPresent()) {
+			String reactionText = TAIL_LIMIT_REACTIONS[(int)(Math.random() * TAIL_LIMIT_REACTIONS.length)];
+			ReactionPayload reactionPayload = ReactionPayload.builder().reactionText(reactionText).build();
+			sseEmitterService.send(sessionId, AiConstants.EVENT_REACTION, reactionPayload);
+			log.info("🎭 [TAIL LIMIT REACTION] sessionId={}, reaction={}", sessionId, reactionText);
+		}
+
 		// done 이벤트를 클라이언트로 전송
 		StatusPayload donePayload = StatusPayload.builder().status("tail_limit_exceeded").build();
 		sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 
-		// 다음 고정 질문 발송
-		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
-		int currentOrder = currentQuestion.qOrder();
+		// 다음 고정 질문 발송 또는 종료 (이미 조회한 nextQuestionOpt 활용)
+		nextQuestionOpt.ifPresentOrElse(
+			nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
+			() -> proceedToClosingOrInsight(sessionId, AiConstants.REASON_ALL_DONE)); // 클로징 전 인사이트 체크
+	}
 
-		interviewService.getNextQuestion(sessionId, currentOrder)
-			.ifPresentOrElse(
-				nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-				() -> streamClosing(sessionId, AiConstants.REASON_ALL_DONE)); // 🔧 종료 멘트 후 완료
+	/**
+	 * 클로징 전 인사이트 질문 체크
+	 * 인사이트 태그가 있으면 인사이트 질문 Phase로 진입, 없으면 바로 클로징
+	 */
+	private void proceedToClosingOrInsight(String sessionId, String endReason) {
+		try {
+			if (insightQuestionService.hasUnaskedInsights(sessionId)) {
+				log.info("🔍 [INSIGHT CHECK] Found unasked insights. Starting insight phase. sessionId={}", sessionId);
+				boolean started = insightQuestionService.startInsightQuestionPhase(sessionId);
+				if (started) {
+					return; // 인사이트 질문 Phase로 진행
+				}
+			}
+		} catch (Exception e) {
+			log.warn("⚠️ [INSIGHT CHECK] Error checking insights, proceeding to closing. sessionId={}, error={}",
+				sessionId, e.getMessage());
+		}
+		// 인사이트 없으면 바로 클로징
+		streamClosing(sessionId, endReason);
 	}
 
 	// ========== 세션 Opening/Closing 방법 ==========
@@ -784,7 +853,6 @@ public class FastApiClient implements AiClient {
 					log.info("👋 [GREETING DONE] Sending first fixed question. sessionId={}", sessionId);
 					// DB에서 첫번째 고정질문 조회
 					FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
-					// Fetch total questions
 					Long surveyId = interviewService.getSurveyIdBySession(sessionId);
 					int totalQs = interviewService.getTotalQuestionCount(surveyId);
 

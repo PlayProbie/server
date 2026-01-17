@@ -5,11 +5,13 @@ import java.util.Map;
 
 import org.springframework.http.codec.ServerSentEvent;
 
+import com.playprobie.api.domain.game.dto.GameElementExtractRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractResponse;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
+import com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest.TesterProfileDto;
 import com.playprobie.api.infra.ai.dto.request.GenerateFeedbackRequest;
 import com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest;
 import com.playprobie.api.infra.ai.dto.response.GenerateFeedbackResponse;
-
 import com.playprobie.api.infra.ai.dto.response.SessionEmbeddingResponse;
 
 import reactor.core.publisher.Flux;
@@ -39,9 +41,24 @@ public interface AiClient {
 	GenerateFeedbackResponse getQuestionFeedback(GenerateFeedbackRequest request);
 
 	/**
+	 * 게임 요소 추출 요청
+	 * POST /game/extract-elements
+	 *
+	 * @return 추출된 게임 요소 정보
+	 */
+	GameElementExtractResponse extractGameElements(
+		GameElementExtractRequest request);
+
+	/**
 	 * streaming 대화 토큰 전달
 	 */
 	void streamNextQuestion(String sessionId, UserAnswerRequest userAnswerRequest);
+
+	/**
+	 * 오프닝 스트리밍 (세션 시작)
+	 */
+	void streamOpening(String sessionId, Map<String, Object> gameInfo,
+		TesterProfileDto testerProfile);
 
 	// 세션 완료 시 임베딩 요청 (비동기)
 	Mono<SessionEmbeddingResponse> embedSessionData(SessionEmbeddingRequest request);

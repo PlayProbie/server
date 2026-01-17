@@ -10,11 +10,14 @@ import org.springframework.stereotype.Service;
 
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
+import com.playprobie.api.domain.interview.domain.AnswerQuality;
+import com.playprobie.api.domain.interview.domain.AnswerValidity;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
 import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
+import com.playprobie.api.domain.interview.dto.TesterProfileRequest;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
 import com.playprobie.api.domain.interview.dto.common.SessionInfo;
@@ -23,6 +26,7 @@ import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
+import com.playprobie.api.global.error.exception.SessionClosedException;
 import com.playprobie.api.global.error.exception.SessionNotFoundException;
 import com.playprobie.api.global.util.InterviewUrlProvider;
 
@@ -42,7 +46,7 @@ public class InterviewService {
 
 	@Transactional
 	public InterviewCreateResponse createSession(UUID surveyUuid,
-		com.playprobie.api.domain.interview.dto.TesterProfileRequest profileRequest) {
+		TesterProfileRequest profileRequest) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
 
@@ -202,7 +206,7 @@ public class InterviewService {
 		// 0. [Blocking] Check if session is already finished
 		if (session.getStatus().isFinished()) {
 			log.warn("Attempt to update finished session: {}", sessionId);
-			throw new com.playprobie.api.global.error.exception.SessionClosedException();
+			throw new SessionClosedException();
 		}
 
 		// 1. [Server-Side Authority] Validate & Correct State
@@ -393,8 +397,8 @@ public class InterviewService {
 	 */
 	@Transactional
 	public void updateLogValidityQuality(String sessionId, Long fixedQuestionId, int answerTurnNum,
-		com.playprobie.api.domain.interview.domain.AnswerValidity validity,
-		com.playprobie.api.domain.interview.domain.AnswerQuality quality) {
+		AnswerValidity validity,
+		AnswerQuality quality) {
 
 		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
 			.orElseThrow(SessionNotFoundException::new);

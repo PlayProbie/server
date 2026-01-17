@@ -89,6 +89,8 @@ jobs:
               "echo \"AWS_S3_REGION=${{ secrets.DEV_S3_REGION }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_S3_BUCKET_NAME=${{ secrets.DEV_AWS_S3_BUCKET_NAME }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_S3_ROLE_ARN=${{ secrets.DEV_AWS_S3_ROLE_ARN }}\" >> /tmp/playprobie/.env",
+              "echo \"AWS_S3_REPLAY_BUCKET_NAME=${{ secrets.DEV_AWS_S3_REPLAY_BUCKET_NAME }}\" >> /tmp/playprobie/.env",
+              "echo \"AWS_S3_REPLAY_REGION=${{ secrets.DEV_AWS_S3_REPLAY_REGION }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_GAMELIFT_REGION=${{ secrets.DEV_AWS_GAMELIFT_REGION }}\" >> /tmp/playprobie/.env",
               "echo \"AWS_GAMELIFT_ROLE_ARN=${{ secrets.DEV_AWS_GAMELIFT_ROLE_ARN }}\" >> /tmp/playprobie/.env",
               "echo \"AI_SERVER_URL=${{ secrets.DEV_AI_SERVER_URL }}\" >> /tmp/playprobie/.env",

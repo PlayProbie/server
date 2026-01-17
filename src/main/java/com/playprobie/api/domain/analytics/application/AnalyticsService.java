@@ -1,42 +1,42 @@
 package com.playprobie.api.domain.analytics.application;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository;
 import com.playprobie.api.domain.analytics.domain.AnalysisStatus;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 import com.playprobie.api.domain.analytics.dto.AnalyticsResponse;
 import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
+import com.playprobie.api.domain.analytics.dto.analysis.AnswerProfile;
+import com.playprobie.api.domain.analytics.dto.analysis.ClusterInfo;
+import com.playprobie.api.domain.analytics.dto.analysis.QuestionAnalysisOutput;
 import com.playprobie.api.domain.analytics.event.AnalyticsUpdatedEvent;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
+import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
+import com.playprobie.api.domain.interview.domain.SurveySession;
+import com.playprobie.api.domain.interview.domain.TesterProfile;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.global.error.ErrorCode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.playprobie.api.domain.analytics.dto.analysis.AnswerProfile;
-import com.playprobie.api.domain.analytics.dto.analysis.ClusterInfo;
-import com.playprobie.api.domain.analytics.dto.analysis.QuestionAnalysisOutput;
-import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
-import com.playprobie.api.domain.interview.domain.SurveySession;
-import com.playprobie.api.domain.interview.domain.TesterProfile;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.ai.AiClient;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -103,38 +103,11 @@ public class StreamingResource extends BaseTimeEntity {
 		this.status = StreamingResourceStatus.READY;
 	}
 
-	/**
-	 * 관리자 테스트 시작 시 호출합니다.
-	 */
-	public void startTest() {
-		if (!this.status.canScale()) {
-			throw new IllegalStateException("테스트를 시작할 수 없는 상태입니다: " + this.status);
-		}
-		this.status = StreamingResourceStatus.TESTING;
-		this.currentCapacity = 1;
-	}
-
-	/**
-	 * 관리자 테스트 종료 시 호출합니다.
-	 */
-	public void stopTest() {
-		if (this.status != StreamingResourceStatus.TESTING) {
-			throw new IllegalStateException("테스트 중이 아닙니다: " + this.status);
-		}
-		this.status = StreamingResourceStatus.READY;
-		this.currentCapacity = 0;
-	}
-
-	/**
-	 * 서비스 오픈(Scale Out) 시 호출합니다.
-	 */
-	public void activate(int targetCapacity) {
-		if (!this.status.canScale()) {
-			throw new IllegalStateException("활성화할 수 없는 상태입니다: " + this.status);
-		}
-		this.status = StreamingResourceStatus.SCALING;
-		this.currentCapacity = targetCapacity;
-	}
+	// ========== [주의] 아래 레거시 메서드들은 Phase 1 리팩토링에서 삭제되었습니다 ==========
+	// startTest(), stopTest(), activate() 메서드는 더 이상 사용되지 않습니다.
+	// 대신 markScalingUp/markScalingDown/confirmStartTest/confirmStopTest 패턴을 사용하세요.
+	// Two-Phase Transaction Pattern으로 DB 업데이트와 AWS API 호출을 분리합니다.
+	// =================================================================================
 
 	/**
 	 * 스케일링 완료 시 호출합니다.

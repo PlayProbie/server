@@ -14,11 +14,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.playprobie.api.domain.interview.application.InterviewService;
 import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
 import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
+import com.playprobie.api.domain.interview.dto.TesterProfileRequest;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.common.response.CommonResponse;
-import com.playprobie.api.infra.ai.impl.FastApiClient;
+import com.playprobie.api.infra.ai.AiClient;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Interview API", description = "인터뷰 진행 API (비회원 접근 가능)")
 public class InterviewController {
 
-	private final FastApiClient fastApiClient;
+	private final AiClient fastApiClient;
 	private final SseEmitterService sseEmitterService;
 	private final InterviewService interviewService;
 
@@ -42,7 +43,7 @@ public class InterviewController {
 		@PathVariable(name = "surveyUuid")
 		java.util.UUID surveyUuid,
 		@RequestBody(required = false)
-		com.playprobie.api.domain.interview.dto.TesterProfileRequest profileRequest) {
+		TesterProfileRequest profileRequest) {
 		return ResponseEntity.status(201)
 			.body(CommonResponse.of(interviewService.createSession(surveyUuid, profileRequest)));
 	}
@@ -94,11 +95,12 @@ public class InterviewController {
 			sessionId, savedResponse.fixedQId(), savedResponse.turnNum());
 
 		// 2. [AI Streaming] 교정된 값으로 AI 스트리밍 요청
-		UserAnswerRequest correctedRequest = new UserAnswerRequest(
-			savedResponse.fixedQId(),
-			savedResponse.turnNum(),
-			request.getQuestionText(),
-			request.getAnswerText());
+		UserAnswerRequest correctedRequest = UserAnswerRequest.builder()
+			.fixedQId(savedResponse.fixedQId())
+			.turnNum(savedResponse.turnNum())
+			.questionText(request.getQuestionText())
+			.answerText(request.getAnswerText())
+			.build();
 
 		// AI 스트리밍 시작
 		fastApiClient.streamNextQuestion(sessionId, correctedRequest);
