@@ -69,31 +69,24 @@ public class SurveyResultService {
 			? sessions.get(sessions.size() - 1).getId()
 			: null;
 
-		// N+1 최적화: surveyIds 추출 후 일괄 조회
-		Set<Long> surveyIds = sessions.stream()
-			.map(s -> s.getSurvey().getId())
-			.collect(Collectors.toSet());
-
-		Map<Long, String> firstQuestionMap = fixedQuestionRepository
-			.findFirstQuestionsBySurveyIds(surveyIds)
-			.stream()
-			.collect(Collectors.toMap(FixedQuestion::getSurveyId, FixedQuestion::getContent));
-
 		List<SurveyResultListResponse.SessionItem> content = sessions.stream()
-			.map(session -> SurveyResultListResponse.SessionItem.builder()
-				.sessionUuid(session.getUuid())
-				.surveyName(session.getSurvey().getName())
-				.surveyUuid(session.getSurvey().getUuid())
-				.testerId(session.getTesterProfile() != null
-					? session.getTesterProfile().getTesterId()
-					: null)
-				.status(session.getStatus())
-				.firstQuestion(firstQuestionMap.get(session.getSurvey().getId()))
-				.endedAt(session.getEndedAt() != null
-					? session.getEndedAt().atZone(ZoneId.of("Asia/Seoul"))
-						.toOffsetDateTime()
-					: null)
-				.build())
+			.map(session -> {
+				var profile = session.getTesterProfile();
+				return SurveyResultListResponse.SessionItem.builder()
+					.sessionUuid(session.getUuid())
+					.surveyName(session.getSurvey().getName())
+					.surveyUuid(session.getSurvey().getUuid())
+					.testerId(profile != null ? profile.getTesterId() : null)
+					.status(session.getStatus())
+					.gender(profile != null ? profile.getGender() : null)
+					.ageGroup(profile != null ? profile.getAgeGroup() : null)
+					.preferGenre(profile != null ? profile.getPreferGenre() : null)
+					.endedAt(session.getEndedAt() != null
+						? session.getEndedAt().atZone(ZoneId.of("Asia/Seoul"))
+							.toOffsetDateTime()
+						: null)
+					.build();
+			})
 			.toList();
 
 		return SurveyResultListResponse.builder()

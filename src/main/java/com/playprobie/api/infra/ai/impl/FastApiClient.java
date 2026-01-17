@@ -606,10 +606,30 @@ public class FastApiClient implements AiClient {
 	@Override
 	public Flux<ServerSentEvent<String>> streamQuestionAnalysis(String surveyUuid, Long fixedQuestionId,
 		Map<String, String> filters) {
+		// AI 서비스는 snake_case 키를 사용하므로 변환 (ageGroup → age_group, preferGenre →
+		// prefer_genre)
+		Map<String, String> convertedFilters = null;
+		if (filters != null) {
+			convertedFilters = new java.util.HashMap<>();
+			for (Map.Entry<String, String> entry : filters.entrySet()) {
+				String key = entry.getKey();
+				String value = entry.getValue();
+				if (value == null || value.isBlank())
+					continue;
+
+				// camelCase → snake_case 변환
+				switch (key) {
+					case "ageGroup" -> convertedFilters.put("age_group", value);
+					case "preferGenre" -> convertedFilters.put("prefer_genre", value);
+					default -> convertedFilters.put(key, value); // gender 등은 그대로
+				}
+			}
+		}
+
 		QuestionAnalysisRequest request = QuestionAnalysisRequest.builder()
 			.surveyUuid(surveyUuid)
 			.fixedQuestionId(fixedQuestionId)
-			.filters(filters)
+			.filters(convertedFilters)
 			.build();
 
 		return aiWebClient.post()

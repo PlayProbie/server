@@ -40,7 +40,15 @@ public class SurveyResultListResponse {
 		@Schema(description = "테스터 ID", example = "tester123")
 		private String testerId;
 		private SessionStatus status;
-		private String firstQuestion;
+
+		@Schema(description = "성별", example = "M")
+		private String gender;
+
+		@Schema(description = "연령대", example = "20s")
+		private String ageGroup;
+
+		@Schema(description = "선호 장르", example = "RPG, FPS")
+		private String preferGenre;
 
 		@Schema(description = "종료 일시", example = "2024-01-01T10:30:00+09:00", type = "string")
 		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul")
