@@ -517,19 +517,30 @@ public class FastApiClient implements AiClient {
 						log.warn("⚠️ Metadata extraction failed for session: {}", sessionId, e);
 					}
 
-					// === 추가: 가장 최근 FIXED 답변의 validity/quality 추출 ===
+					// === 수정: 모든 로그 중 최고 품질 사용 (꼬리질문으로 품질 개선 반영) ===
+					String validity = null;
+					String quality = null;
+
+					// 1. validity는 FIXED 답변에서 추출
 					InterviewLog fixedLog = logs.stream()
 						.filter(l -> l.getType() == QuestionType.FIXED)
 						.findFirst()
 						.orElse(null);
 
-					String validity = null;
-					String quality = null;
-
 					if (fixedLog != null && fixedLog.getAnalysis() != null) {
-						com.playprobie.api.domain.interview.domain.LogAnalysis analysis = fixedLog.getAnalysis();
-						validity = analysis.getValidity() != null ? analysis.getValidity().name() : null;
-						quality = analysis.getQuality() != null ? analysis.getQuality().name() : null;
+						validity = fixedLog.getAnalysis().getValidity() != null
+							? fixedLog.getAnalysis().getValidity().name() : null;
+					}
+
+					// 2. quality는 모든 로그 중 최고 품질 선택 (FULL > GROUNDED > FLOATING > EMPTY)
+					com.playprobie.api.domain.interview.domain.AnswerQuality bestQuality = logs.stream()
+						.filter(l -> l.getAnalysis() != null && l.getAnalysis().getQuality() != null)
+						.map(l -> l.getAnalysis().getQuality())
+						.max(java.util.Comparator.comparingInt(Enum::ordinal))
+						.orElse(null);
+
+					if (bestQuality != null) {
+						quality = bestQuality.name();
 					}
 
 					SessionEmbeddingRequest request = SessionEmbeddingRequest.builder()
