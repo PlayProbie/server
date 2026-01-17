@@ -120,6 +120,29 @@ public class FastApiClient implements AiClient {
 		return result;
 	}
 
+	@Override
+	public com.playprobie.api.domain.game.dto.GameElementExtractResponse extractGameElements(
+		com.playprobie.api.domain.game.dto.GameElementExtractRequest request) {
+
+		return aiWebClient.post()
+			.uri("/game/extract-elements")
+			.contentType(MediaType.APPLICATION_JSON)
+			.accept(MediaType.APPLICATION_JSON)
+			.bodyValue(request)
+			.retrieve()
+			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+				clientResponse -> clientResponse.bodyToMono(String.class)
+					.flatMap(body -> {
+						log.error("❌ AI 서버 에러: status={}, body={}", clientResponse.statusCode(), body);
+						return reactor.core.publisher.Mono.error(
+							new RuntimeException("AI Server Error: " + clientResponse.statusCode()
+								+ " - " + body));
+					}))
+			.bodyToMono(com.playprobie.api.domain.game.dto.GameElementExtractResponse.class)
+			.timeout(java.time.Duration.ofSeconds(60))
+			.block();
+	}
+
 	/**
 	 * AI 서버에 답변 분석 및 꼬리질문 생성 요청을 보냅니다.
 	 * SSE 스트리밍으로 응답을 받아 클라이언트에 전달합니다.
@@ -189,7 +212,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM) // SSE 응답 타입
 			.bodyValue(aiInteractionRequest)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		// AI 응답에서 추출한 action 저장 (TAIL_QUESTION 또는 PASS_TO_NEXT)
 		final AtomicReference<String> nextAction = new AtomicReference<>(null);
@@ -593,7 +617,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			})
 			.map(sse -> {
 				// data만 꺼내서 새로운 SSE 생성 (event 타입 유지)
 				String event = sse.event() != null ? sse.event() : "message";
@@ -620,23 +645,41 @@ public class FastApiClient implements AiClient {
 			.onErrorReturn("");
 	}
 
+	// 꼬리질문 제한 초과 시 사용할 기본 리액션 메시지들
+	private static final String[] TAIL_LIMIT_REACTIONS = {
+		"좋은 의견 감사해요! 다음 주제로 넘어가볼게요 😊",
+		"충분히 이해했어요! 다른 부분도 여쭤볼게요",
+		"네, 잘 알겠어요! 그럼 다음 질문 드릴게요",
+		"좋아요, 이 부분은 충분한 것 같아요! 다음으로 넘어갈게요"
+	};
+
 	/**
 	 * 꼬리질문 횟수 제한 초과 시 호출
 	 * AI 호출 없이 바로 다음 고정 질문으로 이동
+	 * 중간 질문 전환 시에만 리액션 전송 (마지막→엔딩 시에는 리액션 없음)
 	 */
 	private void handleTailLimitExceeded(String sessionId, Long fixedQuestionId) {
+		// 다음 고정 질문 확인
+		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
+		int currentOrder = currentQuestion.qOrder();
+		var nextQuestionOpt = interviewService.getNextQuestion(sessionId, currentOrder);
+
+		// 다음 질문이 있을 때만 리액션 전송 (마지막→엔딩일 때는 리액션 없이 바로 종료)
+		if (nextQuestionOpt.isPresent()) {
+			String reactionText = TAIL_LIMIT_REACTIONS[(int)(Math.random() * TAIL_LIMIT_REACTIONS.length)];
+			ReactionPayload reactionPayload = ReactionPayload.builder().reactionText(reactionText).build();
+			sseEmitterService.send(sessionId, AiConstants.EVENT_REACTION, reactionPayload);
+			log.info("🎭 [TAIL LIMIT REACTION] sessionId={}, reaction={}", sessionId, reactionText);
+		}
+
 		// done 이벤트를 클라이언트로 전송
 		StatusPayload donePayload = StatusPayload.builder().status("tail_limit_exceeded").build();
 		sseEmitterService.send(sessionId, AiConstants.EVENT_DONE, donePayload);
 
-		// 다음 고정 질문 발송
-		FixedQuestionResponse currentQuestion = interviewService.getQuestionById(fixedQuestionId);
-		int currentOrder = currentQuestion.qOrder();
-
-		interviewService.getNextQuestion(sessionId, currentOrder)
-			.ifPresentOrElse(
-				nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
-				() -> proceedToClosingOrInsight(sessionId, AiConstants.REASON_ALL_DONE)); // 클로징 전 인사이트 체크
+		// 다음 고정 질문 발송 또는 종료 (이미 조회한 nextQuestionOpt 활용)
+		nextQuestionOpt.ifPresentOrElse(
+			nextQuestion -> sendNextQuestion(sessionId, nextQuestion),
+			() -> proceedToClosingOrInsight(sessionId, AiConstants.REASON_ALL_DONE)); // 클로징 전 인사이트 체크
 	}
 
 	/**
@@ -680,7 +723,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleOpeningEvent(sessionId, sse.data()),
@@ -711,7 +755,8 @@ public class FastApiClient implements AiClient {
 			.accept(MediaType.TEXT_EVENT_STREAM)
 			.bodyValue(request)
 			.retrieve()
-			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {});
+			.bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+			});
 
 		eventStream.subscribe(
 			sse -> handleClosingEvent(sessionId, sse.data()),
@@ -749,7 +794,6 @@ public class FastApiClient implements AiClient {
 					log.info("👋 [GREETING DONE] Sending first fixed question. sessionId={}", sessionId);
 					// DB에서 첫번째 고정질문 조회
 					FixedQuestionResponse firstQuestion = interviewService.getFirstQuestion(sessionId);
-					// Fetch total questions
 					Long surveyId = interviewService.getSurveyIdBySession(sessionId);
 					int totalQs = interviewService.getTotalQuestionCount(surveyId);
 

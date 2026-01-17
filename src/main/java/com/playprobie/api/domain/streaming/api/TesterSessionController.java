@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.playprobie.api.domain.streaming.application.StreamingResourceService;
+import com.playprobie.api.domain.streaming.application.StreamingSessionManager;
 import com.playprobie.api.domain.streaming.dto.SessionAvailabilityResponse;
 import com.playprobie.api.domain.streaming.dto.SessionStatusResponse;
 import com.playprobie.api.domain.streaming.dto.SignalRequest;
@@ -31,13 +31,13 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Tester Session API", description = "테스터 세션 관리 API (WebRTC 시그널링, Heartbeat 등)")
 public class TesterSessionController {
 
-	private final StreamingResourceService streamingResourceService;
+	private final StreamingSessionManager streamingSessionManager;
 
 	@GetMapping("/session")
 	@Operation(summary = "세션 가용성 확인", description = "세션 가용 여부를 확인합니다.")
 	public ResponseEntity<CommonResponse<SessionAvailabilityResponse>> checkSession(@PathVariable
 	UUID surveyUuid) {
-		SessionAvailabilityResponse response = streamingResourceService.checkSessionAvailability(surveyUuid);
+		SessionAvailabilityResponse response = streamingSessionManager.checkSessionAvailability(surveyUuid);
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
@@ -49,7 +49,7 @@ public class TesterSessionController {
 		@Valid @RequestBody
 		SignalRequest request) {
 
-		SignalResponse response = streamingResourceService.processSignal(surveyUuid, request.signalRequest());
+		SignalResponse response = streamingSessionManager.processSignal(surveyUuid, request.signalRequest());
 		return ResponseEntity.ok(CommonResponse.of(response));
 	}
 
@@ -61,7 +61,7 @@ public class TesterSessionController {
 		@RequestParam(name = "survey_session_uuid")
 		UUID surveySessionUuid) {
 
-		boolean isActive = streamingResourceService.isSessionActive(surveySessionUuid);
+		boolean isActive = streamingSessionManager.isSessionActive(surveySessionUuid);
 		return ResponseEntity.ok(CommonResponse.of(isActive
 			? SessionStatusResponse.active(surveySessionUuid)
 			: SessionStatusResponse.inactive()));
@@ -75,7 +75,7 @@ public class TesterSessionController {
 		@Valid @RequestBody
 		TerminateSessionRequest request) {
 
-		streamingResourceService.terminateSession(surveyUuid, request.surveySessionUuid(), request.reason(),
+		streamingSessionManager.terminateSession(surveyUuid, request.surveySessionUuid(), request.reason(),
 			request.proceedToInterview());
 		return ResponseEntity.ok(CommonResponse.of(TerminateSessionResponse.ok()));
 	}

@@ -1,6 +1,7 @@
 package com.playprobie.api.domain.streaming.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.playprobie.api.domain.streaming.domain.StreamingConstants;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -29,7 +30,8 @@ public record TestActionResponse(
 	}
 
 	public static TestActionResponse inProgress(String status, int capacity, Long requestId) {
-		return new TestActionResponse(status, capacity, "요청이 비동기로 처리 중입니다.", requestId, 5);
+		return new TestActionResponse(status, capacity, "요청이 비동기로 처리 중입니다.", requestId,
+			StreamingConstants.DEFAULT_ASYNC_COMPLETION_SECONDS);
 	}
 
 	public boolean isAsyncPending() {

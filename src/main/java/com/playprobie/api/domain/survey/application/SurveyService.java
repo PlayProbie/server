@@ -9,7 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.game.application.GameService;
 import com.playprobie.api.domain.game.domain.Game;
-import com.playprobie.api.domain.streaming.application.StreamingResourceService;
+import com.playprobie.api.domain.streaming.application.StreamingResourceManager;
+import com.playprobie.api.domain.streaming.application.StreamingTestManager;
 import com.playprobie.api.domain.streaming.dto.TestActionResponse;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
@@ -46,7 +47,8 @@ public class SurveyService {
 	private final SurveyRepository surveyRepository;
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final GameService gameService;
-	private final StreamingResourceService streamingResourceService;
+	private final StreamingTestManager streamingTestManager;
+	private final StreamingResourceManager streamingResourceManager;
 	private final AiClient aiClient;
 	private final WorkspaceSecurityManager securityManager;
 
@@ -128,7 +130,7 @@ public class SurveyService {
 		if (newStatus == SurveyStatus.ACTIVE) {
 			// JIT Provisioning: ACTIVE 시점에 Max Capacity로 확장
 			// 리소스가 없으면 null 반환 (Safe Method)
-			streamingAction = streamingResourceService.activateResourceIfPresent(surveyUuid, user);
+			streamingAction = streamingTestManager.activateResourceIfPresent(surveyUuid, user);
 
 			if (streamingAction == null) {
 				log.info("설문 활성화 완료 (스트리밍 리소스 없음). surveyUuid={}", surveyUuid);
@@ -136,7 +138,7 @@ public class SurveyService {
 		} else if (newStatus == SurveyStatus.CLOSED) {
 			// 설문 종료 시 리소스 즉시 해제
 			// 리소스가 없으면 무시 (Safe Method)
-			streamingResourceService.deleteResourceIfPresent(surveyUuid, user);
+			streamingResourceManager.deleteResourceIfPresent(surveyUuid, user);
 			streamingAction = TestActionResponse.stopTest("CLEANING", 0);
 		}
 
