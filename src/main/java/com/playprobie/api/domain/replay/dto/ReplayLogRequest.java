@@ -19,8 +19,8 @@ public record ReplayLogRequest(
 	@NotBlank @JsonProperty("segment_id")
 	String segmentId,
 
-	@NotBlank @JsonProperty("s3_url")
-	String s3Url,
+	@NotBlank @JsonProperty("video_url")
+	String videoUrl,
 
 	@NotNull @Valid
 	List<InputLogDto> logs) {
