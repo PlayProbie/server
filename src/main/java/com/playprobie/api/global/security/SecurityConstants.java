@@ -47,5 +47,8 @@ public final class SecurityConstants {
 		// 게임/설문 API (개발용 - 추후 인증 적용 필요)
 		"/games/**",
 		"/surveys/**",
+
+		// Replay API (세션 기반 - 비회원 접근 가능)
+		"/sessions/*/replay/**",
 	};
 }
