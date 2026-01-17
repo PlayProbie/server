@@ -39,7 +39,29 @@ public record AwsProperties(
 		Duration credentialsDuration,
 
 		@NotBlank(message = "S3 Role ARN must be defined")
-		String roleArn) {
+		String roleArn,
+
+		String replayBucketName,
+
+		String replayRegion) {
+
+		/**
+		 * 리플레이 버킷 이름 반환 (필수 설정)
+		 */
+		public String getReplayBucketName() {
+			return replayBucketName != null && !replayBucketName.isBlank()
+				? replayBucketName
+				: bucketName;
+		}
+
+		/**
+		 * 리플레이 버킷 리전 반환 (미설정 시 기본 AWS 리전 사용)
+		 */
+		public String getReplayRegion() {
+			return replayRegion != null && !replayRegion.isBlank()
+				? replayRegion
+				: "ap-northeast-2"; // 기본값: 서울 리전
+		}
 	}
 
 	public record GameLift(

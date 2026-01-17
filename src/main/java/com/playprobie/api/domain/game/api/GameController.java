@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.playprobie.api.domain.game.application.GameService;
 import com.playprobie.api.domain.game.dto.CreateGameRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractRequest;
+import com.playprobie.api.domain.game.dto.GameElementExtractResult;
 import com.playprobie.api.domain.game.dto.GameResponse;
 import com.playprobie.api.domain.game.dto.UpdateGameRequest;
 import com.playprobie.api.domain.user.domain.User;
@@ -37,11 +39,11 @@ public class GameController {
 
 	@PostMapping("/games/extract-elements")
 	@Operation(summary = "게임 요소 추출", description = "게임 설명에서 핵심 요소를 추출합니다.")
-	public ResponseEntity<com.playprobie.api.domain.game.dto.GameElementExtractResult> extractElements(
+	public ResponseEntity<GameElementExtractResult> extractElements(
 		@RequestBody
-		com.playprobie.api.domain.game.dto.GameElementExtractRequest request) {
+		GameElementExtractRequest request) {
 
-		com.playprobie.api.domain.game.dto.GameElementExtractResult result = gameService.extractElements(request);
+		GameElementExtractResult result = gameService.extractElements(request);
 		return ResponseEntity.ok(result);
 	}
 
