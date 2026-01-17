@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.playprobie.api.domain.streaming.dao.CapacityChangeRequestRepository;
 import com.playprobie.api.domain.streaming.dao.StreamingResourceRepository;
@@ -48,7 +50,7 @@ public class StreamingTestManager {
 	 *
 	 * <p>
 	 * Phase 1: DB 업데이트 (트랜잭션 내)
-	 * Phase 2: 비동기 AWS API 호출 (트랜잭션 외)
+	 * Phase 2: 비동기 AWS API 호출 (트랜잭션 커밋 후)
 	 *
 	 * @param surveyUuid Survey UUID
 	 * @param user       요청 사용자
@@ -76,8 +78,8 @@ public class StreamingTestManager {
 		resource.markScalingUp(1);
 		streamingResourceRepository.save(resource);
 
-		// Phase 2: Async Execution with Fail-Fast
-		executeAsyncCapacityChange(resource.getId(), request.getId(), 1, CapacityChangeType.START_TEST);
+		// Phase 2: 트랜잭션 커밋 후 비동기 실행
+		executeAsyncCapacityChangeAfterCommit(resource.getId(), request.getId(), 1, CapacityChangeType.START_TEST);
 
 		return TestActionResponse.inProgress("SCALING_UP", 1, request.getId());
 	}
@@ -111,8 +113,8 @@ public class StreamingTestManager {
 		resource.markScalingDown();
 		streamingResourceRepository.save(resource);
 
-		// Phase 2: Async Execution with Fail-Fast
-		executeAsyncCapacityChange(resource.getId(), request.getId(), 0, CapacityChangeType.STOP_TEST);
+		// Phase 2: 트랜잭션 커밋 후 비동기 실행
+		executeAsyncCapacityChangeAfterCommit(resource.getId(), request.getId(), 0, CapacityChangeType.STOP_TEST);
 
 		return TestActionResponse.inProgress("SCALING_DOWN", 0, request.getId());
 	}
@@ -151,8 +153,9 @@ public class StreamingTestManager {
 		resource.markScalingUp(targetCapacity);
 		streamingResourceRepository.save(resource);
 
-		// Phase 2: Async Execution with Fail-Fast
-		executeAsyncCapacityChange(resource.getId(), request.getId(), targetCapacity, CapacityChangeType.ACTIVATE);
+		// Phase 2: 트랜잭션 커밋 후 비동기 실행
+		executeAsyncCapacityChangeAfterCommit(resource.getId(), request.getId(), targetCapacity,
+			CapacityChangeType.ACTIVATE);
 
 		log.info("Resource activation initiated for resourceId={}, targetCapacity={}",
 			resource.getId(), targetCapacity);
@@ -209,8 +212,9 @@ public class StreamingTestManager {
 		resource.markScalingUp(targetCapacity);
 		streamingResourceRepository.save(resource);
 
-		// Phase 2: Async Execution
-		executeAsyncCapacityChange(resource.getId(), request.getId(), targetCapacity, CapacityChangeType.ACTIVATE);
+		// Phase 2: 트랜잭션 커밋 후 비동기 실행
+		executeAsyncCapacityChangeAfterCommit(resource.getId(), request.getId(), targetCapacity,
+			CapacityChangeType.ACTIVATE);
 
 		return TestActionResponse.inProgress("SCALING_UP", targetCapacity, request.getId());
 	}
@@ -253,6 +257,42 @@ public class StreamingTestManager {
 		return status == StreamingResourceStatus.SCALING_UP ||
 			status == StreamingResourceStatus.SCALING_DOWN ||
 			status == StreamingResourceStatus.SCALING;
+	}
+
+	/**
+	 * 트랜잭션 커밋 후 비동기 용량 변경을 실행합니다.
+	 *
+	 * <p>
+	 * <b>안정성 보장</b>:
+	 * <ul>
+	 *   <li>트랜잭션이 없는 경우 즉시 실행 (Fallback)</li>
+	 *   <li>afterCommit 내부 예외 로깅 (예외 증발 방지)</li>
+	 * </ul>
+	 */
+	private void executeAsyncCapacityChangeAfterCommit(Long resourceId, Long requestId,
+		int targetCapacity, CapacityChangeType type) {
+
+		// 트랜잭션 활성 상태 체크
+		if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+			log.warn("No active transaction. Executing async change immediately. resourceId={}", resourceId);
+			executeAsyncCapacityChange(resourceId, requestId, targetCapacity, type);
+			return;
+		}
+
+		// 트랜잭션 커밋 후 실행
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				try {
+					executeAsyncCapacityChange(resourceId, requestId, targetCapacity, type);
+				} catch (Exception e) {
+					// [CRITICAL] afterCommit 예외는 상위로 전파되지 않음 - 반드시 로깅
+					log.error("[AFTER_COMMIT_FAILURE] Failed to trigger async capacity change. " +
+						"resourceId={}, requestId={}, type={}, error={}", resourceId, requestId, type, e.getMessage(),
+						e);
+				}
+			}
+		});
 	}
 
 	/**

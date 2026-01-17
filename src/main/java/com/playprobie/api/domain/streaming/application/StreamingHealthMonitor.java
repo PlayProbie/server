@@ -78,22 +78,39 @@ public class StreamingHealthMonitor {
 	}
 
 	private void handleActiveState(StreamingResource resource, GetStreamGroupResponse awsResponse) {
-		int desiredCapacity = resource.getMaxCapacity();
+		// currentCapacity를 사용: READY 상태에서는 0, ACTIVE 상태에서는 설정된 값
+		int desiredCapacity = resource.getCurrentCapacity();
+		int awsConfiguredCapacity = extractAlwaysOnCapacity(awsResponse);
 		int allocatedCapacity = extractAllocatedCapacity(awsResponse);
 
-		if (allocatedCapacity >= desiredCapacity) {
-			// 용량 확보됨 → DB 상태를 ACTIVE로 동기화
-			if (resource.getStatus() != StreamingResourceStatus.ACTIVE) {
-				resource.markActive();
-				streamingResourceRepository.save(resource);
-				log.info("Resource verified as ACTIVE and READY (Capacity {}/{}) via sync logic. resourceId={}",
-					allocatedCapacity, desiredCapacity, resource.getId());
+		// desiredCapacity가 0이면 Self-healing 불필요 (READY 상태)
+		if (desiredCapacity == 0) {
+			log.debug("Resource in standby mode (desiredCapacity=0). Skipping health check. resourceId={}",
+				resource.getId());
+			return;
+		}
+
+		// 1. 설정값 비교: AWS alwaysOnCapacity vs DB desiredCapacity
+		if (awsConfiguredCapacity >= desiredCapacity) {
+			// 설정값 정상 → 인스턴스 할당 상태에 따라 DB 동기화
+			if (allocatedCapacity >= desiredCapacity) {
+				// 인스턴스도 할당됨 → ACTIVE 상태로 마킹
+				if (resource.getStatus() != StreamingResourceStatus.ACTIVE) {
+					resource.markActive();
+					streamingResourceRepository.save(resource);
+					log.info("Resource verified as ACTIVE and READY (Capacity {}/{}) via sync logic. resourceId={}",
+						allocatedCapacity, desiredCapacity, resource.getId());
+				}
+			} else {
+				// 설정은 맞지만 인스턴스 할당 중 → 정상 (AWS 시간 필요)
+				log.debug(
+					"AWS provisioning instances. Config OK (alwaysOn={}), waiting for allocation ({}/{}). resourceId={}",
+					awsConfiguredCapacity, allocatedCapacity, desiredCapacity, resource.getId());
 			}
 		} else {
-			// 용량 부족 → Self-Healing
-			log.warn("Capacity Mismatch detected! AWS Active but Allocated: {}, Desired: {}. resourceId={}",
-				allocatedCapacity, desiredCapacity, resource.getId());
-
+			// 설정값 불일치 → Self-Healing 필요
+			log.warn("Capacity Config Mismatch! AWS alwaysOn: {}, Desired: {}. resourceId={}",
+				awsConfiguredCapacity, desiredCapacity, resource.getId());
 			triggerSelfHealing(resource);
 		}
 	}
@@ -111,6 +128,19 @@ public class StreamingHealthMonitor {
 			return 0;
 		}
 		return awsResponse.locationStates().get(0).allocatedCapacity();
+	}
+
+	/**
+	 * AWS 응답에서 alwaysOnCapacity 설정값을 추출합니다.
+	 *
+	 * @param awsResponse AWS 응답
+	 * @return alwaysOnCapacity 설정값
+	 */
+	private int extractAlwaysOnCapacity(GetStreamGroupResponse awsResponse) {
+		if (awsResponse.locationStates() == null || awsResponse.locationStates().isEmpty()) {
+			return 0;
+		}
+		return awsResponse.locationStates().get(0).alwaysOnCapacity();
 	}
 
 	/**
