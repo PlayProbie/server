@@ -28,6 +28,7 @@ import com.playprobie.api.domain.analytics.dto.analysis.QuestionAnalysisOutput;
 import com.playprobie.api.domain.analytics.event.AnalyticsUpdatedEvent;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
+import com.playprobie.api.domain.interview.domain.SessionStatus;
 import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.interview.domain.TesterProfile;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
@@ -256,7 +257,7 @@ public class AnalyticsService {
 			questions.size(), analyses.size());
 
 		int totalParticipants = (int)surveySessionRepository.countBySurveyIdAndStatus(surveyId,
-			com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED);
+			SessionStatus.COMPLETED);
 
 		// 설문 종합 평가 포함
 		String surveySummary = survey.getSurveySummary();
