@@ -147,7 +147,10 @@ public class AnalyticsService {
 				log.info("📊 분석 진행 상황: {}/{} (surveyUuid={})", completedCount, totalCount, surveyUuid);
 
 				if (completedCount >= totalCount) {
-					log.info("📢 모든 질문 분석 완료, SSE 이벤트 발행: surveyUuid={}", surveyUuid);
+					log.info("📢 모든 질문 분석 완료. 설문 종합 평가 생성 시작: surveyUuid={}", surveyUuid);
+
+					// Survey Summary 생성
+					generateAndSaveSurveySummary(survey.getId(), surveyUuid);
 					eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
 				}
 			})
@@ -431,6 +434,37 @@ public class AnalyticsService {
 			surveyRepository.save(survey);
 			log.info("💾 설문 종합 평가 저장 완료: surveyUuid={}", surveyUuid);
 		});
+	}
+
+	/**
+	 * 모든 질문 분석 결과에서 meta_summary를 추출하여 설문 종합 평가 생성
+	 */
+	private void generateAndSaveSurveySummary(Long surveyId, UUID surveyUuid) {
+		List<QuestionResponseAnalysis> allAnalyses = questionResponseAnalysisRepository.findAllBySurveyId(surveyId);
+
+		List<String> metaSummaries = allAnalyses.stream()
+			.map(QuestionResponseAnalysis::getResultJson)
+			.map(json -> {
+				try {
+					com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+					if (node.has("meta_summary")) {
+						return node.get("meta_summary").asText();
+					}
+				} catch (JsonProcessingException e) {
+					log.warn("Failed to parse meta_summary from json", e);
+				}
+				return null;
+			})
+			.filter(java.util.Objects::nonNull)
+			.toList();
+
+		if (!metaSummaries.isEmpty()) {
+			aiClient.generateSurveySummary(metaSummaries)
+				.doOnSuccess(summary -> saveSurveySummary(surveyUuid, summary))
+				.subscribe();
+		} else {
+			log.warn("⚠️ 메타 요약이 없어 설문 종합 평가를 건너뜁니다.");
+		}
 	}
 
 	/**
