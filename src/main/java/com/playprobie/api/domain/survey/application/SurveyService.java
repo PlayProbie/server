@@ -7,7 +7,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.game.application.GameService;
+import com.playprobie.api.domain.game.dao.GameRepository;
 import com.playprobie.api.domain.game.domain.Game;
 import com.playprobie.api.domain.streaming.application.StreamingResourceManager;
 import com.playprobie.api.domain.streaming.application.StreamingTestManager;
@@ -47,11 +50,13 @@ public class SurveyService {
 
 	private final SurveyRepository surveyRepository;
 	private final FixedQuestionRepository fixedQuestionRepository;
+	private final GameRepository gameRepository;
 	private final GameService gameService;
 	private final StreamingTestManager streamingTestManager;
 	private final StreamingResourceManager streamingResourceManager;
 	private final AiClient aiClient;
 	private final WorkspaceSecurityManager securityManager;
+	private final ObjectMapper objectMapper;
 
 	// ========== Survey CRUD ==========
 
@@ -148,14 +153,93 @@ public class SurveyService {
 
 	// ========== AI & Questions ==========
 
-	public List<String> generateAiQuestions(AiQuestionsRequest request) {
-		return aiClient.generateQuestions(
-			request.gameName(),
-			String.join(", ", request.gameGenre()),
-			request.gameContext(),
-			request.themePriorities(),
-			request.themeDetails());
+	public List<String> generateAiQuestions(AiQuestionsRequest request, User user) {
+		log.info("📢 AI 질문 생성 요청: gameUuid={}, elementsProvided={}", request.gameUuid(),
+			request.extractedElements() != null);
 
+		// 1. Check extractedElements
+		java.util.Map<String, String> extractedElements = request.extractedElements();
+
+		if (extractedElements == null || extractedElements.isEmpty()) {
+			// Try Fetch from DB if gameUuid is present
+			if (request.gameUuid() != null) {
+				try {
+					Game game = gameService.getGameEntity(request.gameUuid(), user);
+					String json = game.getExtractedElements();
+					if (json != null && !json.isBlank()) {
+						extractedElements = objectMapper.readValue(json,
+							new TypeReference<java.util.Map<String, String>>() {});
+						log.info("🧩 DB에서 게임 요소 로드: {}", extractedElements);
+					}
+				} catch (Exception e) {
+					log.warn("⚠️ 게임 요소 DB 조회 실패 (계속 진행): {}", e.getMessage());
+				}
+			} else if (request.gameName() != null) {
+				// Fallback: Search by Game Name (Workaround for client missing UUID)
+				try {
+					log.info("⚠️ gameUuid 부재로 인해 gameName으로 조회 시도: {}", request.gameName());
+					// 중복된 이름이 있을 수 있으므로 모두 조회하여 가장 최신의 유효한 데이터를 사용
+					List<Game> games = gameRepository.findAllByName(request.gameName());
+
+					// ID 내림차순(최신순)으로 정렬 후 extractedElements가 있는 첫 번째 게임 선택
+					Game game = games.stream()
+						.sorted((g1, g2) -> g2.getId().compareTo(g1.getId()))
+						.filter(g -> g.getExtractedElements() != null && !g.getExtractedElements().isBlank())
+						.findFirst()
+						.orElse(null);
+
+					if (game != null) {
+						String json = game.getExtractedElements();
+						extractedElements = objectMapper.readValue(json,
+							new TypeReference<java.util.Map<String, String>>() {});
+						log.info("🧩 [Fallback] DB에서 게임 요소 로드 (by name, found {} games): {}", games.size(),
+							extractedElements);
+					} else {
+						log.warn("⚠️ 이름으로 게임들을 찾았으나({}) 유효한 extractedElements가 없음", games.size());
+					}
+				} catch (Exception e) {
+					log.warn("⚠️ 게임 요소 DB 조회 실패 (Fallback): {}", e.getMessage());
+				}
+			}
+			// Fallback: AI Auto-Extraction if still empty
+			if (extractedElements == null || extractedElements.isEmpty()) {
+				log.info("🧩 게임 요소 정보 부재. AI 자동 추출 시작: {}", request.gameName());
+			}
+		}
+		// Flatten themeDetails values for purposeSubcategories
+		List<String> purposeSubcategories = request.themeDetails() != null
+			? request.themeDetails().values().stream()
+				.flatMap(List::stream)
+				.toList()
+			: List.of();
+
+		// Default count to 5 if null
+		int count = request.count() != null ? request.count() : 5;
+
+		com.playprobie.api.infra.ai.dto.request.QuestionRecommendRequest recommendRequest = com.playprobie.api.infra.ai.dto.request.QuestionRecommendRequest
+			.builder()
+			.gameName(request.gameName())
+			.gameDescription(request.gameContext()) // context -> description
+			.genres(request.gameGenre())
+			.testPhase(request.testStage() != null ? request.testStage() : "prototype")
+			.purposeCategories(request.themePriorities())
+			.purposeSubcategories(purposeSubcategories)
+			.extractedElements(filterNullValues(extractedElements))
+			.topK(count) // Use requested count
+			.shuffle(request.shuffle())
+			.build();
+
+		com.playprobie.api.infra.ai.dto.response.QuestionRecommendResponse response = aiClient
+			.recommendQuestions(recommendRequest);
+
+		// Map Response DTOs to List<String> with slot replacement
+		java.util.Map<String, String> elementsToUse = extractedElements != null ? extractedElements
+			: java.util.Map.of();
+
+		return response.questions().stream()
+			.limit(count)
+			.map(q -> replaceSlots(q.text(), elementsToUse))
+			.toList();
 	}
 
 	public QuestionFeedbackResponse getQuestionFeedback(
@@ -226,6 +310,30 @@ public class SurveyService {
 			}
 		}
 		throw new IllegalArgumentException("Invalid test stage code: " + code);
+	}
+
+	private java.util.Map<String, String> filterNullValues(java.util.Map<String, String> elements) {
+		if (elements == null) {
+			return java.util.Collections.emptyMap();
+		}
+		return elements.entrySet().stream()
+			.filter(entry -> entry.getValue() != null)
+			.collect(java.util.stream.Collectors.toMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue));
+	}
+
+	private String replaceSlots(String text, java.util.Map<String, String> elements) {
+		if (text == null || elements == null || elements.isEmpty()) {
+			return text;
+		}
+		String result = text;
+		for (java.util.Map.Entry<String, String> entry : elements.entrySet()) {
+			String key = "[" + entry.getKey() + "]";
+			if (result.contains(key)) {
+				log.info("🔄 슬롯 치환: {} -> {}", key, entry.getValue());
+				result = result.replace(key, entry.getValue());
+			}
+		}
+		return result;
 	}
 
 }

@@ -69,7 +69,9 @@ public class InterviewController {
 
 		// AI 서버에 세션 시작 요청 (비동기 SSE 스트리밍)
 		// 게임 정보와 테스터 프로필은 InterviewService에서 조회하여 전달
-		fastApiClient.streamOpening(sessionId, null, null);
+		com.playprobie.api.domain.interview.dto.SessionAiContext context = interviewService
+			.getSessionAiContext(sessionId);
+		fastApiClient.streamOpening(sessionId, context.gameInfo(), context.testerProfile());
 
 		return emitter;
 	}

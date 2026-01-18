@@ -316,6 +316,8 @@ public class MockDataLoader implements CommandLineRunner {
 			.name((String)gameData.get("name"))
 			.genres(genres)
 			.context((String)gameData.get("description"))
+			.extractedElements(
+				"{\"core_mechanic\": \"숨바꼭질 및 퇴마 의식\", \"player_goal\": \"새벽 4시까지 생존하고 악령 퇴치\", \"horror_element\": \"점프스케어와 심리적 압박\", \"atmosphere\": \"어둡고 습한 폐가, 고립감\", \"main_character\": \"기억을 잃은 퇴마사\"}")
 			.build());
 		log.info("💾 [1/4] Game 저장 완료: {}, UUID={}, genres={}", game.getName(), game.getUuid(), genres);
 

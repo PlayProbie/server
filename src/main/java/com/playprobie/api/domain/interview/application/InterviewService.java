@@ -43,6 +43,7 @@ public class InterviewService {
 	private final InterviewLogRepository interviewLogRepository;
 	private final SurveySessionRepository surveySessionRepository;
 	private final FixedQuestionRepository fixedQuestionRepository;
+	private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
 	@Transactional
 	public InterviewCreateResponse createSession(UUID surveyUuid,
@@ -421,5 +422,52 @@ public class InterviewService {
 		log.info(
 			"[VALIDITY_QUALITY] Updated log: sessionId={}, fixedQuestionId={}, turnNum={}, logId={}, validity={}, quality={}",
 			sessionId, fixedQuestionId, answerTurnNum, targetLog.getId(), validity, quality);
+	}
+
+	/**
+	 * AI 세션 시작을 위한 컨텍스트(GameInfo, TesterProfile)를 조회합니다.
+	 */
+	@Transactional
+	public com.playprobie.api.domain.interview.dto.SessionAiContext getSessionAiContext(String sessionId) {
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		Survey survey = session.getSurvey();
+		com.playprobie.api.domain.game.domain.Game game = survey.getGame();
+
+		// 1. Game Info 구성
+		Map<String, Object> gameInfo = new java.util.HashMap<>();
+		gameInfo.put("game_name", game.getName());
+		gameInfo.put("game_genre", game.getGenres().stream().map(Enum::name).toList());
+		gameInfo.put("game_context", game.getContext());
+		gameInfo.put("target_theme", survey.getThemePriorities()); // Survey에서 가져옴
+
+		// extracted_elements 파싱
+		try {
+			if (game.getExtractedElements() != null && !game.getExtractedElements().isBlank()) {
+				Map<String, Object> elements = objectMapper.readValue(game.getExtractedElements(),
+					new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+				gameInfo.put("extracted_elements", elements);
+			}
+		} catch (Exception e) {
+			log.warn("Failed to parse extracted_elements for game {}: {}", game.getId(), e.getMessage());
+		}
+
+		// 2. Tester Profile 구성
+		com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest.TesterProfileDto profileDto = null;
+		if (session.getTesterProfile() != null) {
+			com.playprobie.api.domain.interview.domain.TesterProfile p = session.getTesterProfile();
+			profileDto = com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest.TesterProfileDto.builder()
+				.testerId(p.getTesterId())
+				.ageGroup(p.getAgeGroup())
+				.gender(p.getGender())
+				.preferGenre(p.getPreferGenre())
+				.build();
+		}
+
+		return com.playprobie.api.domain.interview.dto.SessionAiContext.builder()
+			.gameInfo(gameInfo)
+			.testerProfile(profileDto)
+			.build();
 	}
 }

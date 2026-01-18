@@ -80,9 +80,11 @@ public class SurveyController {
 	@PostMapping("/ai-questions")
 	@Operation(summary = "AI 질문 생성", description = "AI를 통해 추천 질문 목록을 생성합니다.")
 	public ResponseEntity<CommonResponse<List<String>>> generateAiQuestions(
+		@AuthenticationPrincipal(expression = "user")
+		User user,
 		@Valid @RequestBody
 		AiQuestionsRequest request) {
-		List<String> result = surveyService.generateAiQuestions(request);
+		List<String> result = surveyService.generateAiQuestions(request, user);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.of(result));
 	}
 
