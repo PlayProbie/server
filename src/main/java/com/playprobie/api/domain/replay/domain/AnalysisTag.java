@@ -66,6 +66,13 @@ public class AnalysisTag extends BaseTimeEntity {
 	@Column(name = "is_asked", nullable = false)
 	private Boolean isAsked = false;
 
+	/**
+	 * 인사이트 질문 대상으로 선택되었는지 여부
+	 * startInsightQuestionPhase에서 랜덤 선택 시 true로 설정
+	 */
+	@Column(name = "is_selected", nullable = false)
+	private Boolean isSelected = false;
+
 	@Column(name = "answer_text", columnDefinition = "TEXT")
 	private String answerText;
 
@@ -78,6 +85,7 @@ public class AnalysisTag extends BaseTimeEntity {
 		this.durationMs = durationMs;
 		this.metadata = metadata;
 		this.isAsked = false;
+		this.isSelected = false;
 	}
 
 	/**
@@ -86,5 +94,21 @@ public class AnalysisTag extends BaseTimeEntity {
 	public void markAsAsked(String answerText) {
 		this.isAsked = true;
 		this.answerText = answerText;
+	}
+
+	/**
+	 * 인사이트 질문 대상으로 선택
+	 */
+	public void markAsSelected() {
+		this.isSelected = true;
+	}
+
+	/**
+	 * 인사이트 질문 대상에서 제외 (스킵 처리)
+	 * isAsked=true로 설정하여 향후 조회에서 제외
+	 */
+	public void markAsSkipped() {
+		this.isAsked = true;
+		this.answerText = null;
 	}
 }
