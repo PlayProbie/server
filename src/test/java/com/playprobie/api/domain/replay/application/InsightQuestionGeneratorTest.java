@@ -38,8 +38,8 @@ class InsightQuestionGeneratorTest {
 	class RandomSelection {
 
 		@Test
-		@DisplayName("3개 이상 태그 중 최대 2개 선택")
-		void selectMax2_whenMoreThan2Tags() {
+		@DisplayName("2개 이상 태그 중 최대 1개 선택")
+		void selectMax1_whenMoreThan1Tags() {
 			// given
 			List<AnalysisTag> tags = createTags(5);
 
@@ -47,20 +47,7 @@ class InsightQuestionGeneratorTest {
 			List<AnalysisTag> selected = generator.selectRandomInsights(tags);
 
 			// then
-			assertThat(selected).hasSize(2);
-		}
-
-		@Test
-		@DisplayName("2개 이하 태그는 전체 반환")
-		void returnAll_whenLessThan3Tags() {
-			// given
-			List<AnalysisTag> tags = createTags(2);
-
-			// when
-			List<AnalysisTag> selected = generator.selectRandomInsights(tags);
-
-			// then
-			assertThat(selected).hasSize(2);
+			assertThat(selected).hasSize(1);
 		}
 
 		@Test

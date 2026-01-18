@@ -3,6 +3,7 @@ package com.playprobie.api.domain.replay.application;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ import com.playprobie.api.domain.replay.domain.AnalysisTag;
 import com.playprobie.api.domain.replay.dto.InsightAnswerResponse;
 import com.playprobie.api.domain.replay.dto.InsightCompletePayload;
 import com.playprobie.api.domain.replay.dto.InsightQuestionPayload;
+import com.playprobie.api.domain.replay.event.InsightPhaseCompleteEvent;
 import com.playprobie.api.global.error.ErrorCode;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
 import com.playprobie.api.infra.sse.service.SseEmitterService;
@@ -36,6 +38,7 @@ public class InsightQuestionService {
 	private final SurveySessionRepository surveySessionRepository;
 	private final InsightQuestionGenerator insightQuestionGenerator;
 	private final SseEmitterService sseEmitterService;
+	private final ApplicationEventPublisher eventPublisher;
 
 	/**
 	 * 세션에 질문하지 않은 인사이트 태그가 있는지 확인
@@ -49,7 +52,7 @@ public class InsightQuestionService {
 
 	/**
 	 * 인사이트 질문 Phase 시작
-	 * 랜덤으로 최대 2개 선택하여 첫번째 질문 전송
+	 * 랜덤으로 최대 1개 선택하여 질문 전송
 	 *
 	 * @return 시작 성공 여부 (인사이트 없으면 false)
 	 */
@@ -66,7 +69,7 @@ public class InsightQuestionService {
 			return false;
 		}
 
-		// 랜덤으로 최대 2개 선택
+		// 랜덤으로 최대 1개 선택
 		List<AnalysisTag> selectedTags = insightQuestionGenerator.selectRandomInsights(allTags);
 
 		// 선택된 태그 마킹 및 비선택 태그 스킵 처리
@@ -205,5 +208,8 @@ public class InsightQuestionService {
 
 		log.info("[InsightQuestionService] Insight phase complete: session={}, total={}, answered={}",
 			sessionUuid, allTags.size(), answeredCount);
+
+		// 클로징 트리거 이벤트 발행
+		eventPublisher.publishEvent(new InsightPhaseCompleteEvent(sessionUuid));
 	}
 }

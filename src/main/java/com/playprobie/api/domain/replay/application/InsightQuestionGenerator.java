@@ -16,25 +16,25 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 인사이트 질문 생성기
  * AnalysisTag를 기반으로 하드코딩된 템플릿 질문 생성
- * 랜덤으로 최대 2개 선택
+ * 랜덤으로 최대 1개 선택
  */
 @Slf4j
 @Service
 public class InsightQuestionGenerator {
 
-	private static final int MAX_INSIGHT_QUESTIONS = 2;
+	private static final int MAX_INSIGHT_QUESTIONS = 1;
 
 	private static final Map<InsightType, String> TEMPLATES = Map.of(
 		InsightType.PANIC,
-		"영상의 %d초~%d초 구간에서 버튼을 빠르게 여러 번 누르셨는데, 혹시 당황하셨거나 조작이 어려우셨나요?",
+		"영상의 %d초~%d초 구간에서 버튼을 빠르게 여러 번 누르셨는데, 어떤 상황인지 설명해주실 수 있으신가요?",
 		InsightType.IDLE,
-		"영상의 %d초~%d초 구간에서 잠시 멈추셨는데, 어떤 생각을 하고 계셨나요? 혹시 막히는 부분이 있으셨나요?");
+		"영상의 %d초~%d초 구간에서 잠시 멈추셨는데, 어떤 상황인지 설명해주실 수 있으신가요?");
 
 	/**
-	 * 감지된 태그 중 랜덤으로 최대 2개 선택
+	 * 감지된 태그 중 랜덤으로 최대 1개 선택
 	 *
 	 * @param allTags 전체 태그 목록
-	 * @return 선택된 태그 목록 (최대 2개)
+	 * @return 선택된 태그 목록 (최대 1개)
 	 */
 	public List<AnalysisTag> selectRandomInsights(List<AnalysisTag> allTags) {
 		if (allTags == null || allTags.isEmpty()) {

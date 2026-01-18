@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -24,6 +25,7 @@ import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.replay.application.InsightQuestionService;
+import com.playprobie.api.domain.replay.event.InsightPhaseCompleteEvent;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.config.properties.AiProperties;
@@ -974,6 +976,16 @@ public class FastApiClient implements AiClient {
 				sessionId, e.getMessage(), e);
 			sendInterviewComplete(sessionId);
 		}
+	}
+
+	/**
+	 * 인사이트 Phase 완료 이벤트 핸들러
+	 * 인사이트 질문 완료 후 클로징 진행
+	 */
+	@EventListener
+	public void onInsightPhaseComplete(InsightPhaseCompleteEvent event) {
+		log.info("🎯 [INSIGHT COMPLETE] Triggering closing after insight phase. sessionId={}", event.sessionUuid());
+		streamClosing(event.sessionUuid(), AiConstants.REASON_ALL_DONE);
 	}
 
 	@Override
