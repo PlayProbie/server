@@ -69,6 +69,16 @@ public class InsightQuestionService {
 		// 랜덤으로 최대 2개 선택
 		List<AnalysisTag> selectedTags = insightQuestionGenerator.selectRandomInsights(allTags);
 
+		// 선택된 태그 마킹 및 비선택 태그 스킵 처리
+		for (AnalysisTag tag : allTags) {
+			if (selectedTags.contains(tag)) {
+				tag.markAsSelected();
+			} else {
+				tag.markAsSkipped();
+			}
+		}
+		analysisTagRepository.saveAll(allTags);
+
 		log.info("[InsightQuestionService] Starting insight phase: session={}, selected={}/{}",
 			sessionUuid, selectedTags.size(), allTags.size());
 
@@ -97,9 +107,9 @@ public class InsightQuestionService {
 		log.info("[InsightQuestionService] Answer saved: tagId={}, type={}",
 			tagId, tag.getInsightType());
 
-		// 남은 인사이트 질문 확인
+		// 남은 인사이트 질문 확인 (선택된 태그 중에서만)
 		UUID uuid = UUID.fromString(sessionUuid);
-		List<AnalysisTag> remainingTags = analysisTagRepository.findBySessionUuidAndIsAskedFalse(uuid);
+		List<AnalysisTag> remainingTags = analysisTagRepository.findBySessionUuidAndIsSelectedTrueAndIsAskedFalse(uuid);
 
 		if (remainingTags.isEmpty()) {
 			// 모든 인사이트 질문 완료
@@ -133,9 +143,9 @@ public class InsightQuestionService {
 		log.info("[InsightQuestionService] Answer saved: tagId={}, type={}",
 			tagId, tag.getInsightType());
 
-		// 남은 인사이트 질문 확인
+		// 남은 인사이트 질문 확인 (선택된 태그 중에서만)
 		UUID uuid = UUID.fromString(sessionUuid);
-		List<AnalysisTag> remainingTags = analysisTagRepository.findBySessionUuidAndIsAskedFalse(uuid);
+		List<AnalysisTag> remainingTags = analysisTagRepository.findBySessionUuidAndIsSelectedTrueAndIsAskedFalse(uuid);
 
 		if (remainingTags.isEmpty()) {
 			// 모든 인사이트 질문 완료 - SSE 이벤트 전송 및 완료 응답 반환
