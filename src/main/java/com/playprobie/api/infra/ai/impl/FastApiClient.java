@@ -261,7 +261,8 @@ public class FastApiClient implements AiClient {
 					// Ideally, we handle it here.
 					boolean success = parseAndHandleEvent(sessionId, fixedQuestionId, nextTurnNum, data, nextAction,
 						tailQuestionGenerated,
-						currentQuestionOrder, totalQuestions, validityRef, qualityRef);
+						currentQuestionOrder, totalQuestions, validityRef, qualityRef, currentTailCount,
+						maxTailQuestions);
 
 					if (!success) {
 						throw new SseConnectionClosedException("Client disconnected");
@@ -284,7 +285,8 @@ public class FastApiClient implements AiClient {
 	private boolean parseAndHandleEvent(String sessionId, Long fixedQuestionId, int nextTurnNum, String jsonStr,
 		AtomicReference<String> nextAction,
 		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions,
-		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef) {
+		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef, int currentTailCount,
+		int maxTailQuestions) {
 		log.debug("📥 [SSE RAW] sessionId={}, rawJson={}", sessionId, jsonStr);
 		try {
 			JsonNode rootNode = objectMapper.readTree(jsonStr);
@@ -294,7 +296,7 @@ public class FastApiClient implements AiClient {
 			return handleEvent(sessionId, fixedQuestionId, nextTurnNum, eventType, dataNode, nextAction,
 				tailQuestionGenerated,
 				order,
-				totalQuestions, validityRef, qualityRef);
+				totalQuestions, validityRef, qualityRef, currentTailCount, maxTailQuestions);
 		} catch (JsonProcessingException e) {
 			log.error("❌ Failed to parse JSON event. Data: {} | Error: {}", jsonStr, e.getMessage());
 			return true; // JSON parsing error shouldn't stop stream, technically connection is fine
@@ -305,7 +307,8 @@ public class FastApiClient implements AiClient {
 		JsonNode dataNode,
 		AtomicReference<String> nextAction,
 		AtomicBoolean tailQuestionGenerated, Integer order, Integer totalQuestions,
-		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef) {
+		AtomicReference<AnswerValidity> validityRef, AtomicReference<AnswerQuality> qualityRef, int currentTailCount,
+		int maxTailQuestions) {
 		switch (eventType) {
 			case AiConstants.EVENT_START:
 				StatusPayload startPayload = StatusPayload.builder().status(dataNode.path("status").asText()).build();
@@ -354,6 +357,13 @@ public class FastApiClient implements AiClient {
 
 				String action = nextAction.get();
 				log.info("🔍 [ACTION CHECK] sessionId={}, rawAction={}", sessionId, action);
+
+				if ("LIMIT_EXCEEDED_HANDLED".equals(action)) {
+					log.info(
+						"🛑 [LIMIT HANDLED] Already handled RETRY suppression. Skipping DONE event logic. sessionId={}",
+						sessionId);
+					return true;
+				}
 
 				if (AiConstants.ACTION_TAIL_QUESTION.equals(action) && !tailQuestionGenerated.get()) {
 					log.warn(
@@ -454,6 +464,18 @@ public class FastApiClient implements AiClient {
 
 			case AiConstants.EVENT_RETRY_REQUEST:
 				String retryMessage = dataNode.path("message").asText();
+
+				// [FIX] 마지막 꼬리질문 단계(max - 1)라면 RETRY를 무시하고 강제 종료(SKIP)
+				if (currentTailCount >= maxTailQuestions) {
+					log.info(
+						"✋ [RETRY SUPPRESSED] Max tail count reached ({}). Suppressing RETRY and moving to next. sessionId={}, msg={}",
+						currentTailCount, sessionId, retryMessage);
+
+					handleTailLimitExceeded(sessionId, fixedQuestionId);
+					nextAction.set("LIMIT_EXCEEDED_HANDLED");
+					return true;
+				}
+
 				interviewService.saveRetryQuestionLog(sessionId, fixedQuestionId, retryMessage);
 				log.info("Saved RETRY question log: sessionId={}, fixedQuestionId={}, msg={}", sessionId,
 					fixedQuestionId,
