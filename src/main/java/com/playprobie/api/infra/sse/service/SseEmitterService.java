@@ -32,21 +32,23 @@ public class SseEmitterService {
 		return emitter;
 	}
 
-	public void send(String sessionId, String eventName, Object data) {
-		emitterRepository.findById(sessionId).ifPresentOrElse(
-			emitter -> {
-				try {
-					emitter.send(SseEmitter.event()
-
-						.name(eventName)
-						.data(data));
-				} catch (IOException | IllegalStateException e) {
-					log.warn("Failed to send SSE event. SessionId: {}", sessionId);
-					emitterRepository.deleteById(sessionId);
-					emitter.completeWithError(e);
-				}
-			},
-			() -> log.warn("SSE Emitter를 찾을 수 없습니다. SessionId: {}", sessionId));
+	public boolean send(String sessionId, String eventName, Object data) {
+		return emitterRepository.findById(sessionId).map(emitter -> {
+			try {
+				emitter.send(SseEmitter.event()
+					.name(eventName)
+					.data(data));
+				return true;
+			} catch (IOException | IllegalStateException e) {
+				log.warn("Failed to send SSE event. SessionId: {}", sessionId);
+				emitterRepository.deleteById(sessionId);
+				emitter.completeWithError(e);
+				return false;
+			}
+		}).orElseGet(() -> {
+			log.warn("SSE Emitter를 찾을 수 없습니다. SessionId: {}", sessionId);
+			return false;
+		});
 	}
 
 	public void complete(String sessionId) {
