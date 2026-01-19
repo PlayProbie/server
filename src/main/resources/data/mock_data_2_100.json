@@ -1,0 +1,5118 @@
+{
+  "game": {
+    "name": "Touhou Fumo Racing",
+    "genres": [
+      "SPORTS",
+      "ARCADE",
+      "CASUAL"
+    ],
+    "description": "귀여운 Fumo 캐릭터로 동방 프로젝트 캐릭터들과 함께 왁자지껄한 카트 레이싱! 혼자서 AI와 대결하거나 최대 4명의 친구와 로컬 분할화면 멀티플레이를 즐기세요. Unity 엔진 기반의 팬게임으로, 아기자기한 비주얼과 경쾌한 레이싱 경험을 제공합니다.",
+    "extractedElements": "{\"playMode\":[\"싱글플레이\",\"로컬 멀티플레이(최대 4인)\"],\"coreMechanic\":[\"카트 레이싱\",\"아이템 사용\",\"점프\",\"드리프트\"],\"simulationTarget\":\"캐릭터 카트 레이싱\",\"scoreSystem\":\"순위 기반\",\"category\":\"아케이드 카트 레이싱\",\"playerGoal\":\"다른 Fumo 캐릭터들을 상대로 레이스에서 승리\",\"difficultyCurve\":\"캐주얼/접근성 높음\",\"managementElements\":null}"
+  },
+  "survey": {
+    "name": "Early Access 플레이테스트",
+    "testPurpose": "GAMEPLAY_VALIDATION",
+    "testStage": "PROTOTYPE",
+    "themePriorities": [
+      "GAMEPLAY",
+      "BUG",
+      "UI_UX"
+    ],
+    "themeDetails": {
+      "GAMEPLAY": [
+        "조작감",
+        "아이템 밸런스",
+        "AI 난이도",
+        "트랙 디자인",
+        "멀티플레이"
+      ],
+      "BUG": [
+        "물리 오류",
+        "충돌 문제",
+        "아이템 버그",
+        "멀티플레이 동기화"
+      ],
+      "UI_UX": [
+        "HUD",
+        "캐릭터 선택 화면",
+        "분할화면 가시성",
+        "시점 변경"
+      ]
+    },
+    "versionNote": "얼리 액세스 빌드 - 핵심 카트 레이싱 메카닉 및 멀티플레이어 시스템 검증",
+    "questions": [
+      {
+        "id": 1,
+        "content": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+        "order": 1
+      },
+      {
+        "id": 2,
+        "content": "한 레이스를 플레이하는 시간이 적절했나요?",
+        "order": 2
+      }
+    ]
+  },
+  "sessions": [
+    {
+      "profile": {
+        "testerId": "tester-001",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "RHYTHM"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "핸들링이 약간 둔한 느낌이 들었고 코너링할 때 카트가 살짝 미끄러지는게 아쉬웠어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "카트가 둔하고 미끄러지는 느낌이 들었을 때 게임 플레이에 어떤 불편함을 겪으셨나요?",
+          "answerText": "코너를 돌 때마다 벽에 부딪히게 되고 원하는 방향으로 가기가 힘들어서 레이스에서 자꾸 꼴등을 했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너에서 벽에 자주 부딪히실 때 어떤 점이 가장 불편하거나 아쉬우셨나요?",
+          "answerText": "벽에 부딪힐 때마다 속도가 확 줄어들어서 답답했고, 다시 속도 올리는 게 너무 오래 걸려요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 바퀴 도는데 너무 오래 걸려서 좀 지루했어요. 3-4분 정도면 딱 좋았을 것 같아요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스가 길어서 지루하셨다고 하셨는데, 어떤 점이 가장 지루하게 느껴지셨나요?",
+          "answerText": "직선 코스가 너무 길어서 단순 가속만 하는 구간이 지루했어요. 중간중간 아이템이나 점프대 같은 재미요소가 더 필요할 것 같아요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "직선 코스에서 지루함을 느끼셨다고 하셨는데, 어떤 재미요소가 추가되면 더 흥미진진할 것 같으신가요?",
+          "answerText": "도로 중간중간에 점프대나 숏컷 구간이 있으면 더 신날 것 같아요! 마리오카트처럼 부스터 패드도 있으면 좋겠어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-002",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 카트의 조작감이 꽤 민첩하고 부드러웠는데, 특히 코너링할 때 드리프트 타이밍이 직관적이어서 좋았습니다. 다만 레이무와 마리사 캐릭터의 카트는 서로 비슷한 느낌인데 비해, 플랑드르의 카트는 약간 무거운 느낌이 들어서 캐릭터별 차이가 좀 더 뚜렷했으면 좋겠어요. 가속과 감속도 자연스러워서 초보자도 금방 적응할 수 있을 것 같았습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "일반 코스는 2-3바퀴를 도는데 약 3분 정도가 걸려서 적당한 길이라고 느꼈습니다. 다만 몇몇 숏컷 코스는 1분 30초 정도로 너무 짧게 끝나버려서 아쉬웠어요. 특히 멀티플레이할 때는 게임이 너무 빨리 끝나버려서, 숏컷 코스도 최소 2분은 걸리도록 조정하면 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-003",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트가 약간 무겁게 느껴져서 조작이 다소 둔한 편이었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 카트의 조작이 특히 둔하게 느껴지셨나요?",
+          "answerText": "급커브 구간에서 차량이 잘 안 꺾이고 벽에 부딪히는 경우가 많았어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "급커브 구간에서 차량 조작이 잘 안 된다고 하셨는데, 어떤 부분이 가장 불편하셨나요?",
+          "answerText": "차량의 회전반경이 너무 넓어서 좁은 코너를 돌 때 내가 원하는 궤도로 주행하기가 힘들었어요. 특히 빨간 버섯 트랙의 S자 커브 구간에서는 계속 벽에 부딪히면서 속도가 떨어져서 답답했답니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 트랙 완주하는데 3분 정도라 적당했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분 정도의 레이스 시간이 지루하지도 않고 부담스럽지도 않았던 이유가 무엇인가요?",
+          "answerText": "트랙마다 다양한 장애물과 아이템이 있어서 계속 긴장감이 유지됐고, 짧은 시간 안에 순위 경쟁도 할 수 있어서 재미있었습니다.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스 한 판당 평균적으로 몇 분 정도 소요되었나요?",
+          "answerText": "보통 한 판당 3분에서 4분 정도 걸렸어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-004",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본 조작감이 무겁고 둔탁해서 빠른 방향 전환이나 드리프트가 제대로 이루어지지 않는 문제가 있습니다. 특히 저속에서 코너링할 때 카트가 미끄러지는 현상이 심하고, 가속과 감속의 밸런스도 맞지 않아 정교한 주행이 어렵습니다. 캐릭터별 특성이 조작감에 거의 반영되지 않아 차별성도 부족해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 약 4-5분으로 설정되어 있는데, 이는 캐주얼 게임치고는 다소 길어서 플레이어의 집중력이 중간에 흐트러질 수 있습니다. 특히 실수로 트랙을 이탈했을 때 만회하기가 어려울 정도로 시간이 길며, 초보 플레이어들에게는 부담스러운 플레이 타임입니다. 2-3분 정도로 레이스 시간을 단축하고, 난이도별로 시간을 다르게 설정하는 것이 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-005",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "그냥 별로에요, 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작이 불편하다고 느끼셨는지 구체적인 예를 들어주실 수 있나요?",
+          "answerText": "아 뭐... 그냥 전체적으로 다 불편했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "어떤 부분이 가장 불편하셨는지 구체적으로 말씀해 주실 수 있으신가요?",
+          "answerText": "귀찮은데... 그냥 다 불편했다니까요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "시간이 얼마나 걸렸는지 기억도 안 나요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 트랙을 완주하는데 보통 몇 분 정도 걸린 것 같으신가요?",
+          "answerText": "글쎄요, 시계를 보면서 달린 건 아니라서...",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스를 달리실 때 체감하기에 시간이 너무 길거나 짧다고 느끼신 적은 없으셨나요?",
+          "answerText": "그냥 달리다 보니까 시간 가는 줄도 모르고 했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-006",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "ARCADE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본적인 조작감은 괜찮았는데, 급커브를 돌 때 가끔 미끄러짐이 너무 심해서 벽에 부딪히는 경우가 있었어요. 특히 레이무로 플레이할 때는 드리프트 타이밍을 잡기가 좀 까다로웠던 것 같습니다. 하지만 점프대에서 뛰어오르거나 아이템을 사용할 때의 반응 속도는 정확하고 경쾌해서 좋았어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 한 판에 약 3분 정도가 소요됐는데, 이 정도 길이가 적당히 긴장감도 유지되고 지루하지도 않아서 좋았어요. 특히 숏컷을 잘 활용하면 2분 30초 정도에도 완주할 수 있어서, 기록 단축의 재미도 있었습니다. 다만 초보자의 경우 첫 레이스에서는 4분 이상 걸릴 수 있어서, 난이도 선택 옵션이 있으면 좋겠어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-007",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 방향 전환이 약간 둔하게 느껴졌는데, 특히 레이무로 플레이할 때 급커브에서 벽에 몇 번 부딪혔어요. 가속과 감속은 비교적 자연스러웠지만, 드리프트 시스템이 좀 더 민감하게 반응했으면 좋겠다는 생각이 들었습니다. 전반적으로는 초보자도 쉽게 적응할 수 있는 수준의 조작감이었어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "드리프트 시스템이 더 민감했으면 좋겠다고 하셨는데, 어떤 식으로 개선되면 좋을지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "현재는 드리프트를 시작하려면 버튼을 꽤 오래 눌러야 하는데, 마리사로 플레이할 때 이게 특히 불편했어요. 버튼을 살짝만 눌러도 드리프트가 바로 시작되고, 드리프트 중에 방향 전환도 지금보다 더 빠르게 됐으면 좋겠습니다. 마리오 카트 8처럼 드리프트 게이지가 빨리 차오르면서 미니 부스트도 자주 사용할 수 있게 되면 레이싱이 더 재미있어질 것 같아요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 트랙을 3바퀴 도는데 약 3분 정도 걸렸는데, 이 정도면 적당한 길이라고 생각해요. 체리 블로섬 코스에서는 시간이 좀 더 걸렸지만, 그래도 지루하지 않게 즐길 수 있었습니다. 다만 초보자용 연습 트랙의 경우는 2바퀴 정도로 줄여도 좋을 것 같네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "초보자용 연습 트랙은 왜 2바퀴가 더 적절하다고 생각하셨나요?",
+          "answerText": "연습 트랙은 코스가 단순하고 장애물도 거의 없어서 3바퀴를 돌면 다소 지루했어요. 처음 게임을 접하는 사람들은 기본 조작법을 익히는 게 목적이라 2바퀴면 충분할 것 같았습니다. 실제로 제가 처음 연습할 때도 2바퀴 정도에서 조작감을 충분히 파악할 수 있었고, 그 이상은 불필요하다고 느꼈어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-008",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "FIGHTING"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "글쎄요, 그냥 달리기만 했는데 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "주행할 때 코너링이나 가속, 감속 등 특별히 불편하게 느끼신 부분은 없으셨나요?",
+          "answerText": "아 그냥 별로 신경 안 썼는데... 뭐가 불편했는지 기억도 안 나요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이싱 중에 코너를 돌거나 가속할 때 조작감이 어떠셨는지 구체적으로 기억나시나요?",
+          "answerText": "아 진짜 귀찮은데... 그냥 버튼 막 눌러가면서 했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "시간이요? 음... 전 중간에 핸드폰 보느라 얼마나 걸렸는지 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이싱 게임을 실제로 집중해서 플레이하셨을 때는 대략 몇 분 정도 소요되셨나요?",
+          "answerText": "아 잘 모르겠는데... 그냥 금방 끝났던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스를 완주하는데 대략 몇 분 정도 걸렸는지 기억나시나요?",
+          "answerText": "아까도 말했잖아요, 시간 안 쟀는데요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-009",
+        "ageGroup": "30s",
+        "gender": "FEMALE",
+        "preferGenre": "SIMULATION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 가볍고 날아다니는 느낌이라 귀여운 푸모랑 잘 어울려요. 너무 어렵지도 쉽지도 않아서 재미있게 플레이했습니다.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작감이 특히 가볍고 날아다니는 느낌이 잘 들었는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "점프대를 타고 공중으로 날아오를 때가 정말 기분 좋았어요. 마치 솜사탕처럼 폭신폭신하게 떠다니는 것 같았거든요.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "점프대를 통한 공중 부양 외에도 기억에 남는 조작감이나 재미있었던 움직임이 있었나요?",
+          "answerText": "코너 돌 때 옆으로 살짝 미끄러지듯 달리는 게 정말 재미있었어요. 마치 푸모 인형이 스케이트를 타는 것 같았거든요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 판에 2-3분 정도라 지루하지 않고 딱 좋았어요. 금방금방 다음 레이스로 넘어갈 수 있어서 부담 없이 즐길 수 있었습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "2-3분이라는 레이스 시간이 적당하다고 느끼셨는데, 이 시간이 게임의 재미나 몰입도에 어떤 영향을 주었나요?",
+          "answerText": "짧은 시간이라 긴장감도 있고 계속 한 판 더 하고 싶은 마음이 들었어요. 너무 길지도 짧지도 않아서 좋았습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "보통 한 레이스를 완주하는데 몇 분 정도 걸리셨나요?",
+          "answerText": "대부분 2분 30초 정도 걸렸던 것 같아요. 실수 없이 잘 달리면 2분대 초반에도 들어올 수 있었죠.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-010",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 상당히 부드럽고 직관적이에요. 키보드로 움직일 때도 캐릭터가 잘 반응해서 재미있게 플레이했습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 캐릭터로 플레이하실 때 조작감이 특히 더 좋다고 느끼셨나요?",
+          "answerText": "레이무로 플레이할 때가 제일 손에 익고 편했어요. 무게감이랑 속도가 딱 중간이라 컨트롤하기 좋았습니다.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이무 외의 다른 캐릭터들과 비교했을 때 어떤 차이점을 느끼셨나요?",
+          "answerText": "마리사는 속도가 빠른 대신 좀 미끄러운 느낌이고, 유유코는 좀 무거워서 코너링이 힘들었어요. 레이무가 제일 밸런스가 좋았죠.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3바퀴 정도로 딱 좋았어요! 지루하지도 않고 너무 짧지도 않아서 한 판씩 부담 없이 즐길 수 있었습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3바퀴가 적절했다고 하셨는데, 혹시 어떤 트랙을 달리실 때가 가장 재미있으셨나요?",
+          "answerText": "안개가 자욱한 미스티 레이크 트랙이 제일 재밌었어요. 커브길이 적당해서 속도감도 있고 분위기도 좋았거든요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "미스티 레이크 트랙의 커브길과 분위기가 좋았다고 하셨는데, 구체적으로 어떤 점이 재미있게 느껴지셨나요?",
+          "answerText": "안개 속에서 살짝살짝 보이는 풍경이 신비로웠고, 커브길을 돌 때마다 드리프트하는 맛이 짜릿했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-011",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "꽤 잘 반응하고 조작도 편했어요. 방향 전환이나 가속할 때 딱딱 원하는대로 움직여서 좋았네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "특히 어떤 상황에서 조작감이 가장 만족스러우셨나요?",
+          "answerText": "코너링할 때 드리프트가 정말 부드럽고 재미있었어요. 방향키랑 브레이크 타이밍만 잘 맞추면 딱 원하는 대로 돌 수 있어서 좋았습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트가 부드럽다고 하셨는데, 어떤 점에서 특히 만족스러우셨나요?",
+          "answerText": "살짝만 방향키 눌러도 부드럽게 미끄러지는 느낌이 정말 좋았어요! 마리오카트처럼 너무 과하지도 않고 딱 좋은 정도예요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 판당 3분 정도라 지루하지도 않고 부담스럽지도 않아서 딱 좋았어요. 캐주얼하게 즐기기에 적절한 길이인 것 같네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 플레이 시간이 적절하다고 느끼신 구체적인 이유가 더 있으신가요?",
+          "answerText": "지하철에서 한 두 정거장 가는 동안에도 한 판 할 수 있어서 좋았어요. 바쁜 일상 속에서 틈틈이 즐기기 딱이에요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "짧은 시간 안에 게임을 즐길 수 있어서 좋았다고 하셨는데, 실제로 한 레이스당 몇 분 정도 걸렸나요?",
+          "answerText": "한 판당 3분 정도였는데, 로딩이랑 다 합쳐도 5분 안에 끝나서 정말 가볍게 즐기기 좋았어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-012",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "HORROR"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 핸들링이 다소 민감한 편이라 초반에는 적응이 필요했지만, 몇 판 플레이하다 보니 의도한 대로 정교한 조작이 가능했어요. 특히 마리사로 플레이할 때는 카트가 빠르면서도 안정적이어서 코너링도 부드럽게 할 수 있었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 트랙당 2-3분 정도로 레이스 시간이 설정되어 있어서 지루하지 않고 적당했습니다. 3바퀴를 도는 동안 아이템 수집과 추월 경쟁을 하다 보면 시간이 금방 지나갔어요. 다만 초반에 실수로 트랙을 이탈했을 때는 레이스 시간이 좀 길게 느껴지기도 했네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-013",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "SHOOTER"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 정말 경쾌하고 반응이 빨라서 좋았는데요, 특히 레이무로 플레이할 때 급회전을 하면서도 정확하게 원하는 방향으로 꺾을 수 있어서 너무 재미있었어요! 다만 마리사의 카트는 최고속도가 빠른 대신 약간 무거운 느낌이 들어서, 좁은 코너에서는 레이무의 카트보다 다루기 어려웠지만 이런 캐릭터별 특성 차이도 게임의 재미를 더해주는 것 같아요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3분 내외로 진행되어서 지루하지 않고 딱 알맞았어요! 특히 친구들과 멀티플레이할 때 한 사람이 기다리는 시간이 너무 길지 않아서 좋았고, 짧은 시간 안에 역전의 짜릿함도 느낄 수 있었죠. 다만 더 긴 코스를 즐기고 싶은 플레이어들을 위해 5분 정도의 레이스 옵션도 있으면 좋겠다는 생각이 들었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-014",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "STRATEGY"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 괜찮았어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "코너를 돌 때나 아이템을 사용할 때 조작감이 어땠는지 구체적으로 말씀해 주실 수 있으신가요?",
+          "answerText": "코너링할 때 카트가 좀 미끄러운 느낌이었고, 아이템은 버튼 누르면 바로 발동돼서 좋았어요. 특히 코너에서 드리프트 할 때 타이밍 맞추기가 재미있었는데, 처음에는 벽에 자주 부딪혔다가 점점 익숙해지면서 자연스럽게 할 수 있었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "약 3분 정도여서 적당했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스 도중에 지루하거나 너무 길게 느껴진 구간이 있었나요?",
+          "answerText": "아니요, 맵이 꽤 조밀해서 지루한 구간은 없었습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스 한 판을 완주하는데 보통 몇 분 정도 걸렸나요?",
+          "answerText": "보통 3분에서 3분 30초 정도 걸렸어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-015",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "FIGHTING"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 부드럽고 민감해서 마음대로 잘 움직여져서 좋았어요. 초보자도 쉽게 적응할 수 있을 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "실제로 어떤 상황에서 조작감이 가장 부드럽게 느껴지셨나요?",
+          "answerText": "코너링할 때 드리프트가 자연스럽게 됐고 속도감도 딱 좋았어요. 너무 어렵지도 쉽지도 않은 게 재미있었죠.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트와 속도감이 적절했다고 하셨는데, 어떤 점 때문에 난이도가 딱 좋다고 느끼셨나요?",
+          "answerText": "드리프트가 버튼 하나로 쉽게 되면서도 방향 조절은 적당히 신경 써야 해서 재미있었어요. 무턱대고 드리프트하면 벽에 박히니까요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "5분 정도로 딱 적당했어요. 너무 길지도 짧지도 않아서 지루하지 않게 즐길 수 있었죠.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스를 하면서 어떤 재미있는 상황이나 순간이 있으셨나요?",
+          "answerText": "앞에서 달리던 상대를 아이템으로 맞춰서 제끼는 순간이 진짜 통쾌했어요! 특히 결승선 직전에서 역전했을 때는 너무 짜릿했죠.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-016",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "SIMULATION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 둔탁하고 무거워요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "조작감이 무겁다고 하셨는데, 어떤 상황에서 특히 불편함을 많이 느끼셨나요?",
+          "answerText": "코너링할 때 카트가 너무 늦게 반응해서 벽에 자주 부딪혔어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너링할 때 벽에 자주 부딪히셨다고 하셨는데, 이런 조작감이 게임 플레이에 어떤 영향을 미쳤나요?",
+          "answerText": "레이스 완주하기 힘들고 재미가 떨어져요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분은 너무 짧아서 아쉽네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스 시간이 3분이면 짧다고 느끼셨는데, 적절하다고 생각하시는 레이스 시간은 몇 분 정도일까요?",
+          "answerText": "5분이 적당할 것 같습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스를 플레이하시면서 5분이 길게 느껴지거나 지루했던 순간은 없으셨나요?",
+          "answerText": "아니요, 적당했습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-017",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 되게 부드럽고 직관적이어서 처음 해보는데도 금방 적응했어요! 게임하는 내내 스트레스 없이 즐거웠네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "조작감이 좋다고 하셨는데, 어떤 부분이 특히 직관적이고 부드럽게 느껴지셨나요?",
+          "answerText": "드리프트할 때 카트가 너무 자연스럽게 미끄러지고, 점프나 방향전환도 생각하는 대로 잘 되서 좋았어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트와 조작감이 자연스럽다고 하셨는데, 어떤 점이 특히 실제 운전하는 것 같은 느낌을 주었나요?",
+          "answerText": "아 그렇게 현실적인 느낌은 아니었고요, 그냥 아케이드 게임처럼 가볍고 재미있게 즐길 수 있어서 좋았어요!",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 판에 3-4분 정도라 지루하지도 않고 부담스럽지도 않아서 딱 좋았어요! 가볍게 한 판 더 하고 싶은 길이예요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-018",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "SHOOTER"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "그냥 뭐... 적당했던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "코너를 돌 때나 가속할 때 조작감이 어떠셨는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "네... 코너에서 좀 미끄러진 거 같은데 귀찮아서 자세히는 안 봤어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너를 돌 때 어떤 식으로 미끄러지는 느낌이었는지 자세히 말씀해 주실 수 있으실까요?",
+          "answerText": "아 그런거 자세히 기억 안나는데... 그냥 좀 미끄러졌어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "몰라요... 시간 재면서 안해봐서.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 트랙을 완주하는데 보통 몇 분 정도 걸리셨나요?",
+          "answerText": "아 그냥... 대충 몇 분 걸린 것 같은데 정확히는 기억 안 나요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "마지막으로 플레이하신 레이스에서 몇 바퀴를 도셨는지 기억나시나요?",
+          "answerText": "음... 귀찮아서 중간에 그만뒀는데요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-019",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "네, 전반적으로 조작감이 부드럽고 직관적이었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "카트 조작이 부드럽다고 하셨는데, 코너링이나 점프 같은 특정 상황에서 어떤 느낌이었는지 자세히 설명해 주실 수 있나요?",
+          "answerText": "코너링할 때 미끄러짐이 자연스러웠고 특히 점프대에서 착지할 때 충격이 적절했어요. 드리프트 시스템도 초보자도 쉽게 할 수 있게 잘 설계된 것 같았는데, 부스트 게이지가 쌓이는 속도가 적당해서 레이스의 박진감을 더해줬습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도의 레이스 시간은 적당했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 레이스 시간 동안 경기가 지루하지는 않으셨나요?",
+          "answerText": "아뇨, 코스 중간중간 아이템 박스랑 점프대가 있어서 재미있었어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코스에서 아이템 박스와 점프대를 사용할 때 어떤 점이 특별히 재미있으셨나요?",
+          "answerText": "아이템으로 상대방을 방해하면서 동시에 점프대로 숏컷을 찾는 게 짜릿했어요. 특히 점프대에서 착지할 때 부스트 효과가 있어서 속도감이 정말 좋았고, 다른 플레이어들과 아이템 경쟁을 하면서 전략적으로 플레이하는 재미가 있었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-020",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "아 글쎄요... 그냥 버튼 눌러보긴 했는데 잘 기억이 안나네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "게임을 플레이하실 때 코너를 도는 순간이나 아이템을 사용할 때의 조작감은 어떠셨나요?",
+          "answerText": "음... 코너에서 뭐 그냥 돌기만 했는데 특별한 건 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너를 돌 때 어떤 조작을 하셨는지 자세히 설명해주실 수 있나요?",
+          "answerText": "그냥 방향키 눌러서 돌았어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "음... 시간이 얼마나 걸렸는지 시계를 안 봐서 잘 모르겠네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "플레이하신 레이스 코스 한 바퀴를 도는 데 대략 몇 분 정도 걸린 것 같으신가요?",
+          "answerText": "아 그냥... 한 5분? 시간 재면서 안 해서 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스를 하시면서 코스 한 바퀴를 도는 데 보통 얼마나 걸리셨나요?",
+          "answerText": "아까 말했잖아요... 그냥 대충 5분 정도?",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-021",
+        "ageGroup": "30s",
+        "gender": "FEMALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 괜찮은 편이었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "코너링이나 점프 시에 카트 조작이 어떤 느낌이었는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "코너링할 때 카트가 약간 미끄러지는 느낌이 들어서 재미있었어요. 점프는 타이밍을 잘 맞추기가 조금 까다로웠는데, 특히 레이무로 플레이할 때 점프 후 착지 순간에 카트가 살짝 튀는 느낌이 있었습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이무로 플레이할 때 점프와 착지가 까다롭다고 하셨는데, 이런 조작감이 게임의 재미에는 어떤 영향을 미쳤나요?",
+          "answerText": "처음엔 좀 힘들었지만 점프 타이밍을 익히고 나니까 도전 의식이 생겨서 더 재미있게 느껴졌어요. 특히 점프를 이용해서 숨겨진 지름길을 찾거나 상대방을 앞지르는 순간이 짜릿했고, 이런 어려움이 오히려 게임의 묘미가 되었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간은 약 3분 정도로 적당했습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 레이스 시간 동안 코스의 난이도나 긴장감은 어떠셨나요?",
+          "answerText": "코스가 적당히 어려워서 지루하지 않고 재미있었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 코스를 완주하는데 보통 몇 분 정도 걸리셨나요?",
+          "answerText": "보통 2분 30초에서 3분 정도 걸렸습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-022",
+        "ageGroup": "30s",
+        "gender": "FEMALE",
+        "preferGenre": "ARCADE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 캐릭터와 카트의 조작감이 상당히 민첩하고 자연스러웠는데, 특히 코너링할 때 드리프트 감각이 정말 좋았어요. 다만 가속 시에 약간의 입력 지연이 느껴졌고, 이건 좀 아쉬운 부분이었습니다. 캐릭터별로 카트의 무게감이 조금씩 달라서 조작의 재미가 더해진 것 같아요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 한 판당 약 3-4분 정도가 걸렸는데, 이 정도 길이는 집중력을 유지하면서도 지루하지 않게 즐기기에 딱 좋았습니다. 3바퀴로 구성된 레이스 구조도 적절했는데, 2바퀴까지는 순위 역전의 가능성이 있어서 긴장감이 계속 유지되었어요. 특히 친구들과 로컬 멀티플레이할 때는 이 시간이 너무 길지도 짧지도 않아서 좋았습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-023",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 적당히 민감하고 부드러워서 좋았어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작감이 특히 부드럽다고 느끼셨는지 구체적인 예시를 들어주실 수 있을까요?",
+          "answerText": "급커브 구간에서 드리프트할 때 특히 조작이 자연스러웠어요. 코너링 시 카트가 미끄러지는 정도와 방향 전환이 너무 빠르거나 느리지 않고 제가 의도한 대로 잘 움직였거든요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트할 때 조작감이 특히 좋았다고 하셨는데, 이전에 플레이해보신 다른 레이싱 게임들과 비교했을 때는 어떠셨나요?",
+          "answerText": "마리오 카트와 비교했을 때 좀 더 직관적이고 배우기 쉬웠어요. 마리오 카트는 드리프트 타이밍을 맞추기가 까다로웠는데, 이 게임은 처음 플레이하는 사람도 쉽게 드리프트를 할 수 있게 만들어져 있더라고요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도의 레이스 시간이 지루하지 않고 딱 좋았어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이 적당하다고 느끼신 구체적인 이유가 궁금한데 말씀해 주실 수 있을까요?",
+          "answerText": "아이템 획득하고 경쟁하면서 달리다 보면 시간이 금방 가는데, 그보다 길었으면 집중력이 떨어졌을 것 같아요. 특히 친구들이랑 멀티플레이할 때는 3분이 긴장감을 유지하기에 적당한 길이였고, 여러 번 레이스를 즐기기에도 부담없는 시간이었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-024",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "아 글쎄요... 그냥 운전하는 게 좀 불편했던 것 같기도 하고...",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "운전할 때 어떤 부분이 구체적으로 불편하셨는지 예시를 들어 설명해 주실 수 있나요?",
+          "answerText": "어... 그냥 뭔가 잘 안 됐어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "어떤 부분에서 조작이 잘 안 되었는지 구체적으로 말씀해 주실 수 있으신가요?",
+          "answerText": "아 귀찮은데... 그냥 카트가 막 이상하게 움직이고 그랬어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "글쎄요... 시간이 얼마나 걸렸는지 안 재봤는데...",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "기억나시는 레이스 중에서 가장 재미있게 플레이하신 코스는 얼마나 걸렸나요?",
+          "answerText": "아 잘 모르겠는데... 대충 5분이나 10분 정도?",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 트랙을 완주하는 데 걸린 시간이 길게 느껴지셨나요, 아니면 짧게 느껴지셨나요?",
+          "answerText": "그냥 적당했던 것 같은데 잘 기억이 안나요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-025",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "FIGHTING"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 캐릭터와 카트의 조작감은 적절한 수준이었지만, 급격한 방향 전환 시에는 약간의 둔중함이 느껴졌습니다. 가속과 감속은 부드럽고 직관적이었으며, 특히 드리프트 시스템은 초보자도 쉽게 적응할 수 있을 만큼 잘 설계되어 있었습니다. 다만 점프 후 착지 시의 카트 컨트롤이 다소 불안정한 느낌이 있어 이 부분의 개선이 필요해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "약 3-4분 정도의 레이스 시간은 캐주얼 레이싱 게임으로서 적절한 길이라고 생각합니다. 너무 길지 않아 지루함 없이 집중도를 유지할 수 있었고, 친구들과의 멀티플레이 시에도 부담 없이 여러 번 도전할 수 있었습니다. 다만 일부 트랙의 경우 난이도에 비해 레이스 시간이 다소 짧게 느껴져, 트랙별로 차별화된 최적 레이스 시간 설정을 고려해보면 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-026",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "아 글쎄요... 그냥 대충 움직이던데 별로 신경 안 썼어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "특히 코너를 돌 때 카트가 어떻게 움직이는지 기억나시나요?",
+          "answerText": "아 잘 기억 안 나는데... 그냥 핸들 돌리면 돌아가던데요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이싱 중에 코너를 돌 때 핸들링이 너무 빠르거나 느리다고 느끼신 적은 없으셨나요?",
+          "answerText": "그냥 아무렇게나 달리다가 벽에 박았는데 신경 안 썼어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "시간이요? 음... 얼마나 걸렸는지 잘 모르겠네요 게임하면서 시계 안 봤어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스를 한 바퀴 도는 동안 지루하거나 너무 짧다고 느끼신 적은 없으셨나요?",
+          "answerText": "그냥 적당했던 것 같아요, 딱히 신경 안 썼는데...",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스당 대략 몇 분 정도 걸린 것 같으신가요?",
+          "answerText": "글쎄요... 핸드폰 보느라 시간 체크를 안 했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-027",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "FIGHTING"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 카트의 조작감이 다소 무겁고 둔한 느낌이 들었습니다. 특히 코너링 시 카트가 제때 반응하지 않아 벽에 부딪히는 경우가 잦았고, 가속과 감속의 템포도 부자연스러웠습니다. 조작 반응성을 개선하고 카트의 물리엔진을 더 섬세하게 조정할 필요가 있어 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 너무 길어서 플레이어의 집중력이 크게 저하되는 문제가 있습니다. 한 트랙당 약 5-6분 정도로 설정되어 있는데, 이는 캐주얼 레이싱 게임으로서는 지나치게 긴 시간입니다. 3-4분 정도로 단축하고 랩 수를 줄이는 것이 게임의 템포와 재미를 위해 더 적절해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-028",
+        "ageGroup": "30s",
+        "gender": "FEMALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "핸들링이 매끄럽고 빠른 반응속도가 정말 마음에 들어요. 조작이 쉬워서 초보자도 금방 적응할 수 있을 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작감이 특히 좋다고 느끼셨는지 구체적인 예시를 들어주실 수 있나요?",
+          "answerText": "코너 구간에서 드리프트할 때 특히 조작이 직관적이고 재미있었어요. 핸들링이 부드러워서 기분 좋게 달릴 수 있었죠.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트할 때 조작이 좋았다고 하셨는데, 어떤 점이 특히 직관적이고 재미있게 느껴지셨나요?",
+          "answerText": "버튼 하나로 드리프트가 시작되고 방향 전환도 쉬워서 정말 재미있었어요. 마치 장난감 자동차를 가지고 노는 것처럼 신나게 즐길 수 있었습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3-4분 정도의 레이스 시간이 딱 좋았어요. 지루하지도 않고 부담스럽지도 않아서 계속 더 하고 싶었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-029",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "RHYTHM"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "와, 조작감이 정말 기대 이상으로 좋았어요! 특히 레이무로 플레이할 때 코너링이 매끄럽게 이어지면서도 카트가 미끄러지는 느낌이 아주 자연스러워서 게임하는 내내 즐거웠습니다. 부스터 아이템을 사용할 때의 순간적인 가속감도 정확하게 반응해서, 의도한 타이밍에 맞춰 아이템을 쓸 수 있었던 게 인상적이었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3-4분 정도로 딱 좋았어요! 한 바퀴를 도는 동안 지루할 틈 없이 아이템 획득과 경쟁이 이어져서 계속 긴장감이 유지됐거든요. 특히 마지막 랩에서 치열한 역전극을 펼칠 수 있을 만큼 적절한 길이라 생각했는데, 친구들과 함께 플레이할 때도 다음 레이스를 기다리는 시간이 길지 않아서 정말 만족스러웠답니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-030",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "SIMULATION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 조금 무거운 느낌이에요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 부분에서 조작이 무겁다고 느끼셨는지 구체적인 예를 들어주실 수 있을까요?",
+          "answerText": "코너링할 때 카트가 너무 늦게 방향을 틀어서 벽에 자주 부딪혔어요. 특히 급커브에서는 미리 핸들을 꺾어도 카트가 의도한 대로 움직이지 않았고, 드리프트 시에도 반응이 느려서 타이밍을 맞추기 어려웠습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "카트의 반응성이 늦어서 불편하셨다고 하셨는데, 이런 조작감 때문에 게임 플레이가 얼마나 힘드셨나요?",
+          "answerText": "첫 몇 레이스는 거의 꼴찌로 완주할 수밖에 없었어요. 특히 AI가 설정된 코스를 완벽하게 달리는 것에 비해, 제가 조작에 적응하지 못해서 벽에 계속 부딪히다 보니 경쟁이 안 됐고 게임을 즐기기가 어려웠습니다. 약 30분 정도 플레이하면서 조작에 조금씩 적응은 했지만, 여전히 답답함이 남아있었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 레이스에 3분 정도 걸리는 건 적당했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 레이스 시간이 적당하다고 느끼신 특별한 이유가 있으신가요?",
+          "answerText": "지루하지 않으면서도 역전의 기회가 충분한 시간이었어요. 특히 아이템을 사용해서 순위 변동을 만들어내기에 3분이 딱 좋았고, 여러 판을 연속으로 즐기기에도 부담없는 길이였습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-031",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 가속과 감속이 매끄럽게 이루어지고 코너링도 정교하게 할 수 있어서 전반적으로 조작감이 좋았습니다. 특히 레이무와 마리사 캐릭터를 플레이할 때 각각의 특성이 잘 반영된 조작감 차이를 느낄 수 있었는데, 레이무는 안정적이고 마리사는 속도감 있게 다룰 수 있었어요. 다만 점프 후 착지할 때 가끔 미끄러지는 느낌이 있어서 이 부분은 개선이 필요해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 레이스당 약 3-4분 정도가 소요되었는데, 트랙의 길이와 난이도를 고려했을 때 적당한 플레이 시간이라고 생각합니다. 중간중간 아이템 박스를 획득하고 상대와 경쟁하면서 지루할 틈 없이 레이스를 즐길 수 있었어요. 다만 초보자가 처음 플레이할 때는 트랙 숙지에 시간이 좀 더 필요할 것 같네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-032",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "대부분의 상황에서 조작감이 꽤 부드럽고 반응도 좋았는데, 특히 레이무로 플레이할 때 코너링이 정말 자연스러웠어요. 다만 마리사로 플레이할 때는 가속 시 살짝 딜레이가 느껴지는 것 같았고, 점프 후 착지할 때 가끔 미끄러지는 느낌이 있었습니다. 전반적으로는 초보자도 쉽게 적응할 수 있을 정도로 무난한 조작감이었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 레이스당 2-3분 정도로 진행되는 게 지루하지 않고 적당했어요. 짧은 코스는 1분 30초 정도로 빠르게 끝나서 부담 없이 플레이할 수 있었고, 긴 코스도 4분을 넘기지 않아서 집중력이 떨어지지 않았습니다. 특히 친구들과 로컬 멀티플레이할 때 이 정도 길이가 턴을 주고받기에 딱 좋았어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-033",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "글쎄요... 그냥 버튼 몇 번 눌러보고 말았어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "게임을 플레이하실 때 어떤 버튼들을 사용해보셨는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "뭐였더라... 아무튼 뭔가 눌러봤어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "게임을 플레이하시면서 가장 인상 깊었던 조작 경험이 있다면 구체적으로 말씀해 주실 수 있으신가요?",
+          "answerText": "음... 특별히 기억나는 건 없고 그냥 앞으로 가는 거? 그게 다예요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "시간이요? 전 중간에 그만뒀는데 얼마나 걸렸는지 잘 모르겠네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "중간에 그만두시게 된 특별한 이유가 있으셨나요?",
+          "answerText": "그냥 지루해서요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스 한 판에 걸리는 시간이 얼마나 되셨나요?",
+          "answerText": "아 잘 모르겠는데... 시간은 안 재봤어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-034",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트 조작감이 다소 둔합니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 카트의 둔한 조작감이 가장 불편하게 느껴지셨나요?",
+          "answerText": "급커브 구간에서 카트가 원하는 방향으로 빠르게 틀지 못함",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "급커브 구간에서 어떤 식으로 카트가 움직였는지 자세히 설명해 주실 수 있으신가요?",
+          "answerText": "핸들링이 너무 느려서 벽에 부딪힙니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분은 적당한 길이입니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이 적당하다고 느끼신 이유를 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "지루하지 않고 긴장감 유지하기 좋은 시간이라서.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스당 몇 분 정도 소요되었는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "대략 3분 10초 정도 걸렸음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-035",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "STRATEGY"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 다소 둔하고 미끄러운 느낌이 있어서 정밀한 주행이 어려웠습니다. 특히 코너링 시 카트가 너무 쉽게 미끄러지는 현상이 있어 실력자들도 제대로 된 레이싱 라인을 타기 힘들어 보였습니다. 기본적인 물리엔진 조정과 카트의 그립감 개선이 시급해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 너무 길어서 플레이어의 집중력이 많이 떨어지는 문제가 있습니다. 특히 초보자들의 경우 5분 이상 지속되는 레이스에서 지루함을 느끼기 쉬워 보입니다. 레이스 시간을 3-4분 정도로 단축하고, 난이도별로 랩 수를 차등 적용하는 것이 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-036",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "STRATEGY"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "제가 레이마 캐릭터로 플레이했을 때 카트의 가속과 조향감이 정말 부드럽고 직관적이어서 좋았어요! 특히 드리프트할 때 카트가 살짝 미끄러지는 느낌이 적절해서, 코너링할 때마다 짜릿한 재미를 느낄 수 있었죠. 초보자도 쉽게 적응할 수 있으면서도 숙련자가 되면 더 빠른 기록을 낼 수 있는 밸런스가 잘 잡혀있다고 생각합니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 트랙을 3바퀴 도는데 약 3-4분 정도가 걸렸는데, 이 길이가 정말 딱 좋았어요! 긴장감 있게 레이스를 즐기기에 충분하면서도 지루함을 전혀 느끼지 않았거든요. 특히 친구들과 로컬 멀티플레이할 때도 누군가 기다리는 시간이 길지 않아서, 계속해서 신나게 경기를 이어갈 수 있었답니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-037",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "기본적인 조작감은 나쁘지 않았습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 부분에서 조작감이 특히 좋았거나 인상 깊었는지 구체적으로 말씀해 주실 수 있으신가요?",
+          "answerText": "특히 코너링할 때 드리프트 조작이 직관적이고 부드럽게 느껴졌어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트 조작이 좋았다고 하셨는데, 어떤 코스나 상황에서 특히 드리프트가 유용하게 느껴지셨나요?",
+          "answerText": "요정의 숲 코스에서 연속된 S자 커브 구간을 통과할 때 드리프트가 매우 효과적이었어요. 특히 연속 커브 구간에서 드리프트 부스트를 이어가면서 속도를 유지할 수 있었고, 다른 플레이어들을 제치는데도 큰 도움이 되었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도의 레이스 시간이 적당했습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 레이스 시간 동안 코스의 난이도나 장애물은 어떻게 느끼셨나요?",
+          "answerText": "코스는 초보자도 즐기기 좋은 난이도였습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 코스를 완주하는데 보통 몇 분 정도 걸리셨나요?",
+          "answerText": "보통 3분에서 3분 30초 정도 걸렸어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-038",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 전반적으로 둔탁하고 무겁게 느껴지며, 특히 코너링 시 카트가 제대로 반응하지 않는 문제가 자주 발생했습니다. 급격한 방향 전환 시 캐릭터의 애니메이션이 부자연스럽게 끊기는 현상도 확인되었습니다. 조작의 정밀도와 반응성을 전체적으로 개선할 필요가 있다고 생각합니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3-4분으로 다소 짧게 느껴졌으며, 트랙의 난이도나 복잡성을 고려할 때 플레이어가 충분히 경쟁하고 전략을 구사할 시간이 부족했습니다. 특히 아이템 사용이나 숏컷 발견과 같은 게임의 핵심 요소들을 제대로 활용하기에는 현재 레이스 시간이 너무 제한적입니다. 최소 5-6분 정도로 레이스 시간을 연장하거나, 난이도별로 다양한 레이스 시간 옵션을 제공하는 것이 좋겠습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-039",
+        "ageGroup": "30s",
+        "gender": "FEMALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 꽤 민감하고 정교해서 코너링할 때 정확한 타이밍에 드리프트를 걸 수 있었어요. 특히 레이무로 플레이할 때는 카트가 가볍고 반응이 빨라서 좁은 길도 잘 빠져나갈 수 있었는데, 마리사의 카트는 좀 더 무겁고 안정감 있게 느껴졌습니다. 다만 가속이나 감속할 때 미세한 딜레이가 있어서 이 부분은 개선이 필요해 보여요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 트랙을 3바퀴 도는데 보통 4-5분 정도가 걸렸는데, 이 정도 길이가 집중력을 유지하면서도 지루하지 않게 즐기기에 딱 좋았어요. 중간중간 아이템 박스를 먹고 다른 선수들과 경쟁하다 보면 시간이 금방 지나갔습니다. 다만 연습 모드에서는 바퀴 수를 조절할 수 있으면 좋을 것 같네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-040",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "ARCADE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 약간 둔한 느낌이 들어서 아쉬웠어요. 특히 코너링할 때 카트가 미끄러지는 게 좀 적응하기 어려웠네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "코너링할 때 카트가 미끄러지는 게 불편하셨다고 하셨는데, 어떤 식으로 개선되면 좋을 것 같으신가요?",
+          "answerText": "코너를 돌 때 카트가 좀 더 도로를 잘 붙어서 달렸으면 좋겠어요. 지금은 너무 많이 미끄러져서 초보자가 적응하기 힘들어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "어떤 코스나 구간에서 특히 카트가 많이 미끄러져서 어려움을 겪으셨나요?",
+          "answerText": "얼음 동굴 코스에서 특히 힘들었어요. 미끄러운 바닥 때문에 내 카트가 자꾸 벽에 부딪혔네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3-4분 정도라 부담 없이 즐기기 딱 좋았어요. 짧게 한 판씩 즐기기에 적당한 길이예요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3-4분 정도의 레이스 시간이 적당하다고 느끼신 특별한 이유가 있으신가요?",
+          "answerText": "오래 앉아있기 힘든데 3-4분이면 지루하지도 않고 집중력도 잘 유지돼서 좋았어요.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스 시간이 3-4분 정도라고 하셨는데, 혹시 어떤 트랙이나 코스를 주로 플레이해보셨나요?",
+          "answerText": "처음이라 초보자용 코스인 요정의 숲 트랙을 주로 달렸어요. 난이도가 적당해서 계속 그 코스만 반복했네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-041",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "와, 캐릭터 조작이 정말 경쾌하고 즐거웠어요! 특히 레이무로 플레이할 때 코너링이 부드럽게 되면서도 미끄러짐이 적절해서 컨트롤이 재미있었고, 점프나 가속도 버튼 입력에 따라 즉각적으로 반응해서 마음대로 조작할 수 있었죠. 다만 마리사의 빗자루 카트는 속도가 빠른 대신 조작이 살짝 민감한 느낌이 있었지만, 이것도 캐릭터의 특징을 잘 살린 설정이라 생각해요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3바퀴 기준으로 약 3-4분 정도라 정말 적절했어요! 너무 길지 않아서 지루할 틈이 없었고, 친구들과 번갈아가며 플레이하기에도 딱 좋은 길이였죠. 특히 마지막 바퀴에서 역전의 짜릿함을 느끼기에도 충분한 시간이어서 더욱 재미있게 즐겼답니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-042",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "HORROR"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "그냥 별로에요, 제대로 안해봤어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "게임을 얼마나 플레이해보셨는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "아 글쎄요... 한 5분? 10분? 정확히는 기억도 안 나네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "혹시 게임을 플레이하시면서 카트의 가속이나 코너링같은 구체적인 조작감은 어떻게 느끼셨나요?",
+          "answerText": "음... 그냥 버튼 막 눌렀는데 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "시간이 얼마나 걸렸는지 잘 모르겠는데요, 그냥 대충 했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 트랙을 완주하는데 몇 분 정도 걸렸는지 기억나시나요?",
+          "answerText": "글쎄요, 시계를 보면서 하지는 않아서 잘 모르겠네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "게임을 플레이하실 때 레이스가 너무 길거나 짧다고 느끼신 적은 없으셨나요?",
+          "answerText": "그냥 적당했던 것 같은데 딱히 신경 안 썼어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-043",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "제가 시험해본 캐릭터들은 대체로 빠르게 반응했지만, 가끔 코너링할 때 카트가 살짝 미끄러지는 느낌이 있었어요. 특히 레이무로 플레이할 때는 드리프트 타이밍을 맞추기가 조금 까다로웠는데, 이건 의도된 게임성인 것 같네요. 하지만 전반적으로는 조작감이 경쾌하고 직관적이어서 금방 적응할 수 있었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 트랙을 완주하는데 보통 3-4분 정도 걸렸는데, 이 정도 길이는 집중력을 유지하면서도 지루하지 않게 즐기기에 딱 좋았어요. 특히 친구들과 멀티플레이할 때는 이 시간이 너무 짧지도 않고 길지도 않아서, 여러 번의 레이스를 부담 없이 즐길 수 있었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-044",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 간단하고 부드러워서 처음 하는 사람도 쉽게 적응할 수 있었어요. 속도감도 적절해서 재미있게 즐겼습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 코스나 상황에서 조작감이 특히 편하다고 느끼셨는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "넓은 직선 코스에서 달릴 때가 제일 편했고, 완만한 커브 구간도 부담 없이 달릴 수 있어서 좋았어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "넓은 직선 코스와 완만한 커브 구간이 편했다고 하셨는데, 어떤 점 때문에 특별히 더 편하게 느끼셨나요?",
+          "answerText": "속도 조절이 쉽고 카트가 흔들리지 않아서 안정감 있게 달릴 수 있었어요. 난이도가 적당해서 게임이 더 즐거웠죠.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3-4분 정도의 레이스 시간이 지루하지 않고 딱 좋았어요. 한 판만 더 하고 싶은 적당한 길이였습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스 시간이 적당했다고 하셨는데, 어떤 점 때문에 '한 판만 더' 하고 싶다고 느끼셨나요?",
+          "answerText": "짧은 시간 안에 코스를 익히고 순위 경쟁하는 게 재미있어서 자꾸 도전하고 싶었어요. 적당히 짧아서 부담 없이 한 판 더 할 수 있었죠.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스 한 판을 완주하는데 보통 몇 분 정도 걸리셨나요?",
+          "answerText": "대부분 3분 정도면 완주했던 것 같아요. 빨리 달리면 2분 30초 정도에도 끝났구요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-045",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "HORROR"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 간단하고 직관적이어서 좋았어요! 처음 해보는데도 금방 적응했답니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "처음 게임을 하실 때 어떤 조작이 가장 쉽게 익숙해지셨는지 구체적으로 말씀해 주실 수 있으신가요?",
+          "answerText": "가속과 방향 전환이 단순해서 처음부터 잘 됐어요. 특히 점프는 정말 쉽고 재미있었답니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "점프가 재미있다고 하셨는데, 어떤 상황에서 점프를 활용하면 가장 유리했나요?",
+          "answerText": "앞에 장애물이 있을 때 점프로 뛰어넘으면서 추월하는 게 제일 짜릿했어요! 특히 내리막길에서 점프하면 더 멀리 날아가서 좋았답니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3바퀴 정도로 딱 적당했어요! 지루하지도 않고 너무 짧지도 않아서 좋았답니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3바퀴가 딱 적당했다고 하셨는데, 어떤 점에서 그렇게 느끼셨나요?",
+          "answerText": "한 바퀴 돌 때마다 아이템 써가며 추월하는 재미가 있었고, 3바퀴면 역전의 기회도 충분해서 긴장감이 끝까지 유지됐어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-046",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "HORROR"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 되게 귀엽고 가벼워서 좋았어요. 난이도도 적당해서 처음 하는 사람도 금방 적응할 것 같네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 캐릭터로 플레이하셨을 때 조작감이 가장 편하고 재미있으셨나요?",
+          "answerText": "레이무로 했을 때가 제일 편하고 재미있었어요. 속도랑 핸들링이 초보자한테 딱 맞는 느낌이었거든요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이무 캐릭터로 플레이하실 때 어떤 코스나 상황에서 조작감이 특히 좋다고 느끼셨나요?",
+          "answerText": "내리막길에서 가속하면서 코너 도는게 진짜 재밌었어요. 미끄러지는 느낌이 적당해서 컨트롤하기 좋았거든요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도라 너무 길지도 짧지도 않아서 좋았어요. 지루하지 않게 딱 집중할 수 있는 길이였습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-047",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "그냥 막 눌렀는데 잘 됐어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "실제로 어떤 조작을 했을 때 가장 부드럽게 반응했는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "글쎄요, 별로 신경 안 썼는데... 아무튼 뭔가 잘 굴러갔어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "실제로 게임을 플레이하시면서 코너를 돌거나 아이템을 사용할 때 조작감이 어떠셨는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "아 그냥 버튼 눌러서 돌기만 했는데 뭐가 어떻게 됐는지는 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "시간이 얼마나 걸렸는지 안 재봤는데... 그냥 적당했던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 바퀴 돌 때 보통 몇 분 정도 걸린 것 같으신가요?",
+          "answerText": "음... 시계 안 봐서 잘 모르겠네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스를 돌면서 체감하기에 게임이 너무 길거나 짧다고 느끼신 적은 없으셨나요?",
+          "answerText": "그냥 적당했던 것 같은데 딱히 신경 안 썼어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-048",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 경쾌하고 반응이 빠른 편이었는데, 특히 레이무로 플레이할 때 코너링이 정말 매끄럽게 됐어요. 다만 마리사의 카트는 최고속도는 빠른데 가속할 때 살짝 둔한 느낌이 있었고, 급회전할 때 미끄러지는 느낌이 조금 과했던 것 같아요. 일반적인 카트 레이싱 게임과 비교하면 조작이 쉽고 직관적이라 초보자도 금방 적응할 수 있을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "일반 코스는 2-3분 정도로 적당했는데, 특히 새로운 코스를 배우고 익히는데 부담 없는 길이였어요. 다만 레인보우 로드 같은 특수 코스는 4분 넘게 걸려서 조금 지루했고, 실수하면 만회하기가 너무 힘들었던 것 같아요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-049",
+        "ageGroup": "10s",
+        "gender": "FEMALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 무겁고 둔한 편입니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "조작감이 무겁다고 하셨는데, 특히 어떤 상황에서 불편함을 많이 느끼셨나요?",
+          "answerText": "급커브 구간에서 카트가 잘 안 꺾입니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "급커브 구간에서 어느 정도의 속도로 주행하실 때 카트가 잘 안 꺾이셨나요?",
+          "answerText": "60km/h 이상에서 회전이 어려웠습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "5분 정도로 적당했습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스를 플레이하시면서 5분이 지루하거나 너무 길게 느껴진 순간이 있었나요?",
+          "answerText": "그런 적 없음. 레이스가 계속 긴장감 있었음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스를 진행하면서 긴장감이 있었던 특별한 순간을 예시로 들어주실 수 있나요?",
+          "answerText": "마지막 랩에서 1위와 0.5초 차이로 추격전을 벌였던 순간이 긴장됐음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-050",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 다소 무겁고 둔한 느낌이라 빠른 반응속도가 요구되는 순간에 답답함이 느껴졌습니다. 특히 코너링 시 카트가 제때 방향을 틀지 못하고 미끄러지는 현상이 자주 발생해 정교한 레이싱이 어려웠습니다. 카트의 기본 속도와 회전 반응성을 전체적으로 상향 조정할 필요가 있어 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 너무 길어서 한 경기당 5-6분 정도 소요되는데, 캐주얼 레이싱 게임의 특성상 이는 다소 지루하게 느껴집니다. 트랙 길이를 줄이거나 카트의 기본 속도를 높여서 3-4분 정도로 레이스 시간을 단축하는 것이 플레이어의 집중도 유지에 더 효과적일 것 같습니다. 특히 멀티플레이 시에는 탈락한 플레이어의 대기 시간이 너무 길어지는 문제도 있습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-051",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본 조작감이 너무 무겁고 둔탁해서 빠른 반응속도가 요구되는 레이싱 게임에 적합하지 않다고 생각합니다. 특히 급커브 구간에서 카트가 제때 방향을 틀지 못해 벽에 부딪히는 경우가 잦았으며, 드리프트 시스템도 활성화되는 타이밍이 불명확해서 플레이어의 의도대로 움직이지 않았습니다. 조작 반응성과 카트의 물리 시스템을 전반적으로 개선할 필요가 있어 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 너무 길어서 플레이어의 집중력이 많이 떨어지는 문제가 있었습니다. 특히 3바퀴를 도는 기본 레이스 모드가 약 7-8분 정도 소요되어 캐주얼 게임의 템포와 맞지 않았습니다. 레이스당 4-5분 정도로 플레이 시간을 단축하고, 빠른 게임 모드도 추가하는 것이 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-052",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 괜찮았어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "조작감이 좋았다고 하셨는데, 특히 어떤 상황에서 카트 조작이 만족스러우셨나요?",
+          "answerText": "코너링할 때 드리프트 조작이 특히 부드럽고 직관적이었어요. 속도를 줄이지 않고도 깔끔하게 커브를 돌 수 있어서 레이싱의 재미가 더 컸죠.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트 조작이 편했다고 하셨는데, 어떤 점이 특히 직관적이고 자연스럽게 느껴지셨나요?",
+          "answerText": "드리프트 시작할 때 버튼과 방향키 조작이 자연스럽게 연결되어서 좋았어요. 특히 드리프트 중에도 미세한 방향 조절이 가능해서 의도한 대로 코스를 타기 쉬웠고, 드리프트를 끝내고 나서도 자연스럽게 가속으로 이어지는 느낌이 정말 만족스러웠습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 판당 3분 정도라 딱 적당했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 시간이 적당하다고 느끼신 이유가 무엇인가요?",
+          "answerText": "지루하지 않으면서도 너무 짧지 않아서 경쟁의 재미를 충분히 느낄 수 있었어요. 특히 친구들과 할 때는 이 정도 시간이 서로 추월하고 아이템 사용하면서 즐기기에 딱 좋더라구요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-053",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 너무 민감해서 처음엔 적응하기 힘들었는데, 좀 익숙해지니까 재밌더라구요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "처음에 민감한 조작감이 적응되기까지 얼마나 걸리셨나요?",
+          "answerText": "한 3-4판 정도 달리다 보니까 자연스럽게 손에 익더라구요. 처음엔 좀 어려웠지만 금방 적응했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "처음에는 어려웠다가 금방 적응하셨다고 하셨는데, 구체적으로 어떤 부분이 적응하기 쉬웠나요?",
+          "answerText": "코너 돌 때 드리프트 타이밍이랑 방향키 감각이 생각보다 직관적이어서 금방 익숙해졌어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3-4분 정도라 지루하지 않고 딱 좋았어요. 부담없이 한 판 더 하게 되는 길이예요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3-4분이 적당하다고 느끼신 이유가 궁금한데, 더 길거나 짧았다면 어떤 점이 불편했을 것 같으세요?",
+          "answerText": "더 길면 집중력이 떨어질 것 같고, 더 짧으면 게임의 재미를 제대로 느끼기 전에 끝나버릴 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스에서 몇 바퀴를 돌았고 총 플레이 시간은 얼마나 걸렸나요?",
+          "answerText": "3바퀴 돌았고 총 3분 30초 정도 걸린 것 같아요. 한 바퀴당 1분 조금 넘게 걸려서 적당했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-054",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "RHYTHM"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "아니요, 조작이 좀 둔하게 느껴졌어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 부분에서 조작이 둔하다고 느끼셨는지 구체적인 예시를 들어주실 수 있을까요?",
+          "answerText": "특히 코너링할 때 카트가 너무 늦게 반응하고, 드리프트 시작할 때도 타이밍을 맞추기가 어려웠어요. 레이무로 플레이할 때 급커브 구간에서 벽에 몇 번이나 부딪혔는데, 핸들링이 좀 더 민감했다면 피할 수 있었을 것 같네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너링이나 드리프트가 어려웠다고 하셨는데, 이런 조작감 때문에 게임 플레이가 재미가 떨어지셨나요?",
+          "answerText": "네, 처음에는 재미있게 시작했지만 계속 벽에 부딪히다 보니 좌절감이 들었어요.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 너무 길게 느껴졌어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스가 길게 느껴진 구체적인 이유나 적절하다고 생각하시는 플레이 시간을 말씀해 주실 수 있나요?",
+          "answerText": "한 레이스가 5-6분 정도 걸렸는데, 캐주얼 레이싱 게임치고는 조금 지루했어요. 마리오 카트처럼 3-4분 정도면 적당할 것 같고, 특히 초반에 크게 뒤처지면 남은 시간이 너무 길게 느껴졌습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-055",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 카트와 캐릭터의 조작감이 매우 직관적이고 반응도 빨라서 좋았습니다. 특히 코너링할 때 드리프트 조작이 부드럽게 이어져서 의도한 대로 주행하기 쉬웠어요. 다만 가속 시작할 때 살짝 미끄러지는 느낌이 있어서 초반 스타트 대시가 약간 어색했습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "드리프트 조작이 부드럽다고 하셨는데, 어떤 점에서 특히 만족스러우셨나요?",
+          "answerText": "커브를 돌 때 방향키와 드리프트 버튼을 누르면 카트가 자연스럽게 휘어지면서 속도를 잃지 않고 코너를 통과할 수 있어서 좋았어요. 특히 연속된 S자 커브 구간에서도 드리프트 상태가 끊기지 않고 부드럽게 이어져서 묘한 쾌감이 있었습니다. 마리사로 플레이할 때는 드리프트 중에 미니 부스트까지 받을 수 있어서 더 재미있게 느껴졌네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 레이스당 약 3-4분 정도의 플레이 시간은 적당했다고 생각합니다. 트랙을 3바퀴 도는 동안 지루하지 않게 집중할 수 있었고, 친구들과 함께 플레이할 때도 한 사람이 너무 오래 기다리지 않아서 좋았어요. 중간에 실수로 트랙을 이탈하더라도 금방 따라잡을 수 있는 시간이었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-056",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본적인 가속과 제동은 부드럽고 반응성이 좋았지만, 급격한 코너링 시에는 약간의 미끄러짐이 있어 정교한 조작이 어려웠습니다. 특히 레이무와 마리사 캐릭터는 각각 특색 있는 조작감을 가지고 있어 재미있었으나, 초보자들에게는 다소 어려울 수 있다고 생각합니다. 전반적으로는 아케이드 레이싱 게임다운 경쾌한 조작감을 잘 구현했다고 평가합니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 레이스당 약 3분 정도의 플레이 시간은 캐주얼 레이싱 게임으로서 적절했다고 생각합니다. 너무 길지 않아 지루함이 적고 여러 번 도전하기 좋았지만, 일부 더 긴 트랙의 경우 4분까지 걸리는 것은 다소 지치는 느낌이 들었습니다. 전반적으로는 짧고 굵은 레이스 구성이 게임의 빠른 템포와 잘 어울린다고 봅니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-057",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 너무 둔해서 코너링할 때마다 좀 답답했어요. 특히 급회전할 때 카트가 잘 안 움직여서 벽에 자주 부딪혔네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "코너링할 때 조작이 둔하다고 하셨는데, 어떤 식으로 개선되면 더 좋을 것 같으세요?",
+          "answerText": "카트가 좀 더 민첩하게 움직이고 브레이크 밸런스도 조절되면 좋겠어요. 지금은 너무 뻑뻑해서 재미가 반감돼요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "어떤 코스나 상황에서 카트 조작이 특히 불편하셨는지 구체적인 예시를 들어주실 수 있나요?",
+          "answerText": "아이스 스테이지의 급커브 구간이랑 용궁 맵의 수중 터널에서 정말 힘들었어요. 특히 미끄러운 길에서는 카트가 전혀 말을 안 들었네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "5분 정도로 딱 적당했어요. 지루하지도 않고 부담스럽지도 않은 길이였습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "5분이라는 플레이 시간이 적당하다고 느끼신 이유를 구체적으로 말씀해 주실 수 있으신가요?",
+          "answerText": "너무 길면 피곤할 것 같은데 5분이면 한 판 후딱 할 수 있어서 좋았어요. 다음 판도 한 번 더 하고 싶다는 생각이 들었네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "5분이 적당했다고 하셨는데, 혹시 어떤 코스를 플레이하셨을 때가 가장 재미있으셨나요?",
+          "answerText": "숲속 코스가 제일 재밌었어요! 곡선 구간이 적당히 있으면서도 너무 어렵지 않아서 즐겁게 달렸습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-058",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "네, 특히 레이무로 플레이할 때 코너링이 정말 부드럽고 즉각적으로 반응해서 너무 만족스러웠어요! 점프나 드리프트 타이밍도 직관적이라 처음 플레이하는 친구들도 금방 적응할 수 있었고, 각 캐릭터마다 특성이 잘 반영된 조작감이 정말 인상적이었죠. 다만 마리사의 빗자루 카트는 가속이 너무 빨라서 초반에 적응하는데 살짝 어려움을 느꼈지만, 이것도 캐릭터성을 살린 재미있는 특징이라고 생각해요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3-4분 정도라 지루하지 않고 딱 적당했어요! 짧은 시간이지만 코스마다 숨겨진 지름길도 찾아보고 아이템 전략도 시도해볼 수 있어서 매 레이스가 정말 재미있었죠. 특히 친구들과 함께 할 때는 이 정도 길이가 승부의 긴장감도 유지되면서 다음 라운드로 빠르게 넘어갈 수 있어서 완벽한 것 같아요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-059",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "STRATEGY"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 너무 귀엽고 재밌어요! 카트가 살짝 미끄러지는 느낌이 있지만 그게 오히려 더 재미있네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "미끄러지는 느낌이 재미있다고 하셨는데, 어떤 코스나 상황에서 특히 그 재미를 느끼셨나요?",
+          "answerText": "내리막길에서 미끄러지면서 추월하는 순간이 진짜 짜릿하고 재밌었어요! 특히 급커브 구간에서 드리프트할 때가 제일 신나요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "내리막길 추월이나 드리프트할 때 그렇게 짜릿하고 재미있다고 느끼신 특별한 이유가 있으신가요?",
+          "answerText": "평소에는 귀여운 푸모들이 얌전한데, 드리프트할 때 살짝 흔들리는 모습이 너무 웃기고 귀여워서 더 재밌게 느껴졌어요!",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 딱 좋았어요! 지루하지도 않고 너무 길지도 않아서 부담 없이 즐길 수 있었답니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 레이스당 플레이 시간이 대략 몇 분 정도 걸렸는지 구체적으로 알려주실 수 있나요?",
+          "answerText": "한 판에 3분 정도라 가볍게 한 판씩 즐기기 딱 좋았어요!",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "3분이 적당하다고 하셨는데, 레이스 도중에 어떤 재미있는 상황들이 있었는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "상대방 앞에서 아이템 쓰면서 추월하는 맛이 최고였어요! 특히 마리사 캐릭터의 마법 공격은 너무 귀여웠답니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-060",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 캐릭터와 카트의 조작감이 매우 둔탁하고 무겁게 느껴졌습니다. 특히 코너링 시 미끄러짐이 너무 심하고 카트의 가속과 감속이 현실감 없이 느린 편이라 아쉬웠습니다. 조작의 정확성과 반응속도를 전체적으로 개선하고, 카트의 물리 엔진을 더 섬세하게 조정할 필요가 있어 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 너무 길어서 지루함을 느꼈습니다. 3바퀴를 도는데 약 7-8분이 소요되는데, 이는 캐주얼 레이싱 게임으로서는 과도하게 긴 시간입니다. 특히 앞서 지적한 둔탁한 조작감과 맞물려 플레이어의 피로도가 크게 증가하므로, 레이스당 4-5분 정도로 단축하는 것이 바람직해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-061",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "글쎄요... 그냥 버튼 눌러보기만 했는데 뭐가 좋은지 나쁜지 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "게임을 플레이하실 때 가장 많이 사용하신 키나 버튼은 무엇이었나요?",
+          "answerText": "음... 스페이스바랑 엔터키? 아니면 마우스였나... 잘 기억이 안 나네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "게임을 플레이하실 때 어떤 키나 버튼으로 조작하셨는지 자세히 설명해주실 수 있으신가요?",
+          "answerText": "아 그냥 키보드로 이것저것 눌러봤는데 정확히 뭘 눌렀는지는 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "음... 시간이 얼마나 걸렸는지 잘 모르겠는데 그냥 적당했던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 레이스를 주로 몇 바퀴 정도 돌았는지 기억나시나요?",
+          "answerText": "몇 바퀴였는지는 잘 기억 안 나는데 그냥 열심히 달렸어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "보통 한 게임 플레이하실 때 몇 분 정도 걸렸나요?",
+          "answerText": "시계 안 보고 했는데 잘 모르겠어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-062",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "SPORTS"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "기본적인 조작감은 대체로 부드럽고 반응이 좋았지만, 급격한 방향 전환 시에는 약간의 지연이 느껴졌습니다. 특히 레미리아나 마리사 같은 경량 캐릭터들은 민첩하게 움직이는 반면, 유유코처럼 무거운 캐릭터는 다소 둔중한 느낌이 있어서 캐릭터별 특성이 잘 반영된 것 같습니다. 다만 점프나 아이템 사용 시의 애니메이션이 좀 더 자연스러웠으면 하는 아쉬움이 있네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "기본 3바퀴로 구성된 레이스는 약 3-4분 정도로, 부담 없이 즐기기에 적절한 길이였습니다. 트랙의 난이도와 길이에 따라 시간이 조금씩 달라지긴 했지만, 지루함 없이 집중력을 유지할 수 있었고 여러 번 반복 플레이하기에도 좋았습니다. 다만 일부 긴 트랙의 경우 4-5분까지 소요되어 다소 지치는 느낌이 있었으니, 이런 트랙들은 바퀴 수를 2바퀴로 조정하면 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-063",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "와, 조작감이 정말 직관적이고 반응도 빨라서 너무 좋았어요! 특히 레이무로 플레이할 때 좁은 코너를 돌 때마다 카트가 정확하게 제가 원하는 방향으로 움직여서 굉장히 만족스러웠답니다. 드리프트 시스템도 처음에는 적응이 필요했지만, 30분 정도 연습하니까 자연스럽게 할 수 있게 되어서 레이싱의 재미를 제대로 느낄 수 있었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "네, 한 레이스당 약 3분 정도의 플레이 시간이 정말 적절했어요! 너무 길지도 짧지도 않아서 집중력을 잃지 않고 레이스를 즐길 수 있었고, 친구들과 번갈아가며 플레이할 때도 기다리는 시간이 지루하지 않았답니다. 특히 3바퀴로 설정된 레이스 길이 덕분에 역전의 기회도 충분히 있어서 마지막까지 긴장감 넘치는 승부를 즐길 수 있었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-064",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "SHOOTER"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트가 조금 둔하게 반응합니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 카트가 특히 둔하게 반응한다고 느끼셨나요?",
+          "answerText": "급커브 구간에서 카트 방향 전환이 너무 느려요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "어떤 코스의 급커브 구간에서 특히 방향 전환이 느리다고 느끼셨나요?",
+          "answerText": "마법의 숲 코스 마지막 S자 커브에서 가장 심했습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도로 적당했습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스 중에 지루하거나 너무 긴 구간은 없었나요?",
+          "answerText": "고개를 좌우로 흔들며 지루한 구간 없었음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이스 한 판을 완주하는데 대략 몇 분 정도 걸렸는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "2분 45초 소요됨.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-065",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 전반적으로 둔탁하고 무게감이 부족해서 게임의 재미를 반감시키는 것 같습니다. 특히 코너링 시 미끄러짐이 너무 심하고 예측이 어려워 정교한 주행이 거의 불가능했습니다. 가속과 감속의 피드백도 미약해서 속도감이 잘 전달되지 않는 점이 큰 아쉬움으로 남습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 3-4분 정도로 너무 짧아서 경쟁의 긴장감이 충분히 살아나지 않습니다. 특히 아이템 전략을 펼치거나 순위 역전의 드라마를 만들어내기에는 시간이 부족하다고 느꼈습니다. 최소 5-6분 정도의 레이스 시간이 되어야 카트 레이싱 게임의 재미를 제대로 살릴 수 있을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-066",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "RPG"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 둔한 편이에요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작이 특히 둔하게 느껴지셨는지 예시를 들어주실 수 있으신가요?",
+          "answerText": "코너링할 때 카트가 너무 늦게 반응하고, 특히 레이무 캐릭터로 플레이할 때 가속과 감속이 매끄럽지 않았어요. 급회전 구간에서는 원하는 타이밍에 방향 전환이 잘 안 되어서 벽에 자주 부딪혔습니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "카트 조작감이 불편하셨다고 하셨는데, 이런 점들이 게임 플레이에 얼마나 큰 영향을 미쳤나요?",
+          "answerText": "레이스에서 자주 꼴등을 하게 되어서 게임 자체가 재미없어졌어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 한 판이 약 3분 정도라 적당했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분 정도의 레이스 시간이 지루하지도 않고 짧지도 않았다고 느끼신 이유가 무엇인가요?",
+          "answerText": "레이스 중간중간 아이템 사용하고 코너 도는 재미가 있어서 시간이 금방 갔어요. 또 3바퀴 정도를 달리다 보니 1등과 꼴찌의 격차가 너무 벌어지지도 않고, 역전의 기회도 충분했던 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-067",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "SHOOTER"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 괜찮은 편이었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작감이 특히 좋다고 느끼셨는지 구체적인 예시를 들어주실 수 있으신가요?",
+          "answerText": "급커브 구간에서 드리프트할 때 특히 반응이 정확하고 부드러웠어요. 초반엔 익숙하지 않았지만, 몇 번 연습하니 원하는 타이밍에 드리프트를 시작하고 마무리할 수 있었고, 코너를 빠져나갈 때 가속도 자연스럽게 붙어서 만족스러웠습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도로 적당한 길이였습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 레이스 시간 동안 코스를 몇 바퀴 정도 돌 수 있었나요?",
+          "answerText": "대부분의 코스에서 2바퀴 정도 돌 수 있었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "2바퀴를 도는 동안 체감된 실제 플레이 시간은 대략 몇 분 정도였나요?",
+          "answerText": "체감상 2분 30초 정도였던 것 같습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-068",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "PUZZLE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본적인 가속과 조향은 부드럽고 직관적이어서 초보자도 쉽게 적응할 수 있었지만, 고속 주행 시 미세 조정이 다소 어려웠습니다. 특히 캐릭터별로 조작감이 미묘하게 달라서 적응하는 데 시간이 걸렸고, 드리프트 시스템은 타이밍을 맞추기가 생각보다 까다로웠습니다. 그래도 전반적으로 게임의 캐주얼한 성격에 잘 맞는 밸런스의 조작감이라고 생각합니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "일반 레이스의 3바퀴 기준 플레이 시간은 약 3-4분 정도로, 캐주얼 레이싱 게임으로서 적절한 길이라고 생각합니다. 너무 길지 않아 지루함이 적고 여러 번 도전하기 좋았지만, 일부 짧은 트랙의 경우 2분 내외로 끝나버려 아쉬움이 남았습니다. 다만 트랙 난이도와 길이에 따라 레이스 시간의 편차가 좀 있어서, 일관성 있는 플레이 시간 설정이 필요해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-069",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "RPG"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 참 부드럽고 귀여운 캐릭터들이랑 잘 어울려서 재미있게 즐겼어요. 초보자도 쉽게 적응할 수 있을 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "실제로 플레이하시면서 코너링이나 아이템 사용 같은 특정 조작이 특히 편했던 부분이 있다면 알려주실 수 있나요?",
+          "answerText": "코너링할 때 자동으로 살짝 도와주는 느낌이라 편했고, 아이템은 버튼 하나로 바로 쓸 수 있어서 좋았어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너링과 아이템 사용이 편했다고 하셨는데, 이런 조작감이 게임의 재미를 더해주었나요?",
+          "answerText": "네, 쉬운 조작 덕분에 게임에 더 몰입할 수 있었고 레이싱의 짜릿함을 부담 없이 즐길 수 있었어요.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도로 적당했어요. 지루하지도 않고 부담스럽지도 않은 길이였어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이 적당했다고 하셨는데, 구체적으로 어떤 점에서 그 시간이 레이싱 게임에 잘 맞았다고 느끼셨나요?",
+          "answerText": "한 판 끝나고 바로 다음 판 도전하고 싶은 마음이 들 정도로 적절했어요. 더 길었으면 집중력이 떨어졌을 것 같아요.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스당 걸린 시간이 대략 몇 분 정도였는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "보통 3분에서 3분 30초 정도 걸렸던 것 같아요. 맵마다 조금씩 차이는 있었지만 대부분 비슷했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-070",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "SHOOTER"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 되게 민감하고 빠르게 반응해서 좋았어요! 처음에는 조금 어려웠지만 금방 적응됐답니다.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "조작이 민감하고 빠르게 반응한다고 하셨는데, 어떤 부분에서 그렇게 느끼셨나요?",
+          "answerText": "급커브에서 핸들링할 때랑 아이템 피하려고 방향 틀 때 즉각즉각 반응해서 너무 재미있었어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "조작감이 즉각적이어서 재미있으셨다고 하셨는데, 그런 빠른 반응성이 게임의 어떤 재미요소로 이어졌나요?",
+          "answerText": "상대방이랑 아슬아슬하게 경쟁할 때 순간 반응으로 피하고 추월하는 게 너무 짜릿하고 재밌었어요!",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3-4분 정도로 딱 좋았어요! 지루하지도 않고 너무 길지도 않아서 계속 하고 싶더라구요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3-4분이 적당했다고 하셨는데, 어떤 점이 가장 재미있게 느껴져서 계속 하고 싶으셨나요?",
+          "answerText": "아이템 파밍하고 상대방이랑 부딪히면서 경쟁하는 게 정말 재미있었어요! 순위 역전될 때마다 너무 스릴 넘쳤거든요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "아이템을 활용한 역전극이 특히 스릴 넘치셨다고 하셨는데, 가장 재미있게 사용하신 아이템은 어떤 것이었나요?",
+          "answerText": "레이저 아이템이 제일 재미있었어요! 앞사람 날려버릴 때 속이 다 시원하더라구요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-071",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "SIMULATION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감 괜찮음. 약간 둔한 느낌.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작이 둔하다고 느끼셨는지 구체적인 예시를 들어주실 수 있으신가요?",
+          "answerText": "급커브 돌 때 카트가 늦게 반응함.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "급커브에서 카트가 늦게 반응한다고 하셨는데, 어느 코스나 구간에서 특히 그런 현상을 많이 겪으셨나요?",
+          "answerText": "홋카이도 설산 코스 S자 커브 구간에서 자주 발생.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도로 적당함.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 레이스 시간 동안 코스를 몇 바퀴 정도 돌 수 있었나요?",
+          "answerText": "보통 2바퀴 정도 돌았음",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "2바퀴를 달리실 때 체감상 한 레이스가 몇 분 정도 걸리셨나요?",
+          "answerText": "실제로 3분 좀 넘게 걸렸음",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-072",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 다소 무겁고 둔한 느낌이라 빠른 반응속도가 필요한 순간에 답답함을 느꼈습니다. 특히 급커브 구간에서 카트가 제때 반응하지 않아 벽에 부딪히는 경우가 잦았고, 드리프트 시스템도 타이밍을 맞추기가 어려웠습니다. 조작 반응성과 카트의 물리 엔진을 전체적으로 개선할 필요가 있어 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 너무 길어서 플레이어의 집중력이 급격히 떨어지는 문제가 있습니다. 특히 초반의 흥미로움이 후반부에는 지루함으로 바뀌는데, 이는 트랙 당 4-5분 정도가 적절할 것 같은데 현재는 7-8분이나 소요됩니다. 레이스 시간을 25-30% 정도 단축하고, 랩 수를 줄이는 것이 게임의 박진감을 유지하는데 도움이 될 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-073",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 무겁고 둔한 편이에요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "카트가 어떤 상황에서 특히 둔하게 느껴지셨는지 구체적인 예시를 들어주실 수 있을까요?",
+          "answerText": "급커브에서 카트가 제때 방향전환이 안됨.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "급커브 구간에서 방향 전환이 잘 안 된다고 하셨는데, 어느 트랙의 어떤 구간에서 특히 그런 현상을 겪으셨나요?",
+          "answerText": "미스티레이크 트랙 마지막 헤어핀 구간에서 가장 심했음.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분은 너무 짧음. 5분 정도가 적당할 듯.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이 짧다고 느끼신 이유가 어떤 점 때문인가요?",
+          "answerText": "아이템 활용하고 추월하기도 전에 끝나버려서요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "보통 한 레이스를 완주하는데 몇 분 정도 걸렸나요?",
+          "answerText": "평균 2분 40초 소요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-074",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "STRATEGY"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본적인 조작감은 둔탁하고 무거워서 빠른 반응속도가 필요한 상황에서 답답함을 느꼈습니다. 특히 급커브 구간에서 카트가 제때 방향을 틀지 못해 벽에 부딪히는 경우가 잦았고, 드리프트 시스템도 타이밍을 맞추기 어려워 플레이에 방해가 됐습니다. 조작의 정밀도와 반응성을 전체적으로 개선할 필요가 있어 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "현재 레이스 시간이 4-5분 정도로 설정되어 있는데, 이는 캐주얼 레이싱 게임치고는 다소 길게 느껴졌습니다. 특히 트랙 디자인이 단조롭다 보니 레이스 중반부터는 지루함을 느꼈고, 선두 주자와 격차가 벌어진 상황에서는 역전의 여지가 없어 플레이어의 흥미를 잃게 만듭니다. 레이스 시간을 3분 내외로 단축하고 좀 더 긴박한 승부를 유도하는 것이 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-075",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "SHOOTER"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "그냥 막 눌러도 되긴 하던데요?",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "실제로 게임을 플레이하시면서 어떤 버튼이나 조작이 가장 자주 사용되셨나요?",
+          "answerText": "음... 가속 버튼이랑 뭐 그런거 눌렀던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "게임을 플레이하실 때 차량 조작이 어려웠던 순간이나 불편했던 점이 있었다면 구체적으로 말씀해 주실 수 있을까요?",
+          "answerText": "그냥 잘 안 돌아가서 벽에 자주 박았어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "얼마나 걸렸는지 안 재봤는데요?",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "기억나시는 레이스 중에서 가장 재미있게 플레이하신 코스는 어떤 것이었나요?",
+          "answerText": "그냥 다 비슷비슷했던 것 같은데요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스를 완주하는데 보통 몇 분 정도 걸렸나요?",
+          "answerText": "시계 보면서 안했는데 그냥 적당했던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-076",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "ACTION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트 조작감이 묵직하고 정교합니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 코스나 상황에서 카트의 묵직한 조작감이 특히 잘 느껴지셨나요?",
+          "answerText": "헤어핀 커브 구간에서 드리프트할 때 무게감이 확실히 느껴졌음.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "드리프트할 때 무게감이 잘 느껴졌다고 하셨는데, 어떤 점에서 그렇게 느끼셨나요?",
+          "answerText": "카트가 코너링할 때 원심력과 미끄러짐이 현실감 있게 구현됨.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도로 적당한 길이입니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 레이스 시간 동안 어떤 재미있는 상황들이 있었는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "아이템 박스로 상대방 방해하고 1등 뺏은 게 재밌었음",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "아이템 박스를 사용해서 1등을 뺏었을 때 어떤 아이템이 가장 효과적이었나요?",
+          "answerText": "유도 미사일이 가장 강력했음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-077",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "SIMULATION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본적인 조작감이 너무 둔탁하고 무거워서 아케이드 레이싱의 경쾌함이 많이 부족했습니다. 특히 드리프트 시 카트가 제대로 반응하지 않아 정밀한 코너링이 거의 불가능했고, 가속과 감속의 피드백도 미약해서 속도감을 제대로 느끼기 어려웠습니다. 전반적인 조작 시스템의 대폭적인 개선이 필요해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 한 판당 약 4-5분 정도 소요되는데, 이는 일반적인 카트 레이싱 게임에 비해 다소 길다고 느껴집니다. 특히 조작감이 무겁고 둔탁한 상황에서 이 정도 길이는 플레이어의 피로도를 높이는 요인이 됩니다. 레이스 시간을 3분 내외로 단축하고 랩 수를 줄이는 것이 바람직해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-078",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "와, 카트 조작이 정말 경쾌하고 반응도 빨라서 너무 좋았어요! 특히 레이무로 플레이할 때 급커브에서 드리프트하는 순간의 그 쫄깃한 조작감이 너무 인상적이었죠. 방향키나 컨트롤러로 조작할 때 캐릭터와 카트가 정확하게 내 의도대로 움직여서, 실력만 있다면 좁은 코스도 완벽하게 주행할 수 있다는 느낌이 들었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3바퀴 기준으로 약 3-4분 정도라 정말 적절했다고 생각해요! 너무 길지 않아서 지루할 틈이 없었고, 특히 치르노와 대결할 때는 시간이 어떻게 가는지도 모르게 흥미진진했죠. 친구들과 여러 번 즐기기에도 부담 없는 길이라서 \"한 판만 더!\"하면서 계속 플레이하게 되더라구요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-079",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "HORROR"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트가 너무 무겁게 느껴지고 코너링할 때 조금 답답했어요. 좀 더 경쾌한 움직임이었으면 좋겠네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "코너링이 답답하게 느껴졌다고 하셨는데, 어떤 식으로 개선되면 더 재미있게 즐기실 수 있을 것 같으세요?",
+          "answerText": "코너에서 드리프트가 좀 더 쉽게 되고 속도도 덜 줄었으면 좋겠어요. 마리오카트처럼 경쾌하게 돌면서 재미있게 달리고 싶네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 한 판이 3-4분 정도라 지루하지도 않고 부담없이 즐기기 딱 좋았어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3-4분의 레이스 시간이 적당하다고 느끼신 이유가 궁금한데, 좀 더 자세히 설명해 주실 수 있으신가요?",
+          "answerText": "짧은 시간이라 집중력이 떨어지지 않고, 여러 번 도전하고 싶은 의욕이 생기더라구요. 더 길었으면 중간에 지루했을 것 같아요.",
+          "validity": "VALID",
+          "quality": "FLOATING",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스당 플레이 시간이 대략 몇 분 정도였는지 궁금한데 알려주실 수 있나요?",
+          "answerText": "제가 플레이한 레이스들은 대부분 3분에서 4분 사이로 끝났던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-080",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "RHYTHM"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "네, 조작감이 정말 경쾌하고 반응속도도 빨라서 카트를 다루는 재미가 아주 좋았어요! 특히 레이무로 플레이할 때 급커브에서 드리프트를 하면 정확하게 의도한 대로 움직여줘서 짜릿했고, 점프대에서 착지할 때도 버튼 입력이 정확하게 반영되는 게 느껴졌습니다. 초보자도 쉽게 적응할 수 있으면서도 숙련자가 되면 더 재미있게 즐길 수 있는 밸런스가 잘 잡혀있다고 생각해요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 레이스 당 3바퀴를 도는데 약 3분 정도가 걸려서 정말 적절한 플레이 시간이라고 생각해요! 너무 길지 않아서 지루할 틈이 없었고, 친구들과 여러 트랙을 돌아가면서 즐기기에도 딱 좋은 길이였습니다. 특히 마리사로 플레이할 때는 시간이 순식간에 지나가서 \"한 판만 더!\"하게 되는 중독성 있는 플레이 타임이었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-081",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "ARCADE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "와, 카트 조작감이 정말 경쾌하고 재미있었어요! 특히 레이무로 플레이할 때 코너링이 굉장히 매끄럽고, 드리프트 타이밍도 직관적이어서 초보자도 쉽게 적응할 수 있을 것 같았습니다. 속도감과 타격감도 적절해서 파워업 아이템을 사용할 때마다 짜릿한 재미를 느낄 수 있었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3-4분 정도로 딱 집중력을 유지할 수 있는 완벽한 길이였어요! 트랙을 3바퀴 도는 동안 지루할 틈 없이 아이템 획득과 추월의 재미를 충분히 즐길 수 있었고, 친구들과 함께 플레이할 때도 누군가 너무 기다리지 않아도 되는 적절한 시간이었습니다. 특히 마지막 한 바퀴에서 순위 역전의 짜릿함을 느끼기에도 딱 좋은 플레이 타임이었어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-082",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "RPG"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "캐릭터와 카트의 조작감이 전반적으로 둔탁하고 무게감이 부족하다고 느꼈습니다. 특히 코너링 시 미끄러짐이 너무 심해서 정밀한 주행이 어려웠고, 가속과 감속의 피드백이 미약해서 속도감을 제대로 느끼기 어려웠습니다. 물리엔진 조정과 카트 충돌 처리를 개선하여 더 반응성 있는 조작감으로 발전시켜야 할 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 3분 내외로 너무 짧아서 경쟁의 재미를 제대로 느끼기 어려웠습니다. 트랙 길이가 짧고 랩 수도 적어서 역전의 기회가 제한적이었으며, 아이템 사용과 전략적 플레이를 시도해볼 여유가 부족했습니다. 최소 5분 이상의 레이스 시간과 3-4랩으로 조정하는 것이 바람직해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-083",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "STRATEGY"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감은 괜찮았지만 개선의 여지가 있다고 봅니다. 카트의 기본적인 가속과 회전은 부드럽고 직관적이었으나, 급격한 코너링 시에는 가끔 미끄러짐이 과하게 느껴졌습니다. 특히 레이무와 마리사 캐릭터는 서로 다른 핸들링 특성을 가져 다양한 플레이 스타일을 시도해볼 수 있었던 점이 인상적이었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간은 3~4분 정도로 적절했다고 생각합니다. 짧지 않아서 역전의 기회가 충분했고, 너무 길지도 않아 지루함 없이 집중력을 유지할 수 있었습니다. 다만 일부 트랙의 경우 숏컷 구간으로 인해 레이스 시간이 예상보다 크게 단축되는 경우가 있어서, 트랙 디자인 측면에서 약간의 밸런스 조정이 필요해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-084",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감 괜찮음. 카트 반응 빠르고 정확함.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 캐릭터나 카트로 플레이하실 때 조작감이 특히 좋다고 느끼셨는지 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "레이무 기본 카트가 가장 밸런스 좋음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이무 기본 카트의 어떤 점이 특별히 조작감이 좋다고 느끼셨는지 자세히 말씀해 주실 수 있나요?",
+          "answerText": "가속과 코너링 밸런스가 적당해서 초보자도 다루기 쉬움.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도로 적당함.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 시간이 적당하다고 느끼신 이유를 자세히 설명해주실 수 있나요?",
+          "answerText": "지루하지 않고 긴장감 유지하기 좋은 길이.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스를 완주하는데 보통 몇 분 정도 걸리셨나요?",
+          "answerText": "평균 2분 50초 걸림.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-085",
+        "ageGroup": "20s",
+        "gender": "MALE",
+        "preferGenre": "RHYTHM"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감은 괜찮은데 가속할 때 약간 버벅거림.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "가속할 때 어떤 상황에서 버벅거림이 가장 심하게 느껴지셨나요?",
+          "answerText": "코너 출구에서 가속할 때 특히 심함.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너 출구에서 가속할 때 어떤 문제가 구체적으로 발생했는지 자세히 설명해 주실 수 있으신가요?",
+          "answerText": "가속 버튼 누르면 0.5초 정도 딜레이 생기고 속도 안 올라감.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3바퀴는 너무 짧음. 5바퀴가 적당할 듯.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3바퀴가 짧게 느껴진 구체적인 이유나 경험을 말씀해 주실 수 있나요?",
+          "answerText": "아이템 활용할 시간도 부족하고 순위 역전할 기회가 없었음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스에서 아이템을 몇 번 정도 사용해보셨고, 어떤 점이 아쉬웠는지 자세히 말씀해 주실 수 있나요?",
+          "answerText": "아이템 2-3번 사용. 효과 체감 전에 레이스 끝남.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-086",
+        "ageGroup": "20s",
+        "gender": "FEMALE",
+        "preferGenre": "SHOOTER"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 둔한 편이었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작이 가장 둔하게 느껴지셨나요?",
+          "answerText": "코너링할 때 카트가 너무 느리게 회전하는 게 가장 불편했어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너를 돌 때 어느 정도의 속도에서 회전이 가장 느리게 느껴지셨나요?",
+          "answerText": "보통 시속 80km 이상으로 달릴 때 회전이 많이 둔했어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 좀 길게 느껴졌어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 레이스가 몇 분 정도 걸렸고, 어느 정도가 적당하다고 생각하시나요?",
+          "answerText": "한 레이스가 약 7-8분 정도 걸렸는데, 5분 정도가 더 적당할 것 같아요. 트랙이 너무 길다보니 중간에 집중력이 흐트러지고 지루해지더라고요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-087",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "RPG"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "와, 카트 조작이 정말 경쾌하고 즉각적이어서 너무 좋았어요! 특히 레이무로 플레이할 때 급커브를 돌 때마다 미끄러지듯 드리프트하는 느낌이 아주 자연스럽고 재미있었답니다. 파워업 아이템을 사용할 때도 버튼 입력에 따른 반응이 딜레이 없이 바로바로 이루어져서, 전략적인 플레이를 하기에도 정말 좋았습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "네, 한 트랙당 2-3분 정도의 레이스 시간이 정말 알맞았어요! 짧은 시간이지만 긴장감 넘치는 승부를 즐기기에 충분했고, 특히 마리사와 박빙의 승부를 펼쳤던 'Forest of Magic' 코스는 시간이 어떻게 가는지도 모르고 집중했답니다. 여러 트랙을 연달아 플레이하기에도 부담 없는 길이라 친구들과 함께 할 때도 딱 좋았어요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-088",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "PUZZLE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "네 정말 좋았어요! 특히 마리사로 플레이할 때 급커브에서도 카트가 정확하게 반응해서 벽에 부딪히지 않고 드리프트를 성공했을 때의 그 짜릿함이 아직도 생생해요. 캐릭터들의 무게감도 적절해서 레미리아같은 가벼운 캐릭터는 민첩하게, 유유코같은 무거운 캐릭터는 안정감있게 조작되는 게 너무 마음에 들었답니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 레이스 플레이 시간이 3분에서 4분 정도라 정말 적절했어요! 한 판이 너무 길지도, 짧지도 않아서 친구들과 번갈아가며 플레이할 때도 지루하지 않게 즐길 수 있었죠. 특히 치르노의 얼음 호수 코스에서는 시간이 어떻게 가는지도 모르게 재미있게 달렸는데, 마지막 랩에서의 긴장감도 딱 좋은 길이로 유지되어서 더 몰입감 있게 즐길 수 있었답니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-089",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 괜찮았는데, 특히 드리프트할 때 카트가 자연스럽게 미끄러지는 느낌이 좋았어요. 다만 급커브 구간에서 가끔 벽에 부딪힐 때 튕기는 물리엔진이 좀 어색하게 느껴졌습니다. 키보드로 조작할 때는 조향각이 좀 급격한 느낌이 있어서 게임패드 사용을 추천하고 싶네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3바퀴를 도는 일반 레이스 기준으로 약 3-4분 정도가 소요되어 적당한 플레이 시간이었어요. 너무 길지도 짧지도 않아서 친구들과 여러 번 즐기기에 좋은 길이였고, 특히 점심시간이나 짧은 휴식 시간에 한 두 판 하기에도 딱 좋았습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-090",
+        "ageGroup": "10s",
+        "gender": "FEMALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 다소 둔하고 무거워서 정교한 컨트롤이 어려웠습니다. 특히 코너링 시 카트가 제때 반응하지 않아 벽에 부딪히는 경우가 잦았고, 드리프트 시스템도 타이밍을 맞추기가 굉장히 까다로웠습니다. 조작 지연 문제와 물리 엔진 최적화가 시급해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 너무 길어서 플레이어의 집중력이 많이 떨어지는 문제가 있었습니다. 한 트랙당 4-5분 정도면 적당할 것 같은데, 현재는 7-8분이나 걸려서 지루함을 느꼈습니다. 특히 AI 상대와의 경기에서 격차가 벌어진 후반부는 의미 없이 시간만 보내는 느낌이었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-091",
+        "ageGroup": "10s",
+        "gender": "MALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본적인 가속과 제동은 꽤 직관적이고 반응이 좋았지만, 급격한 방향 전환시 미끄러짐이 심해서 정교한 조작이 어려웠습니다. 특히 마리사와 레이무 캐릭터는 각각 특색있는 조작감을 가져 재미있었으나, 치르노의 경우 빙판 효과로 인한 과도한 미끄러짐으로 컨트롤이 힘들었습니다. 전반적으로는 아케이드 레이싱으로서 적절한 난이도와 조작감을 제공하지만, 일부 캐릭터의 밸런싱 조정이 필요해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "한 트랙당 2-3분 정도의 레이스 시간은 캐주얼 레이싱 게임으로서 적당했고, 집중력을 유지하면서도 지루함을 느끼지 않았습니다. 다만 초보자의 경우 처음 접하는 트랙에서는 시간이 다소 빠듯하게 느껴질 수 있었고, 반대로 숙련자에게는 트랙 마스터를 위한 추가 도전 요소가 부족했습니다. 전반적으로는 부담 없이 즐기기 좋은 플레이 타임이었지만, 난이도별 시간 설정 옵션이 있으면 좋을 것 같습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-092",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 좀 무겁고 둔한 느낌이에요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작이 특히 무겁게 느껴지셨는지 구체적인 예를 들어주실 수 있으신가요?",
+          "answerText": "급커브 구간에서 차량이 잘 안 꺾이고 벽에 부딪히는 경우가 많았어요. 특히 레이무 캐릭터로 설산 맵을 달릴 때 마지막 헤어핀 커브에서 카트가 너무 느리게 반응해서 매번 벽에 박았던 게 기억나네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "레이무로 설산 맵을 달릴 때 카트 조작이 불편하셨다고 하셨는데, 어떤 점을 개선하면 더 나았을 것 같으신가요?",
+          "answerText": "카트의 선회 반경을 좀 더 작게 만들면 좋을 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 좀 긴 편이었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "한 레이스당 대략 몇 분 정도 소요되었는지 말씀해 주실 수 있나요?",
+          "answerText": "한 레이스당 평균 7-8분 정도 걸렸던 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "7-8분의 레이스 시간이 지루하거나 너무 길게 느껴진 적은 없으셨나요?",
+          "answerText": "3바퀴 정도 돌 때부터는 조금 지루해지기 시작했어요. 특히 1등으로 달리고 있을 때는 뒤따라오는 경쟁자도 없어서 더 길게 느껴졌던 것 같습니다. 5분 정도가 더 적당할 것 같네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-093",
+        "ageGroup": "50s",
+        "gender": "MALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 기본적인 가속과 감속은 부드럽고 직관적이어서 좋았지만, 급격한 코너링 시에는 약간의 미끄러짐이 있어 정밀한 조작이 어려웠습니다. 특히 레이무와 마리사 캐릭터는 각각 다른 핸들링 특성을 가지고 있어 다양한 플레이 스타일을 시도할 수 있었으나, 초보자가 처음 적응하기에는 약간의 어려움이 있을 것 같습니다. 전반적으로는 아케이드 레이싱 게임다운 경쾌한 조작감을 잘 구현했다고 생각합니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분에서 4분 정도의 레이스 시간은 캐주얼한 게임의 특성을 잘 살린 적절한 길이라고 생각합니다. 한 트랙당 3바퀴를 도는 구성은 지루하지 않으면서도 역전의 기회를 충분히 제공했지만, 일부 초보자들에게는 약간 길게 느껴질 수 있었습니다. 전반적으로 친구들과 함께 즐기기에 부담 없는 플레이 타임이었습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-094",
+        "ageGroup": "50s",
+        "gender": "FEMALE",
+        "preferGenre": "FIGHTING"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트의 조작감이 전반적으로 둔탁하고 무거워서 빠른 반응속도가 필요한 상황에서 원하는대로 움직이기 어려웠습니다. 특히 코너링 시 카트가 미끄러지는 정도가 너무 심해 정교한 주행이 거의 불가능했고, 가속과 감속의 밸런스도 부자연스러웠습니다. 마리오 카트 같은 유명 레이싱 게임들의 조작감을 벤치마킹해서 전체적인 물리엔진 튜닝이 필요해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스당 평균 5-6분 정도 소요되는데, 이는 일반적인 카트 레이싱 게임에 비해 다소 긴 편이라 지루함을 느꼈습니다. 특히 AI 상대와의 경기에서 중반 이후에는 순위 변동이 거의 없어 플레이어의 흥미가 급격히 떨어지는 문제가 있었습니다. 레이스 시간을 3-4분 정도로 단축하고 맵 구성을 더 조밀하게 만드는 것이 바람직해 보입니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-095",
+        "ageGroup": "40s",
+        "gender": "MALE",
+        "preferGenre": "ARCADE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감이 무난하고 자연스러워요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작감이 특히 자연스럽다고 느끼셨는지 구체적인 예를 들어주실 수 있나요?",
+          "answerText": "코너링할 때 드리프트 감이 부드럽습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너를 돌 때 드리프트가 가장 잘 되는 구간이나 상황을 구체적으로 설명해 주실 수 있으신가요?",
+          "answerText": "S자 커브 구간에서 연속 드리프트가 잘 됨.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "5분 정도라 적당함.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스 중에 어떤 요소들이 있어서 5분이 지루하지 않게 느껴졌는지 자세히 말씀해 주실 수 있나요?",
+          "answerText": "아이템 박스와 점프대가 적절히 배치되어 있어서 계속 긴장감 있었음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "아이템 박스나 점프대를 활용해서 가장 재미있었던 순간을 구체적으로 말씀해 주실 수 있나요?",
+          "answerText": "점프대로 숏컷 찾아서 1등했음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-096",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "CASUAL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작이 너무 민감해서 처음엔 적응하기 힘들었는데, 익숙해지니까 꽤 재밌더라구요!",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "처음에 조작이 어려웠다고 하셨는데, 어떤 상황에서 특히 적응하기 힘드셨나요?",
+          "answerText": "코너링할 때 카트가 너무 빨리 회전해서 자주 벽에 부딪혔어요. 처음엔 좀 짜증났지만 연습하면서 익숙해졌답니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분 정도면 딱 좋았어요! 지루하지도 않고 부담스럽지도 않아서 계속 한 판 더 하게 되더라구요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이라는 시간이 적당하다고 느끼신 구체적인 이유가 궁금한데, 좀 더 자세히 설명해 주실 수 있을까요?",
+          "answerText": "한 판 하고 잠깐 쉬었다가 다음 판 할 수 있는 시간이라 좋았어요. 더 길었으면 중간에 지루했을 것 같아요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "한 레이스당 걸린 시간이 대략 몇 분 정도였나요?",
+          "answerText": "한 판에 3분 정도 걸렸는데, 카트 게임으로는 딱 적당한 길이였어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-097",
+        "ageGroup": "30s",
+        "gender": "FEMALE",
+        "preferGenre": "SIMULATION"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "조작감 평균적. 약간 무겁고 둔한 느낌.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "카트가 무겁고 둔하게 느껴졌다고 하셨는데, 특히 어떤 상황에서 그런 느낌이 많이 들었나요?",
+          "answerText": "코너링할 때 카트가 제때 반응하지 않음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "코너를 돌 때 어떤 식으로 카트가 반응이 늦었는지 자세히 설명해 주실 수 있으신가요?",
+          "answerText": "핸들 꺾어도 1초 정도 지연되고 미끄러짐.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "3분은 적당. 지루하지 않음.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "3분이 적당했다고 하셨는데, 혹시 특별히 기억에 남는 레이스 코스가 있으셨나요?",
+          "answerText": "폭포 구간이 있는 미스티 레이크 코스가 인상적.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "미스티 레이크 코스의 폭포 구간에서 주행하실 때 난이도는 어떠셨나요?",
+          "answerText": "폭포 구간은 조금 어려웠지만 도전의식 적당함.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-098",
+        "ageGroup": "40s",
+        "gender": "FEMALE",
+        "preferGenre": "ROGUELIKE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "아 좀 답답했어요. 카트가 좀 무거운 느낌이라 빠르게 방향 전환하기가 힘들었네요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 구간에서 특히 카트 조작이 불편하다고 느끼셨나요?",
+          "answerText": "꼬불꼬불한 커브 구간에서 정말 힘들었어요. 카트가 너무 늦게 돌아서 계속 벽에 부딪혔네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "커브 구간에서 카트가 늦게 반응하면 게임 플레이가 많이 답답하셨을 것 같은데, 어떤 점이 가장 불편하셨나요?",
+          "answerText": "벽에 부딪힐 때마다 속도가 확 떨어져서 너무 답답했어요. 앞서가던 AI한테 순식간에 따라잡히는 게 제일 스트레스 받았네요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 좀 길었어요. 5분 정도면 충분할 것 같은데 지금은 너무 지루하게 느껴졌네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스 시간이 길게 느껴진 구체적인 순간이나 상황이 있었나요?",
+          "answerText": "마지막 랩에서 1등으로 달리고 있을 때 특히 지루했어요. 더 이상 추월할 선수도 없고 그냥 트랙만 도는 느낌이었거든요.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-099",
+        "ageGroup": "30s",
+        "gender": "FEMALE",
+        "preferGenre": "VISUAL_NOVEL"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "전반적으로 조작감이 둔한 느낌이었어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "어떤 상황에서 조작이 특히 둔하게 느껴지셨는지 구체적인 예시를 들어주실 수 있으신가요?",
+          "answerText": "급격한 커브 구간에서 카트가 제때 방향을 틀지 못하고 벽에 부딪히는 경우가 자주 발생했어요. 특히 버섯의 숲 맵 중반부의 S자 커브 구간에서는 아무리 조작을 빨리 해도 의도한 대로 움직이지 않아 매번 벽에 부딪혔던 게 가장 기억에 남네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "벽에 자주 부딪히셨을 때 게임 플레이에 대한 흥미나 재미가 떨어지진 않으셨나요?",
+          "answerText": "네, 처음엔 재미있었지만 계속 벽에 부딪히다 보니 좀 짜증이 났어요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 너무 길게 느껴졌습니다.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스가 길게 느껴진 구체적인 상황이나 플레이 시간을 말씀해 주실 수 있나요?",
+          "answerText": "한 레이스가 약 7-8분 정도 걸렸는데, 중간에 아이템 효과로 인한 방해나 충돌이 잦아서 지루하게 느껴졌어요. 특히 마지막 랩에서 계속 뒤처지다 보니 완주하는 게 힘들게 느껴졌습니다.",
+          "validity": "VALID",
+          "quality": "FULL",
+          "sentiment": null
+        }
+      ]
+    },
+    {
+      "profile": {
+        "testerId": "tester-100",
+        "ageGroup": "30s",
+        "gender": "MALE",
+        "preferGenre": "ADVENTURE"
+      },
+      "logs": [
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "캐릭터나 카트의 조작 반응이 좋다고 느끼셨나요?",
+          "answerText": "카트가 너무 둔하게 움직이는 것 같아요. 코너링할 때 특히 답답하고 무거운 느낌이에요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "코너링할 때 둔하고 답답하다고 하셨는데, 어떤 부분이 가장 불편하셨나요?",
+          "answerText": "커브에서 카트가 너무 늦게 방향을 틀어서 벽에 자주 부딪혔어요. 좀 더 민감하게 반응했으면 좋겠어요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 1,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "커브 구간에서 카트 조작이 불편하셨다고 하셨는데, 어떤 식으로 개선되면 좋을 것 같으신가요?",
+          "answerText": "핸들링 감도를 조금만 높이고 카트가 좀 더 가벼웠으면 좋겠어요. 지금은 너무 무거워서 재미가 떨어져요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 1,
+          "type": "FIXED",
+          "questionText": "한 레이스를 플레이하는 시간이 적절했나요?",
+          "answerText": "레이스 시간이 좀 길게 느껴졌어요. 캐주얼 게임인데 한 판에 5분 넘게 걸려서 지루했네요.",
+          "validity": "VALID",
+          "quality": "GROUNDED",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 2,
+          "type": "TAIL",
+          "questionText": "레이스 시간이 길어서 지루하셨다고 하셨는데, 적당하다고 생각하시는 레이스 시간은 얼마 정도인가요?",
+          "answerText": "3분 정도면 딱 좋을 것 같아요. 짧고 빠르게 즐기고 싶은데 더 길면 집중력이 떨어지더라고요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        },
+        {
+          "fixedQuestionId": 2,
+          "turnNum": 3,
+          "type": "TAIL",
+          "questionText": "3분이 적당하다고 하셨는데, 혹시 더 길거나 짧았던 레이스를 해보신 적이 있나요?",
+          "answerText": "네, 제가 해본 모바일 레이싱은 1-2분 정도로 더 짧았는데 그건 또 너무 허무하더라고요.",
+          "validity": "VALID",
+          "quality": "EMPTY",
+          "sentiment": null
+        }
+      ]
+    }
+  ]
+}

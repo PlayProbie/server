@@ -113,7 +113,7 @@ import lombok.extern.slf4j.Slf4j;
  * }</pre>
  */
 @Component
-@Profile({"local", "dev", "prod"})
+@Profile({ "local", "dev", "prod" })
 @RequiredArgsConstructor
 @Slf4j
 public class MockDataLoader implements CommandLineRunner {
@@ -132,6 +132,16 @@ public class MockDataLoader implements CommandLineRunner {
 	private final PasswordEncoder passwordEncoder;
 	private final AnalyticsService analyticsService;
 
+	/**
+	 * 설문 설정 (내부 클래스)
+	 */
+	@lombok.Data
+	@lombok.AllArgsConstructor
+	private static class SurveyConfig {
+		String name;
+		String jsonFileName;
+	}
+
 	@Override
 	public void run(String... args) throws Exception {
 		if (surveyRepository.count() > 0) {
@@ -143,159 +153,339 @@ public class MockDataLoader implements CommandLineRunner {
 				return;
 			} else {
 				log.info("🔄 Analytics 데이터가 없습니다. AI 처리를 시작합니다...");
-				triggerAiProcessing();
+				triggerAiProcessingForExistingSurveys();
 			}
 			return;
 		}
 
 		log.info("🚀 Mock 데이터 로딩 시작...");
+		log.info("========================================");
 
-		try (InputStream inputStream = getClass().getResourceAsStream("/data/mock_data.json")) {
-			if (inputStream == null) {
-				log.warn("⚠️ mock_data.json 파일을 찾을 수 없습니다.");
-				return;
+		// 4개 설문 설정 (첫 번째는 500개 세션, 나머지는 100개 세션)
+		java.util.List<SurveyConfig> surveyConfigs = java.util.List.of(
+				new SurveyConfig("1.0.0v 플레이테스트", "/data/mock_data_2_500.json"),
+				new SurveyConfig("1.1.0v 플레이테스트", "/data/mock_data_2_100.json"),
+				new SurveyConfig("2.0.0v 플레이테스트", "/data/mock_data_2_100.json"),
+				new SurveyConfig("2.1.0v 플레이테스트", "/data/mock_data_2_100.json"));
+
+		// Demo User & Workspace는 한 번만 생성
+		User demoUser = createDemoUser();
+		Workspace workspace = createDemoWorkspace(demoUser);
+		Game game = null;
+
+		// 설문별 순차 처리
+		for (int i = 0; i < surveyConfigs.size(); i++) {
+			SurveyConfig config = surveyConfigs.get(i);
+			int surveyIndex = i + 1;
+
+			log.info("\n========================================");
+			log.info("📋 [{}/{}] Survey 처리 시작: {}", surveyIndex, surveyConfigs.size(), config.getName());
+			log.info("========================================");
+
+			try {
+				// 1️⃣ 데이터 생성 (Survey + Questions + Sessions)
+				log.info("🔄 [{}/{}] 데이터 생성 중...", surveyIndex, surveyConfigs.size());
+				Survey survey = loadSurveyDataWithTransaction(config, workspace, game);
+
+				// 첫 번째 설문에서 생성된 게임 재사용
+				if (game == null) {
+					game = survey.getGame();
+				}
+
+				log.info("✅ [{}/{}] 데이터 생성 완료: Survey ID={}, Sessions={}",
+						surveyIndex, surveyConfigs.size(), survey.getId(),
+						surveySessionRepository.countBySurveyIdAndStatus(survey.getId(),
+								com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED));
+
+				// 2️⃣ AI Embedding
+				log.info("🔄 [{}/{}] AI Embedding 시작...", surveyIndex, surveyConfigs.size());
+				embedSurveyData(survey);
+				log.info("✅ [{}/{}] AI Embedding 완료", surveyIndex, surveyConfigs.size());
+
+				// 3️⃣ Analytics 수행
+				log.info("🔄 [{}/{}] Analytics 시작...", surveyIndex, surveyConfigs.size());
+				analyzeSurveyQuestions(survey);
+				log.info("✅ [{}/{}] Analytics 완료", surveyIndex, surveyConfigs.size());
+
+				// 4️⃣ Survey Summary 생성
+				log.info("🔄 [{}/{}] Survey Summary 생성 중...", surveyIndex, surveyConfigs.size());
+				generateAndSaveSurveySummary(survey);
+				log.info("✅ [{}/{}] Survey Summary 완료", surveyIndex, surveyConfigs.size());
+
+				// 5️⃣ 완료 검증
+				verifySurveyPipelineCompleted(survey);
+
+				log.info("\n✅✅✅ [{}/{}] Survey 완전 처리 완료: {} ✅✅✅",
+						surveyIndex, surveyConfigs.size(), config.getName());
+
+			} catch (Exception e) {
+				log.error("❌ [{}/{}] Survey 처리 실패: {}", surveyIndex, surveyConfigs.size(),
+						config.getName(), e);
+				// 개별 설문 실패 시 다음 설문 계속 처리 (앱 종료 방지)
 			}
-
-			Map<String, Object> data = objectMapper.readValue(inputStream, new TypeReference<>() {});
-
-			// 데이터 로딩은 별도 트랜잭션에서 실행
-			loadDataWithTransaction(data);
 		}
 
-		log.info("✅ Mock 데이터 로딩 완료!");
-
-		// AI 처리는 트랜잭션 외부에서 실행 (deadlock 방지)
-		triggerAiProcessing();
-	}
-
-	@Transactional
-	protected void loadDataWithTransaction(Map<String, Object> data) {
-		loadData(data);
+		log.info("\n========================================");
+		log.info("🎉 모든 Survey 처리 완료!");
+		log.info("========================================");
 	}
 
 	/**
-	 * AI Embedding 및 Analytics 처리를 트리거합니다.
-	 *
-	 * <p>
-	 * 처리 순서:
-	 * </p>
-	 * <ol>
-	 * <li>AI 서버 연결 상태 확인 (최대 30회 재시도, 각 30초 대기)</li>
-	 * <li>완료된 세션을 배치 단위로 나누어 처리 (배치 크기: 10개 세션)</li>
-	 * <li>각 배치 내에서는 병렬 처리 (최대 50개 동시 실행)</li>
-	 * <li>BERTopic 기반 Analytics 실행 및 DB 저장</li>
-	 * </ol>
+	 * Demo User 생성
 	 */
-	private void triggerAiProcessing() {
-		try {
-			// 1. 완료된 세션 목록 조회
-			List<SurveySession> completedSessions = surveySessionRepository.findAll()
+	private User createDemoUser() {
+		User demoUser = userRepository.save(User.builder()
+				.email("jungle@playprobie.com")
+				.password(passwordEncoder.encode("jungle1234"))
+				.name("Jungle")
+				.build());
+		log.info("💾 Demo User 생성 완료: ID={}, email={}", demoUser.getId(), demoUser.getEmail());
+		return demoUser;
+	}
+
+	/**
+	 * Demo Workspace 생성
+	 */
+	private Workspace createDemoWorkspace(User demoUser) {
+		Workspace workspace = workspaceRepository.save(Workspace.builder()
+				.uuid(java.util.UUID.fromString("00000000-0000-0000-0000-000000000000")) // Demo용 고정 UUID
+				.name("Jungle Workspace")
+				.description("Jungle 11기 나만의 무기 만들기")
+				.build());
+
+		workspaceMemberRepository.save(WorkspaceMember.builder()
+				.workspace(workspace)
+				.user(demoUser)
+				.role(WorkspaceRole.OWNER)
+				.build());
+
+		log.info("💾 Workspace 생성 완료: ID={}, Name={}, UUID={}",
+				workspace.getId(), workspace.getName(), workspace.getUuid());
+		return workspace;
+	}
+
+	/**
+	 * 설문 데이터 생성 (Survey + Questions + Sessions)
+	 */
+	@Transactional
+	protected Survey loadSurveyDataWithTransaction(SurveyConfig config, Workspace workspace, Game existingGame)
+			throws Exception {
+		try (InputStream inputStream = getClass().getResourceAsStream(config.getJsonFileName())) {
+			if (inputStream == null) {
+				throw new IllegalStateException("JSON 파일을 찾을 수 없습니다: " + config.getJsonFileName());
+			}
+
+			Map<String, Object> data = objectMapper.readValue(inputStream, new TypeReference<>() {
+			});
+
+			// Game 생성 (첫 번째 설문에서만)
+			Game game = existingGame;
+			if (game == null) {
+				Map<String, Object> gameData = objectMapper.convertValue(data.get("game"),
+						new TypeReference<Map<String, Object>>() {
+						});
+
+				List<String> genreStrings = objectMapper.convertValue(gameData.get("genres"),
+						new TypeReference<List<String>>() {
+						});
+				List<GameGenre> genres = genreStrings.stream()
+						.map(GameGenre::valueOf)
+						.collect(Collectors.toList());
+
+				game = gameRepository.save(Game.builder()
+						.workspace(workspace)
+						.name((String) gameData.get("name"))
+						.genres(genres)
+						.context((String) gameData.get("description"))
+						.extractedElements(
+								"{\"core_mechanic\": \"카트 레이싱\", \"player_goal\": \"레이스 우승\", \"racing_element\": \"아케이드 레이싱\"}")
+						.build());
+				log.info("💾 Game 생성 완료: {}, UUID={}", game.getName(), game.getUuid());
+			}
+
+			// Survey 생성
+			Map<String, Object> surveyData = objectMapper.convertValue(data.get("survey"),
+					new TypeReference<Map<String, Object>>() {
+					});
+
+			TestPurpose testPurpose = TestPurpose.valueOf((String) surveyData.get("testPurpose"));
+			TestStage testStage = surveyData.get("testStage") != null
+					? TestStage.valueOf((String) surveyData.get("testStage"))
+					: null;
+
+			List<String> themePriorities = objectMapper.convertValue(surveyData.get("themePriorities"),
+					new TypeReference<List<String>>() {
+					});
+
+			Map<String, List<String>> themeDetails = objectMapper.convertValue(surveyData.get("themeDetails"),
+					new TypeReference<Map<String, List<String>>>() {
+					});
+
+			String versionNote = (String) surveyData.get("versionNote");
+
+			Survey survey = surveyRepository.saveAndFlush(Survey.builder()
+					.game(game)
+					.name(config.getName()) // 설문 이름을 config에서 가져옴
+					.testPurpose(testPurpose)
+					.testStage(testStage)
+					.themePriorities(themePriorities)
+					.themeDetails(themeDetails)
+					.versionNote(versionNote)
+					.startAt(LocalDateTime.now().minusDays(7))
+					.endAt(LocalDateTime.now().plusDays(7))
+					.build());
+
+			if (survey.getId() == null) {
+				throw new IllegalStateException("Survey 저장 실패: " + config.getName());
+			}
+
+			log.info("💾 Survey 저장 완료: ID={}, Name={}", survey.getId(), survey.getName());
+
+			// FixedQuestion 생성 및 JSON ID → DB ID 매핑 생성
+			List<Map<String, Object>> questionsData = objectMapper.convertValue(surveyData.get("questions"),
+					new TypeReference<List<Map<String, Object>>>() {
+					});
+			Map<Long, Long> questionIdMapping = new java.util.HashMap<>(); // JSON id → DB id
+			for (Map<String, Object> qData : questionsData) {
+				Long jsonId = ((Number) qData.get("id")).longValue();
+				FixedQuestion savedQuestion = fixedQuestionRepository.save(FixedQuestion.builder()
+						.surveyId(survey.getId())
+						.content((String) qData.get("content"))
+						.order((Integer) qData.get("order"))
+						.status(QuestionStatus.CONFIRMED)
+						.build());
+				questionIdMapping.put(jsonId, savedQuestion.getId());
+			}
+			fixedQuestionRepository.flush();
+			log.info("💾 FixedQuestion {}개 저장 완료 (ID 매핑: {})", questionsData.size(), questionIdMapping);
+
+			// Session & Logs 생성
+			List<Map<String, Object>> sessionsData = objectMapper.convertValue(data.get("sessions"),
+					new TypeReference<List<Map<String, Object>>>() {
+					});
+			int logCount = 0;
+
+			for (Map<String, Object> sData : sessionsData) {
+				Map<String, Object> profileData = objectMapper.convertValue(sData.get("profile"),
+						new TypeReference<Map<String, Object>>() {
+						});
+
+				TesterProfile testerProfile = TesterProfile.builder()
+						.testerId((String) profileData.get("testerId"))
+						.ageGroup((String) profileData.get("ageGroup"))
+						.gender((String) profileData.get("gender"))
+						.preferGenre((String) profileData.get("preferGenre"))
+						.build();
+
+				SurveySession session = SurveySession.builder()
+						.survey(survey)
+						.testerProfile(testerProfile)
+						.build();
+				session.complete();
+				surveySessionRepository.save(session);
+
+				List<Map<String, Object>> logsData = objectMapper.convertValue(sData.get("logs"),
+						new TypeReference<List<Map<String, Object>>>() {
+						});
+				for (Map<String, Object> lData : logsData) {
+					Long jsonFixedQuestionId = ((Number) lData.get("fixedQuestionId")).longValue();
+					// JSON ID를 실제 DB ID로 변환
+					Long actualFixedQuestionId = questionIdMapping.get(jsonFixedQuestionId);
+					if (actualFixedQuestionId == null) {
+						log.warn("⚠️ 매핑되지 않은 fixedQuestionId: {}", jsonFixedQuestionId);
+						continue;
+					}
+
+					interviewLogRepository.save(InterviewLog.builder()
+							.session(session)
+							.fixedQuestionId(actualFixedQuestionId)
+							.turnNum((Integer) lData.get("turnNum"))
+							.type(QuestionType.valueOf((String) lData.get("type")))
+							.questionText((String) lData.get("questionText"))
+							.answerText((String) lData.get("answerText"))
+							.build());
+					logCount++;
+				}
+			}
+			surveySessionRepository.flush();
+			interviewLogRepository.flush();
+			log.info("💾 SurveySession {}개, InterviewLog {}개 저장 완료", sessionsData.size(), logCount);
+
+			return survey;
+		}
+	}
+
+	/**
+	 * AI Embedding 처리 (해당 설문의 모든 세션)
+	 */
+	private void embedSurveyData(Survey survey) throws InterruptedException {
+		// AI 서버 상태 확인
+		waitForAiServer();
+
+		List<SurveySession> completedSessions = surveySessionRepository.findAll()
 				.stream()
+				.filter(s -> s.getSurvey().getId().equals(survey.getId()))
 				.filter(s -> s.getStatus() == com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED)
 				.collect(Collectors.toList());
 
-			if (completedSessions.isEmpty()) {
-				log.info("⏩ 완료된 세션이 없습니다. AI 처리를 건너뜁니다.");
-				return;
-			}
+		if (completedSessions.isEmpty()) {
+			log.warn("완료된 세션이 없습니다.");
+			return;
+		}
 
-			// 0. AI 서버 상태 확인 및 대기
-			log.info("⏳ AI 서버 연결 확인 중...");
-			int maxRetries = 30; // 최대 30회 시도 (15분)
-			int retryCount = 0;
-			boolean isAiServerReady = false;
+		String surveyUuid = survey.getUuid().toString();
+		log.info("🚀 AI Embedding 시작 (총 {}개 세션)", completedSessions.size());
 
-			while (retryCount < maxRetries) {
-				if (aiClient.checkHealth()) {
-					isAiServerReady = true;
-					break;
-				}
-				retryCount++;
-				log.warn("⚠️ AI 서버에 연결할 수 없습니다. 30초 후 재시도합니다... ({}/{})", retryCount, maxRetries);
-				Thread.sleep(30000);
-			}
+		final int BATCH_SIZE = 10;
+		final int CONCURRENCY_LIMIT = 50;
 
-			if (!isAiServerReady) {
-				log.error("❌ AI 서버가 준비되지 않아 AI 처리를 건너뜁니다.");
-				return;
-			}
-
-			// Survey UUID를 미리 조회 (LazyInitializationException 방지)
-			Long firstSurveyId = completedSessions.get(0).getSurvey().getId();
-			Survey survey = surveyRepository.findById(firstSurveyId).orElseThrow();
-			String surveyUuid = survey.getUuid().toString();
-
-			log.info("🚀 AI Embedding 처리 시작 (총 {}개 세션, Survey UUID={})...", completedSessions.size(),
-				surveyUuid);
-
-			// 2. 배치 처리 설정
-			final int BATCH_SIZE = 10; // 배치 크기: 10개 세션씩
-			final int CONCURRENCY_LIMIT = 50; // 동시 처리 제한
-
-			java.util.concurrent.atomic.AtomicInteger totalCompletedEmbeddings = new java.util.concurrent.atomic.AtomicInteger(
+		java.util.concurrent.atomic.AtomicInteger totalCompletedEmbeddings = new java.util.concurrent.atomic.AtomicInteger(
 				0);
-			java.util.concurrent.atomic.AtomicInteger totalFailedEmbeddings = new java.util.concurrent.atomic.AtomicInteger(
+		java.util.concurrent.atomic.AtomicInteger totalFailedEmbeddings = new java.util.concurrent.atomic.AtomicInteger(
 				0);
 
-			// 3. 세션을 배치 단위로 나누어 처리
-			int totalBatches = (int)Math.ceil((double)completedSessions.size() / BATCH_SIZE);
-			log.info("📦 총 {}개 배치로 나누어 처리 (배치당 최대 {}개 세션)", totalBatches, BATCH_SIZE);
+		int totalBatches = (int) Math.ceil((double) completedSessions.size() / BATCH_SIZE);
 
-			for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-				final int currentBatchIndex = batchIndex; // 람다에서 사용하기 위해 final 변수로 복사
-				int startIdx = currentBatchIndex * BATCH_SIZE;
-				int endIdx = Math.min(startIdx + BATCH_SIZE, completedSessions.size());
-				List<SurveySession> batchSessions = completedSessions.subList(startIdx, endIdx);
+		for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+			final int currentBatchIndex = batchIndex;
+			int startIdx = currentBatchIndex * BATCH_SIZE;
+			int endIdx = Math.min(startIdx + BATCH_SIZE, completedSessions.size());
+			List<SurveySession> batchSessions = completedSessions.subList(startIdx, endIdx);
 
-				log.info("🔄 배치 {}/{} 처리 중... (세션 {}-{})", currentBatchIndex + 1, totalBatches, startIdx + 1,
-					endIdx);
+			List<reactor.core.publisher.Mono<Void>> batchTasks = new java.util.ArrayList<>();
 
-				// 현재 배치에 대한 Embedding 태스크 생성
-				List<reactor.core.publisher.Mono<Void>> batchTasks = new java.util.ArrayList<>();
-				java.util.concurrent.atomic.AtomicInteger batchEmbeddingCount = new java.util.concurrent.atomic.AtomicInteger(
-					0);
+			for (SurveySession session : batchSessions) {
+				String sessionId = session.getUuid().toString();
 
-				for (SurveySession session : batchSessions) {
-					String sessionId = session.getUuid().toString();
-
-					// 세션의 InterviewLog를 고정질문별로 그룹핑
-					Map<Long, List<InterviewLog>> logsByFixedQuestion = interviewLogRepository
+				Map<Long, List<InterviewLog>> logsByFixedQuestion = interviewLogRepository
 						.findBySessionIdOrderByTurnNumAsc(session.getId())
 						.stream()
 						.collect(Collectors.groupingBy(InterviewLog::getFixedQuestionId));
 
-					for (Map.Entry<Long, List<InterviewLog>> entry : logsByFixedQuestion.entrySet()) {
-						Long fixedQuestionId = entry.getKey();
-						List<InterviewLog> logs = entry.getValue();
+				for (Map.Entry<Long, List<InterviewLog>> entry : logsByFixedQuestion.entrySet()) {
+					Long fixedQuestionId = entry.getKey();
+					List<InterviewLog> logs = entry.getValue();
 
-						// Q&A 쌍 생성
-						List<com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair> qaPairs = logs
+					List<com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair> qaPairs = logs
 							.stream()
 							.filter(l -> l.getAnswerText() != null)
 							.map(l -> com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair
-								.of(
-									l.getQuestionText(),
-									l.getAnswerText(),
-									l.getType().name()))
+									.of(l.getQuestionText(), l.getAnswerText(), l.getType().name()))
 							.collect(Collectors.toList());
 
-						if (!qaPairs.isEmpty()) {
-							batchEmbeddingCount.incrementAndGet();
+					if (!qaPairs.isEmpty()) {
+						Map<String, Object> metadata = new java.util.HashMap<>();
+						if (session.getTesterProfile() != null) {
+							TesterProfile profile = session.getTesterProfile();
+							if (profile.getGender() != null)
+								metadata.put("gender", profile.getGender());
+							if (profile.getAgeGroup() != null)
+								metadata.put("age_group", profile.getAgeGroup());
+							if (profile.getPreferGenre() != null)
+								metadata.put("prefer_genre", profile.getPreferGenre());
+						}
 
-							// Metadata 생성
-							Map<String, Object> metadata = new java.util.HashMap<>();
-							if (session.getTesterProfile() != null) {
-								TesterProfile profile = session.getTesterProfile();
-								if (profile.getGender() != null)
-									metadata.put("gender", profile.getGender());
-								if (profile.getAgeGroup() != null)
-									metadata.put("age_group", profile.getAgeGroup());
-								if (profile.getPreferGenre() != null)
-									metadata.put("prefer_genre", profile.getPreferGenre());
-							}
-
-							// autoTriggerAnalysis = false로 설정하여 자동 트리거 방지
-							com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest request = com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest
+						com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest request = com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest
 								.builder()
 								.sessionId(sessionId)
 								.surveyUuid(surveyUuid)
@@ -305,293 +495,210 @@ public class MockDataLoader implements CommandLineRunner {
 								.autoTriggerAnalysis(false)
 								.build();
 
-							// Mono 태스크 생성
-							reactor.core.publisher.Mono<Void> task = aiClient
+						reactor.core.publisher.Mono<Void> task = aiClient
 								.embedSessionData(request)
-								.doOnSuccess(result -> {
-									totalCompletedEmbeddings.incrementAndGet();
-									log.debug("✅ Embedding 완료: session={}, fixedQuestionId={}",
-										sessionId, fixedQuestionId);
-								})
-								.doOnError(error -> {
-									totalFailedEmbeddings.incrementAndGet();
-									log.error("❌ Embedding 실패: session={}, fixedQuestionId={}, error={}",
-										sessionId, fixedQuestionId,
-										error.getMessage());
-								})
+								.doOnSuccess(result -> totalCompletedEmbeddings.incrementAndGet())
+								.doOnError(error -> totalFailedEmbeddings.incrementAndGet())
 								.onErrorResume(e -> reactor.core.publisher.Mono.empty())
 								.then();
 
-							batchTasks.add(task);
-						}
+						batchTasks.add(task);
 					}
 				}
-
-				// 현재 배치의 Embedding 실행
-				log.info("📤 배치 {}/{}: {}개 Embedding 요청 전송 (동시성 제한: {})", currentBatchIndex + 1, totalBatches,
-					batchEmbeddingCount.get(), CONCURRENCY_LIMIT);
-
-				reactor.core.publisher.Flux.fromIterable(batchTasks)
-					.flatMap(mono -> mono.subscribeOn(
-						reactor.core.scheduler.Schedulers.boundedElastic()), CONCURRENCY_LIMIT)
-					.doOnComplete(() -> log.info("✅ 배치 {}/{} 완료 (성공: {}, 실패: {})",
-						currentBatchIndex + 1, totalBatches,
-						totalCompletedEmbeddings.get(), totalFailedEmbeddings.get()))
-					.doOnError(e -> log.error("💥 Embedding 배치 {}/{} 에러: {}", currentBatchIndex + 1,
-						totalBatches, e.getMessage()))
-					.blockLast(java.time.Duration.ofMinutes(5)); // 배치당 최대 5분 대기
-
-				log.info("🏁 배치 {}/{} 처리 완료", currentBatchIndex + 1, totalBatches);
 			}
 
-			log.info("✅ 모든 Embedding 완료: 총 성공 {}, 총 실패 {}", totalCompletedEmbeddings.get(),
+			reactor.core.publisher.Flux.fromIterable(batchTasks)
+					.flatMap(mono -> mono.subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic()),
+							CONCURRENCY_LIMIT)
+					.blockLast(java.time.Duration.ofMinutes(5));
+		}
+
+		log.info("✅ Embedding 완료: 성공 {}, 실패 {}", totalCompletedEmbeddings.get(),
 				totalFailedEmbeddings.get());
+	}
 
-			// 4. Analytics 배치 처리
-			log.info("🚀 Analytics 시작 (surveyUuid={})...", surveyUuid);
+	/**
+	 * Analytics 수행 (해당 설문의 모든 질문)
+	 */
+	private void analyzeSurveyQuestions(Survey survey) {
+		List<FixedQuestion> questions = fixedQuestionRepository.findBySurveyIdOrderByOrderAsc(survey.getId());
 
-			java.util.UUID surveyUuidObj = java.util.UUID.fromString(surveyUuid);
+		if (questions.isEmpty()) {
+			log.warn("분석할 질문이 없습니다.");
+			return;
+		}
 
-			// 질문 목록 조회
-			List<FixedQuestion> questions = fixedQuestionRepository.findBySurveyIdOrderByOrderAsc(survey.getId());
+		java.util.UUID surveyUuid = survey.getUuid();
+		log.info("🔍 Analytics 시작 (총 {}개 질문)", questions.size());
 
-			if (questions.isEmpty()) {
-				log.warn("⚠️ 분석할 질문이 없습니다.");
-			} else {
-				java.util.concurrent.atomic.AtomicInteger totalCompletedAnalytics = new java.util.concurrent.atomic.AtomicInteger(
-					0);
-				java.util.concurrent.atomic.AtomicInteger totalFailedAnalytics = new java.util.concurrent.atomic.AtomicInteger(
-					0);
+		java.util.concurrent.atomic.AtomicInteger totalCompletedAnalytics = new java.util.concurrent.atomic.AtomicInteger(
+				0);
+		java.util.concurrent.atomic.AtomicInteger totalFailedAnalytics = new java.util.concurrent.atomic.AtomicInteger(
+				0);
 
-				// 질문수가 적으므로 배치 처리 없이 순차 처리
-				log.info("🔄 Analytics 처리 중... (총 {}개 질문)", questions.size());
-
-				for (FixedQuestion question : questions) {
-					try {
-						log.debug("🔍 분석 시작: questionId={}", question.getId());
-						analyticsService.analyzeSingleQuestion(surveyUuidObj, question.getId());
-						totalCompletedAnalytics.incrementAndGet();
-						log.debug("✅ Analytics 완료: questionId={}", question.getId());
-					} catch (Exception error) {
-						totalFailedAnalytics.incrementAndGet();
-						log.error("❌ Analytics 실패: questionId={}, error={}", question.getId(), error.getMessage());
-					}
-				}
-
-				log.info("✅ 모든 Analytics 완료: 총 성공 {}, 총 실패 {}", totalCompletedAnalytics.get(),
-					totalFailedAnalytics.get());
-
-				// 5. Survey Summary 생성
-				log.info("🚀 Survey Summary 생성 시작...");
-				try {
-					// 분석 결과에서 meta_summary 추출
-					List<String> metaSummaries = analysisRepository.findAllBySurveyId(survey.getId())
-						.stream()
-						.map(analysis -> {
-							try {
-								String json = analysis.getResultJson();
-								if (json == null || json.isBlank())
-									return null;
-								com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
-								if (node.has("meta_summary")) {
-									return node.get("meta_summary").asText();
-								}
-							} catch (Exception e) {
-								log.warn("meta_summary 추출 실패: {}", e.getMessage());
-							}
-							return null;
-						})
-						.filter(java.util.Objects::nonNull)
-						.filter(s -> !s.isBlank())
-						.collect(Collectors.toList());
-
-					if (!metaSummaries.isEmpty()) {
-						log.info("📝 meta_summary {}개 추출 완료, AI 종합 평가 요청 중...", metaSummaries.size());
-						String surveySummaryResult = aiClient.generateSurveySummary(metaSummaries)
-							.block(java.time.Duration.ofMinutes(2));
-
-						if (surveySummaryResult != null && !surveySummaryResult.isBlank()) {
-							survey.updateSurveySummary(surveySummaryResult);
-							surveyRepository.save(survey);
-							log.info("✅ Survey Summary 저장 완료: {}", surveySummaryResult);
-						}
-					} else {
-						log.warn("⚠️ meta_summary가 없어 Survey Summary를 건너뜁니다.");
-					}
-				} catch (Exception e) {
-					log.error("❌ Survey Summary 생성 실패: {}", e.getMessage());
-				}
+		for (FixedQuestion question : questions) {
+			try {
+				analyticsService.analyzeSingleQuestion(surveyUuid, question.getId());
+				totalCompletedAnalytics.incrementAndGet();
+			} catch (Exception error) {
+				totalFailedAnalytics.incrementAndGet();
+				log.error("❌ Analytics 실패: questionId={}, error={}", question.getId(), error.getMessage());
 			}
+		}
 
-			log.info("✅ AI 처리 완료!");
+		log.info("✅ Analytics 완료: 성공 {}, 실패 {}", totalCompletedAnalytics.get(),
+				totalFailedAnalytics.get());
+	}
 
+	/**
+	 * Survey Summary 생성 및 저장
+	 */
+	@Transactional
+	protected void generateAndSaveSurveySummary(Survey survey) {
+		try {
+			List<String> metaSummaries = analysisRepository.findAllBySurveyId(survey.getId())
+					.stream()
+					.map(analysis -> {
+						try {
+							String json = analysis.getResultJson();
+							if (json == null || json.isBlank())
+								return null;
+							com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+							if (node.has("meta_summary")) {
+								return node.get("meta_summary").asText();
+							}
+						} catch (Exception e) {
+							log.warn("meta_summary 추출 실패: {}", e.getMessage());
+						}
+						return null;
+					})
+					.filter(java.util.Objects::nonNull)
+					.filter(s -> !s.isBlank())
+					.collect(Collectors.toList());
+
+			if (!metaSummaries.isEmpty()) {
+				log.info("📝 meta_summary {}개 추출, Survey Summary 생성 중...", metaSummaries.size());
+				String surveySummaryResult = aiClient.generateSurveySummary(metaSummaries)
+						.block(java.time.Duration.ofMinutes(2));
+
+				if (surveySummaryResult != null && !surveySummaryResult.isBlank()) {
+					survey.updateSurveySummary(surveySummaryResult);
+					surveyRepository.saveAndFlush(survey);
+					log.info("✅ Survey Summary 저장 완료");
+				}
+			} else {
+				log.warn("⚠️ meta_summary가 없어 Survey Summary를 건너뜁니다.");
+			}
 		} catch (Exception e) {
-			log.error("❌ AI 처리 중 오류 발생: {}", e.getMessage(), e);
+			log.error("❌ Survey Summary 생성 실패: {}", e.getMessage());
+			throw new RuntimeException("Survey Summary 생성 실패", e);
 		}
 	}
 
 	/**
-	 * JSON 데이터를 DB에 저장합니다.
-	 *
-	 * <p>
-	 * 처리 순서:
-	 * </p>
-	 * <ol>
-	 * <li>Demo User 생성 (email: demo@playprobie.com, password: demo1234)</li>
-	 * <li>Demo Workspace 생성 (고정 UUID: 00000000-0000-0000-0000-000000000000)</li>
-	 * <li>Game 생성</li>
-	 * <li>Survey 생성</li>
-	 * <li>FixedQuestion 생성</li>
-	 * <li>SurveySession 및 InterviewLog 생성</li>
-	 * </ol>
-	 *
-	 * @param data mock_data.json에서 읽은 Map 데이터
+	 * 설문 파이프라인 완료 검증
 	 */
-	private void loadData(Map<String, Object> data) {
-		log.info("\n========================================");
-		log.info("🚀 Mock Data 로딩 시작");
-		log.info("========================================\n");
+	private void verifySurveyPipelineCompleted(Survey survey) {
+		// 1. Survey Summary 존재 확인
+		Survey refreshedSurvey = surveyRepository.findById(survey.getId())
+				.orElseThrow(() -> new IllegalStateException("Survey not found: " + survey.getId()));
 
-		// 0. Demo User & Workspace 생성
-		// 로그인: email=demo@playprobie.com, password=demo1234
-		User demoUser = userRepository.save(User.builder()
-			.email("demo@playprobie.com")
-			.password(passwordEncoder.encode("demo1234"))
-			.name("Demo User")
-			.build());
-		log.info("💾 [0/4] Demo User 저장 완료: ID={}, email={}", demoUser.getId(), demoUser.getEmail());
-
-		Workspace workspace = workspaceRepository.save(Workspace.builder()
-			.uuid(java.util.UUID.fromString("00000000-0000-0000-0000-000000000000")) // Demo용 고정 UUID
-			.name("Demo Workspace")
-			.description("Mock 데이터용 데모 워크스페이스")
-			.build());
-
-		workspaceMemberRepository.save(WorkspaceMember.builder()
-			.workspace(workspace)
-			.user(demoUser)
-			.role(WorkspaceRole.OWNER)
-			.build());
-		log.info("💾 [0/4] Workspace 저장 완료: ID={}, Name={}, UUID={}",
-			workspace.getId(), workspace.getName(), workspace.getUuid());
-
-		// 1. Game 생성 (JSON에서 로드)
-		Map<String, Object> gameData = objectMapper.convertValue(data.get("game"),
-			new TypeReference<Map<String, Object>>() {});
-
-		// genres 배열 처리 (mock_data.json에서 ["RPG", "ACTION"] 형식)
-		List<String> genreStrings = objectMapper.convertValue(gameData.get("genres"),
-			new TypeReference<List<String>>() {});
-		List<GameGenre> genres = genreStrings.stream()
-			.map(GameGenre::valueOf)
-			.collect(Collectors.toList());
-
-		Game game = gameRepository.save(Game.builder()
-			.workspace(workspace)
-			.name((String)gameData.get("name"))
-			.genres(genres)
-			.context((String)gameData.get("description"))
-			.extractedElements(
-				"{\"core_mechanic\": \"숨바꼭질 및 퇴마 의식\", \"player_goal\": \"새벽 4시까지 생존하고 악령 퇴치\", \"horror_element\": \"점프스케어와 심리적 압박\", \"atmosphere\": \"어둡고 습한 폐가, 고립감\", \"main_character\": \"기억을 잃은 퇴마사\"}")
-			.build());
-		log.info("💾 [1/4] Game 저장 완료: {}, UUID={}, genres={}", game.getName(), game.getUuid(), genres);
-
-		// 2. Survey 생성
-		Map<String, Object> surveyData = objectMapper.convertValue(data.get("survey"),
-			new TypeReference<Map<String, Object>>() {});
-
-		// testPurpose 매핑
-		String testPurposeStr = (String)surveyData.get("testPurpose");
-		TestPurpose testPurpose = TestPurpose.valueOf(testPurposeStr);
-
-		// testStage 매핑 (optional)
-		TestStage testStage = null;
-		String testStageStr = (String)surveyData.get("testStage");
-		if (testStageStr != null) {
-			testStage = TestStage.valueOf(testStageStr);
+		if (refreshedSurvey.getSurveySummary() == null || refreshedSurvey.getSurveySummary().isBlank()) {
+			throw new IllegalStateException("Survey Summary 누락: " + survey.getName());
 		}
 
-		// themePriorities 매핑 (required, 1-3개)
-		List<String> themePriorities = objectMapper.convertValue(surveyData.get("themePriorities"),
-			new TypeReference<List<String>>() {});
+		// 2. Analytics 결과 존재 확인
+		long analysisCount = analysisRepository.findAllBySurveyId(survey.getId()).size();
+		long questionCount = fixedQuestionRepository.countBySurveyId(survey.getId());
 
-		// themeDetails 매핑 (optional)
-		Map<String, List<String>> themeDetails = objectMapper.convertValue(surveyData.get("themeDetails"),
-			new TypeReference<Map<String, List<String>>>() {});
-
-		// versionNote 매핑 (optional)
-		String versionNote = (String)surveyData.get("versionNote");
-
-		Survey survey = surveyRepository.save(Survey.builder()
-			.game(game)
-			.name((String)surveyData.get("name"))
-			.testPurpose(testPurpose)
-			.testStage(testStage)
-			.themePriorities(themePriorities)
-			.themeDetails(themeDetails)
-			.versionNote(versionNote)
-			.startAt(LocalDateTime.now().minusDays(7))
-			.endAt(LocalDateTime.now().plusDays(7))
-			.build());
-
-		log.info("💾 [2/4] Survey 저장 완료: ID={}, Name={}, testStage={}, themePriorities={}",
-			survey.getId(), survey.getName(), testStage, themePriorities);
-
-		// 3. FixedQuestion 생성
-		List<Map<String, Object>> questionsData = objectMapper.convertValue(surveyData.get("questions"),
-			new TypeReference<List<Map<String, Object>>>() {});
-		for (Map<String, Object> qData : questionsData) {
-			fixedQuestionRepository.save(FixedQuestion.builder()
-				.surveyId(survey.getId())
-				.content((String)qData.get("content"))
-				.order((Integer)qData.get("order"))
-				.status(QuestionStatus.CONFIRMED)
-				.build());
+		if (analysisCount != questionCount) {
+			throw new IllegalStateException(String.format(
+					"Analytics 불완전: %s (expected=%d, actual=%d)",
+					survey.getName(), questionCount, analysisCount));
 		}
-		log.info("💾 [3/4] FixedQuestion {}개 저장 완료 (Survey ID={})", questionsData.size(), survey.getId());
 
-		// 4. Session & Logs 생성 (JSON 기반)
-		List<Map<String, Object>> sessionsData = objectMapper.convertValue(data.get("sessions"),
-			new TypeReference<List<Map<String, Object>>>() {});
-		int logCount = 0;
+		log.info("✅ 파이프라인 검증 완료: Survey={}, Questions={}, Analytics={}",
+				survey.getName(), questionCount, analysisCount);
+	}
 
-		for (Map<String, Object> sData : sessionsData) {
-			// TesterProfile 생성 (JSON에서 로드)
-			Map<String, Object> profileData = objectMapper.convertValue(sData.get("profile"),
-				new TypeReference<Map<String, Object>>() {});
+	/**
+	 * AI 서버 연결 대기
+	 */
+	private void waitForAiServer() throws InterruptedException {
+		log.info("⏳ AI 서버 연결 확인 중...");
+		int maxRetries = 30;
+		int retryCount = 0;
 
-			TesterProfile testerProfile = TesterProfile.builder()
-				.testerId((String)profileData.get("testerId"))
-				.ageGroup((String)profileData.get("ageGroup"))
-				.gender((String)profileData.get("gender"))
-				.preferGenre((String)profileData.get("preferGenre"))
-				.build();
-
-			// Session 생성 (이미 완료 상태로)
-			SurveySession session = SurveySession.builder()
-				.survey(survey)
-				.testerProfile(testerProfile)
-				.build();
-			session.complete(); // 상태 완료 처리
-			surveySessionRepository.save(session);
-
-			// Logs 생성
-			List<Map<String, Object>> logsData = objectMapper.convertValue(sData.get("logs"),
-				new TypeReference<List<Map<String, Object>>>() {});
-			for (Map<String, Object> lData : logsData) {
-				Long fixedQuestionId = ((Number)lData.get("fixedQuestionId")).longValue();
-
-				interviewLogRepository.save(InterviewLog.builder()
-					.session(session)
-					.fixedQuestionId(fixedQuestionId)
-					.turnNum((Integer)lData.get("turnNum"))
-					.type(QuestionType.valueOf((String)lData.get("type")))
-					.questionText((String)lData.get("questionText"))
-					.answerText((String)lData.get("answerText"))
-					.build());
-				logCount++;
+		while (retryCount < maxRetries) {
+			if (aiClient.checkHealth()) {
+				log.info("✅ AI 서버 연결 성공");
+				return;
 			}
+			retryCount++;
+			log.warn("⚠️ AI 서버 연결 실패. 30초 후 재시도... ({}/{})", retryCount, maxRetries);
+			Thread.sleep(30000);
 		}
-		log.info("💾 [4/4] SurveySession {}개, InterviewLog {}개 저장 완료", sessionsData.size(), logCount);
+
+		throw new IllegalStateException("AI 서버가 준비되지 않았습니다.");
+	}
+
+	/**
+	 * 기존 설문들에 대해 AI 처리 수행 (데이터는 있지만 Analytics가 없는 경우)
+	 */
+	private void triggerAiProcessingForExistingSurveys() {
+		try {
+			List<Survey> allSurveys = surveyRepository.findAll();
+
+			if (allSurveys.isEmpty()) {
+				log.warn("⚠️ 처리할 설문이 없습니다.");
+				return;
+			}
+
+			log.info("🚀 기존 설문 AI 처리 시작 (총 {}개 설문)", allSurveys.size());
+
+			for (int i = 0; i < allSurveys.size(); i++) {
+				Survey survey = allSurveys.get(i);
+				int surveyIndex = i + 1;
+
+				log.info("\n========================================");
+				log.info("📋 [{}/{}] Survey AI 처리: {}", surveyIndex, allSurveys.size(), survey.getName());
+				log.info("========================================");
+
+				try {
+					// 1️⃣ AI Embedding
+					log.info("🔄 [{}/{}] AI Embedding 시작...", surveyIndex, allSurveys.size());
+					embedSurveyData(survey);
+					log.info("✅ [{}/{}] AI Embedding 완료", surveyIndex, allSurveys.size());
+
+					// 2️⃣ Analytics 수행
+					log.info("🔄 [{}/{}] Analytics 시작...", surveyIndex, allSurveys.size());
+					analyzeSurveyQuestions(survey);
+					log.info("✅ [{}/{}] Analytics 완료", surveyIndex, allSurveys.size());
+
+					// 3️⃣ Survey Summary 생성
+					log.info("🔄 [{}/{}] Survey Summary 생성 중...", surveyIndex, allSurveys.size());
+					generateAndSaveSurveySummary(survey);
+					log.info("✅ [{}/{}] Survey Summary 완료", surveyIndex, allSurveys.size());
+
+					// 4️⃣ 완료 검증
+					verifySurveyPipelineCompleted(survey);
+
+					log.info("\n✅✅✅ [{}/{}] Survey AI 처리 완료: {} ✅✅✅",
+							surveyIndex, allSurveys.size(), survey.getName());
+
+				} catch (Exception e) {
+					log.error("❌ [{}/{}] Survey AI 처리 실패: {}", surveyIndex, allSurveys.size(),
+							survey.getName(), e);
+					// 개별 설문 실패 시 다음 설문 계속 처리
+				}
+			}
+
+			log.info("\n========================================");
+			log.info("🎉 기존 설문 AI 처리 완료!");
+			log.info("========================================");
+
+		} catch (Exception e) {
+			log.error("❌ AI 처리 중 오류 발생: {}", e.getMessage(), e);
+		}
 	}
 }
