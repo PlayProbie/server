@@ -113,7 +113,7 @@ import lombok.extern.slf4j.Slf4j;
  * }</pre>
  */
 @Component
-@Profile({ "local", "dev", "prod" })
+@Profile({"local", "dev", "prod"})
 @RequiredArgsConstructor
 @Slf4j
 public class MockDataLoader implements CommandLineRunner {
@@ -163,10 +163,10 @@ public class MockDataLoader implements CommandLineRunner {
 
 		// 4개 설문 설정 (첫 번째는 500개 세션, 나머지는 100개 세션)
 		java.util.List<SurveyConfig> surveyConfigs = java.util.List.of(
-				new SurveyConfig("1.0.0v 플레이테스트", "/data/mock_data_2_500.json"),
-				new SurveyConfig("1.1.0v 플레이테스트", "/data/mock_data_2_100.json"),
-				new SurveyConfig("2.0.0v 플레이테스트", "/data/mock_data_2_100.json"),
-				new SurveyConfig("2.1.0v 플레이테스트", "/data/mock_data_2_100.json"));
+			new SurveyConfig("1.0.0v 플레이테스트", "/data/mock_data_2_500.json"),
+			new SurveyConfig("1.1.0v 플레이테스트", "/data/mock_data_2_100.json"),
+			new SurveyConfig("2.0.0v 플레이테스트", "/data/mock_data_2_100.json"),
+			new SurveyConfig("2.1.0v 플레이테스트", "/data/mock_data_2_100.json"));
 
 		// Demo User & Workspace는 한 번만 생성
 		User demoUser = createDemoUser();
@@ -193,9 +193,9 @@ public class MockDataLoader implements CommandLineRunner {
 				}
 
 				log.info("✅ [{}/{}] 데이터 생성 완료: Survey ID={}, Sessions={}",
-						surveyIndex, surveyConfigs.size(), survey.getId(),
-						surveySessionRepository.countBySurveyIdAndStatus(survey.getId(),
-								com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED));
+					surveyIndex, surveyConfigs.size(), survey.getId(),
+					surveySessionRepository.countBySurveyIdAndStatus(survey.getId(),
+						com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED));
 
 				// 2️⃣ AI Embedding
 				log.info("🔄 [{}/{}] AI Embedding 시작...", surveyIndex, surveyConfigs.size());
@@ -216,11 +216,11 @@ public class MockDataLoader implements CommandLineRunner {
 				verifySurveyPipelineCompleted(survey);
 
 				log.info("\n✅✅✅ [{}/{}] Survey 완전 처리 완료: {} ✅✅✅",
-						surveyIndex, surveyConfigs.size(), config.getName());
+					surveyIndex, surveyConfigs.size(), config.getName());
 
 			} catch (Exception e) {
 				log.error("❌ [{}/{}] Survey 처리 실패: {}", surveyIndex, surveyConfigs.size(),
-						config.getName(), e);
+					config.getName(), e);
 				// 개별 설문 실패 시 다음 설문 계속 처리 (앱 종료 방지)
 			}
 		}
@@ -235,10 +235,10 @@ public class MockDataLoader implements CommandLineRunner {
 	 */
 	private User createDemoUser() {
 		User demoUser = userRepository.save(User.builder()
-				.email("jungle@playprobie.com")
-				.password(passwordEncoder.encode("jungle1234"))
-				.name("Jungle")
-				.build());
+			.email("jungle@playprobie.com")
+			.password(passwordEncoder.encode("jungle1234"))
+			.name("Jungle")
+			.build());
 		log.info("💾 Demo User 생성 완료: ID={}, email={}", demoUser.getId(), demoUser.getEmail());
 		return demoUser;
 	}
@@ -248,19 +248,19 @@ public class MockDataLoader implements CommandLineRunner {
 	 */
 	private Workspace createDemoWorkspace(User demoUser) {
 		Workspace workspace = workspaceRepository.save(Workspace.builder()
-				.uuid(java.util.UUID.fromString("00000000-0000-0000-0000-000000000000")) // Demo용 고정 UUID
-				.name("Jungle Workspace")
-				.description("Jungle 11기 나만의 무기 만들기")
-				.build());
+			.uuid(java.util.UUID.fromString("00000000-0000-0000-0000-000000000000")) // Demo용 고정 UUID
+			.name("Jungle Workspace")
+			.description("Jungle 11기 나만의 무기 만들기")
+			.build());
 
 		workspaceMemberRepository.save(WorkspaceMember.builder()
-				.workspace(workspace)
-				.user(demoUser)
-				.role(WorkspaceRole.OWNER)
-				.build());
+			.workspace(workspace)
+			.user(demoUser)
+			.role(WorkspaceRole.OWNER)
+			.build());
 
 		log.info("💾 Workspace 생성 완료: ID={}, Name={}, UUID={}",
-				workspace.getId(), workspace.getName(), workspace.getUuid());
+			workspace.getId(), workspace.getName(), workspace.getUuid());
 		return workspace;
 	}
 
@@ -269,71 +269,65 @@ public class MockDataLoader implements CommandLineRunner {
 	 */
 	@Transactional
 	protected Survey loadSurveyDataWithTransaction(SurveyConfig config, Workspace workspace, Game existingGame)
-			throws Exception {
+		throws Exception {
 		try (InputStream inputStream = getClass().getResourceAsStream(config.getJsonFileName())) {
 			if (inputStream == null) {
 				throw new IllegalStateException("JSON 파일을 찾을 수 없습니다: " + config.getJsonFileName());
 			}
 
-			Map<String, Object> data = objectMapper.readValue(inputStream, new TypeReference<>() {
-			});
+			Map<String, Object> data = objectMapper.readValue(inputStream, new TypeReference<>() {});
 
 			// Game 생성 (첫 번째 설문에서만)
 			Game game = existingGame;
 			if (game == null) {
 				Map<String, Object> gameData = objectMapper.convertValue(data.get("game"),
-						new TypeReference<Map<String, Object>>() {
-						});
+					new TypeReference<Map<String, Object>>() {});
 
 				List<String> genreStrings = objectMapper.convertValue(gameData.get("genres"),
-						new TypeReference<List<String>>() {
-						});
+					new TypeReference<List<String>>() {});
 				List<GameGenre> genres = genreStrings.stream()
-						.map(GameGenre::valueOf)
-						.collect(Collectors.toList());
+					.map(GameGenre::valueOf)
+					.collect(Collectors.toList());
 
 				game = gameRepository.save(Game.builder()
-						.workspace(workspace)
-						.name((String) gameData.get("name"))
-						.genres(genres)
-						.context((String) gameData.get("description"))
-						.extractedElements(
-								"{\"core_mechanic\": \"카트 레이싱\", \"player_goal\": \"레이스 우승\", \"racing_element\": \"아케이드 레이싱\"}")
-						.build());
+					.workspace(workspace)
+					.name((String)gameData.get("name"))
+					.genres(genres)
+					.context((String)gameData.get("description"))
+					.extractedElements(
+						"{\"core_mechanic\": \"카트 레이싱\", \"player_goal\": \"레이스 우승\", \"racing_element\": \"아케이드 레이싱\"}")
+					.build());
 				log.info("💾 Game 생성 완료: {}, UUID={}", game.getName(), game.getUuid());
 			}
 
 			// Survey 생성
 			Map<String, Object> surveyData = objectMapper.convertValue(data.get("survey"),
-					new TypeReference<Map<String, Object>>() {
-					});
+				new TypeReference<Map<String, Object>>() {});
 
-			TestPurpose testPurpose = TestPurpose.valueOf((String) surveyData.get("testPurpose"));
+			TestPurpose testPurpose = TestPurpose.valueOf((String)surveyData.get("testPurpose"));
 			TestStage testStage = surveyData.get("testStage") != null
-					? TestStage.valueOf((String) surveyData.get("testStage"))
-					: null;
+				? TestStage.valueOf((String)surveyData.get("testStage"))
+				: null;
 
 			List<String> themePriorities = objectMapper.convertValue(surveyData.get("themePriorities"),
-					new TypeReference<List<String>>() {
-					});
+				new TypeReference<List<String>>() {});
 
 			Map<String, List<String>> themeDetails = objectMapper.convertValue(surveyData.get("themeDetails"),
-					new TypeReference<Map<String, List<String>>>() {
-					});
+				new TypeReference<Map<String, List<String>>>() {});
 
-			String versionNote = (String) surveyData.get("versionNote");
+			String versionNote = (String)surveyData.get("versionNote");
 
 			Survey survey = surveyRepository.saveAndFlush(Survey.builder()
-					.game(game)
-					.name(config.getName()) // 설문 이름을 config에서 가져옴
-					.testPurpose(testPurpose)
-					.testStage(testStage)
-					.themePriorities(themePriorities)
-					.themeDetails(themeDetails)
-					.versionNote(versionNote)
-					.startAt(LocalDateTime.now().minusDays(7))
-					.endAt(LocalDateTime.now().plusDays(7))
-					.build());
+				.game(game)
+				.name(config.getName()) // 설문 이름을 config에서 가져옴
+				.testPurpose(testPurpose)
+				.testStage(testStage)
+				.themePriorities(themePriorities)
+				.themeDetails(themeDetails)
+				.versionNote(versionNote)
+				.startAt(LocalDateTime.now().minusDays(7))
+				.endAt(LocalDateTime.now().plusDays(7))
+				.build());
 
 			if (survey.getId() == null) {
 				throw new IllegalStateException("Survey 저장 실패: " + config.getName());
@@ -343,17 +337,16 @@ public class MockDataLoader implements CommandLineRunner {
 
 			// FixedQuestion 생성 및 JSON ID → DB ID 매핑 생성
 			List<Map<String, Object>> questionsData = objectMapper.convertValue(surveyData.get("questions"),
-					new TypeReference<List<Map<String, Object>>>() {
-					});
+				new TypeReference<List<Map<String, Object>>>() {});
 			Map<Long, Long> questionIdMapping = new java.util.HashMap<>(); // JSON id → DB id
 			for (Map<String, Object> qData : questionsData) {
-				Long jsonId = ((Number) qData.get("id")).longValue();
+				Long jsonId = ((Number)qData.get("id")).longValue();
 				FixedQuestion savedQuestion = fixedQuestionRepository.save(FixedQuestion.builder()
-						.surveyId(survey.getId())
-						.content((String) qData.get("content"))
-						.order((Integer) qData.get("order"))
-						.status(QuestionStatus.CONFIRMED)
-						.build());
+					.surveyId(survey.getId())
+					.content((String)qData.get("content"))
+					.order((Integer)qData.get("order"))
+					.status(QuestionStatus.CONFIRMED)
+					.build());
 				questionIdMapping.put(jsonId, savedQuestion.getId());
 			}
 			fixedQuestionRepository.flush();
@@ -361,34 +354,31 @@ public class MockDataLoader implements CommandLineRunner {
 
 			// Session & Logs 생성
 			List<Map<String, Object>> sessionsData = objectMapper.convertValue(data.get("sessions"),
-					new TypeReference<List<Map<String, Object>>>() {
-					});
+				new TypeReference<List<Map<String, Object>>>() {});
 			int logCount = 0;
 
 			for (Map<String, Object> sData : sessionsData) {
 				Map<String, Object> profileData = objectMapper.convertValue(sData.get("profile"),
-						new TypeReference<Map<String, Object>>() {
-						});
+					new TypeReference<Map<String, Object>>() {});
 
 				TesterProfile testerProfile = TesterProfile.builder()
-						.testerId((String) profileData.get("testerId"))
-						.ageGroup((String) profileData.get("ageGroup"))
-						.gender((String) profileData.get("gender"))
-						.preferGenre((String) profileData.get("preferGenre"))
-						.build();
+					.testerId((String)profileData.get("testerId"))
+					.ageGroup((String)profileData.get("ageGroup"))
+					.gender((String)profileData.get("gender"))
+					.preferGenre((String)profileData.get("preferGenre"))
+					.build();
 
 				SurveySession session = SurveySession.builder()
-						.survey(survey)
-						.testerProfile(testerProfile)
-						.build();
+					.survey(survey)
+					.testerProfile(testerProfile)
+					.build();
 				session.complete();
 				surveySessionRepository.save(session);
 
 				List<Map<String, Object>> logsData = objectMapper.convertValue(sData.get("logs"),
-						new TypeReference<List<Map<String, Object>>>() {
-						});
+					new TypeReference<List<Map<String, Object>>>() {});
 				for (Map<String, Object> lData : logsData) {
-					Long jsonFixedQuestionId = ((Number) lData.get("fixedQuestionId")).longValue();
+					Long jsonFixedQuestionId = ((Number)lData.get("fixedQuestionId")).longValue();
 					// JSON ID를 실제 DB ID로 변환
 					Long actualFixedQuestionId = questionIdMapping.get(jsonFixedQuestionId);
 					if (actualFixedQuestionId == null) {
@@ -397,13 +387,13 @@ public class MockDataLoader implements CommandLineRunner {
 					}
 
 					interviewLogRepository.save(InterviewLog.builder()
-							.session(session)
-							.fixedQuestionId(actualFixedQuestionId)
-							.turnNum((Integer) lData.get("turnNum"))
-							.type(QuestionType.valueOf((String) lData.get("type")))
-							.questionText((String) lData.get("questionText"))
-							.answerText((String) lData.get("answerText"))
-							.build());
+						.session(session)
+						.fixedQuestionId(actualFixedQuestionId)
+						.turnNum((Integer)lData.get("turnNum"))
+						.type(QuestionType.valueOf((String)lData.get("type")))
+						.questionText((String)lData.get("questionText"))
+						.answerText((String)lData.get("answerText"))
+						.build());
 					logCount++;
 				}
 			}
@@ -423,10 +413,10 @@ public class MockDataLoader implements CommandLineRunner {
 		waitForAiServer();
 
 		List<SurveySession> completedSessions = surveySessionRepository.findAll()
-				.stream()
-				.filter(s -> s.getSurvey().getId().equals(survey.getId()))
-				.filter(s -> s.getStatus() == com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED)
-				.collect(Collectors.toList());
+			.stream()
+			.filter(s -> s.getSurvey().getId().equals(survey.getId()))
+			.filter(s -> s.getStatus() == com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED)
+			.collect(Collectors.toList());
 
 		if (completedSessions.isEmpty()) {
 			log.warn("완료된 세션이 없습니다.");
@@ -440,11 +430,11 @@ public class MockDataLoader implements CommandLineRunner {
 		final int CONCURRENCY_LIMIT = 50;
 
 		java.util.concurrent.atomic.AtomicInteger totalCompletedEmbeddings = new java.util.concurrent.atomic.AtomicInteger(
-				0);
+			0);
 		java.util.concurrent.atomic.AtomicInteger totalFailedEmbeddings = new java.util.concurrent.atomic.AtomicInteger(
-				0);
+			0);
 
-		int totalBatches = (int) Math.ceil((double) completedSessions.size() / BATCH_SIZE);
+		int totalBatches = (int)Math.ceil((double)completedSessions.size() / BATCH_SIZE);
 
 		for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
 			final int currentBatchIndex = batchIndex;
@@ -458,20 +448,20 @@ public class MockDataLoader implements CommandLineRunner {
 				String sessionId = session.getUuid().toString();
 
 				Map<Long, List<InterviewLog>> logsByFixedQuestion = interviewLogRepository
-						.findBySessionIdOrderByTurnNumAsc(session.getId())
-						.stream()
-						.collect(Collectors.groupingBy(InterviewLog::getFixedQuestionId));
+					.findBySessionIdOrderByTurnNumAsc(session.getId())
+					.stream()
+					.collect(Collectors.groupingBy(InterviewLog::getFixedQuestionId));
 
 				for (Map.Entry<Long, List<InterviewLog>> entry : logsByFixedQuestion.entrySet()) {
 					Long fixedQuestionId = entry.getKey();
 					List<InterviewLog> logs = entry.getValue();
 
 					List<com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair> qaPairs = logs
-							.stream()
-							.filter(l -> l.getAnswerText() != null)
-							.map(l -> com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair
-									.of(l.getQuestionText(), l.getAnswerText(), l.getType().name()))
-							.collect(Collectors.toList());
+						.stream()
+						.filter(l -> l.getAnswerText() != null)
+						.map(l -> com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest.QaPair
+							.of(l.getQuestionText(), l.getAnswerText(), l.getType().name()))
+						.collect(Collectors.toList());
 
 					if (!qaPairs.isEmpty()) {
 						Map<String, Object> metadata = new java.util.HashMap<>();
@@ -486,21 +476,21 @@ public class MockDataLoader implements CommandLineRunner {
 						}
 
 						com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest request = com.playprobie.api.infra.ai.dto.request.SessionEmbeddingRequest
-								.builder()
-								.sessionId(sessionId)
-								.surveyUuid(surveyUuid)
-								.fixedQuestionId(fixedQuestionId)
-								.qaPairs(qaPairs)
-								.metadata(metadata)
-								.autoTriggerAnalysis(false)
-								.build();
+							.builder()
+							.sessionId(sessionId)
+							.surveyUuid(surveyUuid)
+							.fixedQuestionId(fixedQuestionId)
+							.qaPairs(qaPairs)
+							.metadata(metadata)
+							.autoTriggerAnalysis(false)
+							.build();
 
 						reactor.core.publisher.Mono<Void> task = aiClient
-								.embedSessionData(request)
-								.doOnSuccess(result -> totalCompletedEmbeddings.incrementAndGet())
-								.doOnError(error -> totalFailedEmbeddings.incrementAndGet())
-								.onErrorResume(e -> reactor.core.publisher.Mono.empty())
-								.then();
+							.embedSessionData(request)
+							.doOnSuccess(result -> totalCompletedEmbeddings.incrementAndGet())
+							.doOnError(error -> totalFailedEmbeddings.incrementAndGet())
+							.onErrorResume(e -> reactor.core.publisher.Mono.empty())
+							.then();
 
 						batchTasks.add(task);
 					}
@@ -508,13 +498,13 @@ public class MockDataLoader implements CommandLineRunner {
 			}
 
 			reactor.core.publisher.Flux.fromIterable(batchTasks)
-					.flatMap(mono -> mono.subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic()),
-							CONCURRENCY_LIMIT)
-					.blockLast(java.time.Duration.ofMinutes(5));
+				.flatMap(mono -> mono.subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic()),
+					CONCURRENCY_LIMIT)
+				.blockLast(java.time.Duration.ofMinutes(5));
 		}
 
 		log.info("✅ Embedding 완료: 성공 {}, 실패 {}", totalCompletedEmbeddings.get(),
-				totalFailedEmbeddings.get());
+			totalFailedEmbeddings.get());
 	}
 
 	/**
@@ -532,9 +522,9 @@ public class MockDataLoader implements CommandLineRunner {
 		log.info("🔍 Analytics 시작 (총 {}개 질문)", questions.size());
 
 		java.util.concurrent.atomic.AtomicInteger totalCompletedAnalytics = new java.util.concurrent.atomic.AtomicInteger(
-				0);
+			0);
 		java.util.concurrent.atomic.AtomicInteger totalFailedAnalytics = new java.util.concurrent.atomic.AtomicInteger(
-				0);
+			0);
 
 		for (FixedQuestion question : questions) {
 			try {
@@ -547,7 +537,7 @@ public class MockDataLoader implements CommandLineRunner {
 		}
 
 		log.info("✅ Analytics 완료: 성공 {}, 실패 {}", totalCompletedAnalytics.get(),
-				totalFailedAnalytics.get());
+			totalFailedAnalytics.get());
 	}
 
 	/**
@@ -557,29 +547,29 @@ public class MockDataLoader implements CommandLineRunner {
 	protected void generateAndSaveSurveySummary(Survey survey) {
 		try {
 			List<String> metaSummaries = analysisRepository.findAllBySurveyId(survey.getId())
-					.stream()
-					.map(analysis -> {
-						try {
-							String json = analysis.getResultJson();
-							if (json == null || json.isBlank())
-								return null;
-							com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
-							if (node.has("meta_summary")) {
-								return node.get("meta_summary").asText();
-							}
-						} catch (Exception e) {
-							log.warn("meta_summary 추출 실패: {}", e.getMessage());
+				.stream()
+				.map(analysis -> {
+					try {
+						String json = analysis.getResultJson();
+						if (json == null || json.isBlank())
+							return null;
+						com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+						if (node.has("meta_summary")) {
+							return node.get("meta_summary").asText();
 						}
-						return null;
-					})
-					.filter(java.util.Objects::nonNull)
-					.filter(s -> !s.isBlank())
-					.collect(Collectors.toList());
+					} catch (Exception e) {
+						log.warn("meta_summary 추출 실패: {}", e.getMessage());
+					}
+					return null;
+				})
+				.filter(java.util.Objects::nonNull)
+				.filter(s -> !s.isBlank())
+				.collect(Collectors.toList());
 
 			if (!metaSummaries.isEmpty()) {
 				log.info("📝 meta_summary {}개 추출, Survey Summary 생성 중...", metaSummaries.size());
 				String surveySummaryResult = aiClient.generateSurveySummary(metaSummaries)
-						.block(java.time.Duration.ofMinutes(2));
+					.block(java.time.Duration.ofMinutes(2));
 
 				if (surveySummaryResult != null && !surveySummaryResult.isBlank()) {
 					survey.updateSurveySummary(surveySummaryResult);
@@ -601,7 +591,7 @@ public class MockDataLoader implements CommandLineRunner {
 	private void verifySurveyPipelineCompleted(Survey survey) {
 		// 1. Survey Summary 존재 확인
 		Survey refreshedSurvey = surveyRepository.findById(survey.getId())
-				.orElseThrow(() -> new IllegalStateException("Survey not found: " + survey.getId()));
+			.orElseThrow(() -> new IllegalStateException("Survey not found: " + survey.getId()));
 
 		if (refreshedSurvey.getSurveySummary() == null || refreshedSurvey.getSurveySummary().isBlank()) {
 			throw new IllegalStateException("Survey Summary 누락: " + survey.getName());
@@ -613,12 +603,12 @@ public class MockDataLoader implements CommandLineRunner {
 
 		if (analysisCount != questionCount) {
 			throw new IllegalStateException(String.format(
-					"Analytics 불완전: %s (expected=%d, actual=%d)",
-					survey.getName(), questionCount, analysisCount));
+				"Analytics 불완전: %s (expected=%d, actual=%d)",
+				survey.getName(), questionCount, analysisCount));
 		}
 
 		log.info("✅ 파이프라인 검증 완료: Survey={}, Questions={}, Analytics={}",
-				survey.getName(), questionCount, analysisCount);
+			survey.getName(), questionCount, analysisCount);
 	}
 
 	/**
@@ -684,11 +674,11 @@ public class MockDataLoader implements CommandLineRunner {
 					verifySurveyPipelineCompleted(survey);
 
 					log.info("\n✅✅✅ [{}/{}] Survey AI 처리 완료: {} ✅✅✅",
-							surveyIndex, allSurveys.size(), survey.getName());
+						surveyIndex, allSurveys.size(), survey.getName());
 
 				} catch (Exception e) {
 					log.error("❌ [{}/{}] Survey AI 처리 실패: {}", surveyIndex, allSurveys.size(),
-							survey.getName(), e);
+						survey.getName(), e);
 					// 개별 설문 실패 시 다음 설문 계속 처리
 				}
 			}
