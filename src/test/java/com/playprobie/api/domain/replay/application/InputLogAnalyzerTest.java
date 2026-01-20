@@ -112,12 +112,12 @@ class InputLogAnalyzerTest {
 	class IdleDetection {
 
 		@Test
-		@DisplayName("10초 이상 입력 없음 시 Idle 감지")
+		@DisplayName("30초 이후부터 10초 이상 입력 없음 시 Idle 감지")
 		void detectIdle_whenNoInputForTenSeconds() {
-			// given: 0초에 입력, 15초에 다음 입력 (15초 gap)
+			// given: 30초에 입력, 45초에 다음 입력 (15초 gap) - 30초 이후부터 Idle 감지 대상
 			List<InputLogDto> logs = List.of(
-				createKeyDownLog("Space", " ", 0L),
-				createKeyDownLog("Space", " ", 15000L));
+				createKeyDownLog("Space", " ", 30000L),
+				createKeyDownLog("Space", " ", 45000L));
 
 			// when
 			List<AnalysisTag> tags = inputLogAnalyzer.analyze(mockSession, logs);
@@ -144,13 +144,13 @@ class InputLogAnalyzerTest {
 		}
 
 		@Test
-		@DisplayName("여러 Idle 구간 감지")
+		@DisplayName("30초 이후 여러 Idle 구간 감지")
 		void detectMultipleIdles() {
-			// given: 두 개의 15초 gap
+			// given: 30초 이후부터 두 개의 15초 gap
 			List<InputLogDto> logs = List.of(
-				createKeyDownLog("Space", " ", 0L),
-				createKeyDownLog("Space", " ", 15000L),
-				createKeyDownLog("Space", " ", 30000L));
+				createKeyDownLog("Space", " ", 30000L),
+				createKeyDownLog("Space", " ", 45000L),
+				createKeyDownLog("Space", " ", 60000L));
 
 			// when
 			List<AnalysisTag> tags = inputLogAnalyzer.analyze(mockSession, logs);
@@ -205,14 +205,15 @@ class InputLogAnalyzerTest {
 		@Test
 		@DisplayName("Panic과 Idle 동시 감지")
 		void detectBothPanicAndIdle() {
-			// given: Panic 후 15초 대기
+			// given: Panic 후 30초 이후 15초 대기
 			List<InputLogDto> logs = new ArrayList<>();
-			// Panic: 0-400ms
+			// Panic: 0-400ms (30초 이전이므로 Idle 감지 대상 아님)
 			for (int i = 0; i < 5; i++) {
 				logs.add(createKeyDownLog("Space", " ", i * 100L));
 			}
-			// Idle: 400ms -> 15400ms (15초 gap)
-			logs.add(createKeyDownLog("Enter", "\n", 15400L));
+			// 30초 이후 시작하는 Idle 구간: 30000ms -> 45000ms (15초 gap)
+			logs.add(createKeyDownLog("Enter", "\n", 30000L));
+			logs.add(createKeyDownLog("Enter", "\n", 45000L));
 
 			// when
 			List<AnalysisTag> tags = inputLogAnalyzer.analyze(mockSession, logs);
