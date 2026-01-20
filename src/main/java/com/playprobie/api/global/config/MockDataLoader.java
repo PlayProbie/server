@@ -161,12 +161,12 @@ public class MockDataLoader implements CommandLineRunner {
 		log.info("🚀 Mock 데이터 로딩 시작...");
 		log.info("========================================");
 
-		// 4개 설문 설정 (첫 번째는 500개 세션, 나머지는 100개 세션)
+		// 4개 설문 설정 (모두 100개 세션)
 		java.util.List<SurveyConfig> surveyConfigs = java.util.List.of(
-			new SurveyConfig("1.0.0v 플레이테스트", "/data/mock_data_2_500.json"),
-			new SurveyConfig("1.1.0v 플레이테스트", "/data/mock_data_2_100.json"),
-			new SurveyConfig("2.0.0v 플레이테스트", "/data/mock_data_2_100.json"),
-			new SurveyConfig("2.1.0v 플레이테스트", "/data/mock_data_2_100.json"));
+			new SurveyConfig("v1.0.0 플레이테스트", "/data/mock_data_2_100.json"),
+			new SurveyConfig("v1.1.0 플레이테스트", "/data/mock_data_2_100.json"),
+			new SurveyConfig("v2.0.0 플레이테스트", "/data/mock_data_2_100.json"),
+			new SurveyConfig("v2.1.0 플레이테스트", "/data/mock_data_2_100.json"));
 
 		// Demo User & Workspace는 한 번만 생성
 		User demoUser = createDemoUser();
