@@ -376,7 +376,7 @@ public class FastApiClient implements AiClient {
 
 				if (shouldEnd) {
 					log.info("🛑 [SHOULD_END] AI recommends ending session. reason={}", endReason);
-					streamClosing(sessionId, endReason != null ? endReason : AiConstants.REASON_FATIGUE);
+					proceedToClosingOrInsight(sessionId, endReason != null ? endReason : AiConstants.REASON_FATIGUE);
 					return true;
 				}
 

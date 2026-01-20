@@ -26,7 +26,8 @@ public class InputLogAnalyzer {
 	private static final int PANIC_THRESHOLD_MS = 500;
 	private static final int PANIC_KEY_COUNT = 5;
 
-	// Idle: 10초(10_000ms) 이상 입력 없음
+	// Idle: 30초(30_000ms) 이후부터 10초(10_000ms) 이상 입력 없으면 감지
+	private static final int IDLE_START_THRESHOLD_MS = 30_000;
 	private static final int IDLE_THRESHOLD_MS = 10_000;
 
 	// Panic 감지 시 구간 길이 (기본 3초)
@@ -124,7 +125,7 @@ public class InputLogAnalyzer {
 	}
 
 	/**
-	 * Idle 감지: 10초 이상 입력 없음 (media_time 간격 기준)
+	 * Idle 감지: 30초 이후부터 10초 이상 입력 없음 (media_time 간격 기준)
 	 */
 	private List<AnalysisTag> detectIdle(SurveySession session, List<InputLogDto> allLogs) {
 		List<AnalysisTag> idleTags = new ArrayList<>();
@@ -133,9 +134,10 @@ public class InputLogAnalyzer {
 			return idleTags;
 		}
 
-		// 입력 이벤트만 필터링
+		// 입력 이벤트만 필터링 (30초 이후의 이벤트만 대상)
 		List<InputLogDto> inputEvents = allLogs.stream()
 			.filter(InputLogDto::isInputEvent)
+			.filter(log -> log.mediaTime() >= IDLE_START_THRESHOLD_MS)
 			.toList();
 
 		if (inputEvents.size() < 2) {

@@ -52,7 +52,7 @@ public class InsightQuestionService {
 
 	/**
 	 * 인사이트 질문 Phase 시작
-	 * 랜덤으로 최대 1개 선택하여 질문 전송
+	 * 가장 마지막 태그 1개만 선택하여 질문 전송
 	 *
 	 * @return 시작 성공 여부 (인사이트 없으면 false)
 	 */
@@ -69,8 +69,9 @@ public class InsightQuestionService {
 			return false;
 		}
 
-		// 랜덤으로 최대 1개 선택
-		List<AnalysisTag> selectedTags = insightQuestionGenerator.selectRandomInsights(allTags);
+		// 가장 마지막 태그 1개만 선택
+		AnalysisTag lastTag = allTags.get(allTags.size() - 1);
+		List<AnalysisTag> selectedTags = List.of(lastTag);
 
 		// 선택된 태그 마킹 및 비선택 태그 스킵 처리
 		for (AnalysisTag tag : allTags) {
