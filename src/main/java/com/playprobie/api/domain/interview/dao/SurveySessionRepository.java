@@ -59,4 +59,21 @@ public interface SurveySessionRepository extends JpaRepository<SurveySession, Lo
 		@Param("cursor")
 		Long cursor,
 		Pageable pageable);
+
+	@Query("""
+		SELECT ss FROM SurveySession ss
+		JOIN FETCH ss.survey s
+		WHERE s.id = :surveyId
+		AND ss.status = :status
+		AND (:cursor IS NULL OR ss.id < :cursor)
+		ORDER BY ss.id DESC
+		""")
+	List<SurveySession> findBySurveyIdAndStatusWithCursor(
+		@Param("surveyId")
+		Long surveyId,
+		@Param("status")
+		SessionStatus status,
+		@Param("cursor")
+		Long cursor,
+		Pageable pageable);
 }

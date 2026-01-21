@@ -55,10 +55,10 @@ public class SurveyResultService {
 		return getSummary(survey.getId(), status);
 	}
 
-	// 전체 응답 리스트 (커서 페이징)
+	// 전체 응답 리스트 (커서 페이징) - COMPLETED 상태만 조회
 	public SurveyResultListResponse getResponseList(long surveyId, Long cursor, int size) {
-		List<SurveySession> sessions = sessionRepository.findBySurveyIdWithCursor(
-			surveyId, cursor, PageRequest.of(0, size + 1));
+		List<SurveySession> sessions = sessionRepository.findBySurveyIdAndStatusWithCursor(
+			surveyId, SessionStatus.COMPLETED, cursor, PageRequest.of(0, size + 1));
 
 		boolean hasNext = sessions.size() > size;
 		if (hasNext) {
