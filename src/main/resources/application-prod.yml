@@ -42,7 +42,7 @@ ai:
     connect-timeout: 3000ms
     read-timeout: ${AI_CLIENT_READ_TIMEOUT}
   interview:
-    max-tail-questions: 2
+    max-tail-questions: 1
   sse:
     timeout: 600000ms
 
