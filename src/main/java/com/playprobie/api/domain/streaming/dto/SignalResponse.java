@@ -3,6 +3,7 @@ package com.playprobie.api.domain.streaming.dto;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.playprobie.api.domain.streaming.domain.StreamingConstants;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -19,6 +20,7 @@ public record SignalResponse(
 	Integer expiresInSeconds) {
 
 	public static SignalResponse of(String signalResponse, UUID surveySessionUuid) {
-		return new SignalResponse(signalResponse, surveySessionUuid, 120);
+		return new SignalResponse(signalResponse, surveySessionUuid,
+			StreamingConstants.DEFAULT_SESSION_TIMEOUT_SECONDS);
 	}
 }

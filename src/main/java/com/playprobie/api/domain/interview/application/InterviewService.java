@@ -10,11 +10,14 @@ import org.springframework.stereotype.Service;
 
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
 import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
+import com.playprobie.api.domain.interview.domain.AnswerQuality;
+import com.playprobie.api.domain.interview.domain.AnswerValidity;
 import com.playprobie.api.domain.interview.domain.InterviewLog;
 import com.playprobie.api.domain.interview.domain.QuestionType;
 import com.playprobie.api.domain.interview.domain.SurveySession;
 import com.playprobie.api.domain.interview.dto.InterviewCreateResponse;
 import com.playprobie.api.domain.interview.dto.InterviewHistoryResponse;
+import com.playprobie.api.domain.interview.dto.TesterProfileRequest;
 import com.playprobie.api.domain.interview.dto.UserAnswerRequest;
 import com.playprobie.api.domain.interview.dto.UserAnswerResponse;
 import com.playprobie.api.domain.interview.dto.common.SessionInfo;
@@ -23,6 +26,7 @@ import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.domain.survey.dto.FixedQuestionResponse;
 import com.playprobie.api.global.error.exception.EntityNotFoundException;
+import com.playprobie.api.global.error.exception.SessionClosedException;
 import com.playprobie.api.global.error.exception.SessionNotFoundException;
 import com.playprobie.api.global.util.InterviewUrlProvider;
 
@@ -39,10 +43,11 @@ public class InterviewService {
 	private final InterviewLogRepository interviewLogRepository;
 	private final SurveySessionRepository surveySessionRepository;
 	private final FixedQuestionRepository fixedQuestionRepository;
+	private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
 	@Transactional
 	public InterviewCreateResponse createSession(UUID surveyUuid,
-		com.playprobie.api.domain.interview.dto.TesterProfileRequest profileRequest) {
+		TesterProfileRequest profileRequest) {
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
 			.orElseThrow(EntityNotFoundException::new);
 
@@ -202,7 +207,7 @@ public class InterviewService {
 		// 0. [Blocking] Check if session is already finished
 		if (session.getStatus().isFinished()) {
 			log.warn("Attempt to update finished session: {}", sessionId);
-			throw new com.playprobie.api.global.error.exception.SessionClosedException();
+			throw new SessionClosedException();
 		}
 
 		// 1. [Server-Side Authority] Validate & Correct State
@@ -393,8 +398,8 @@ public class InterviewService {
 	 */
 	@Transactional
 	public void updateLogValidityQuality(String sessionId, Long fixedQuestionId, int answerTurnNum,
-		com.playprobie.api.domain.interview.domain.AnswerValidity validity,
-		com.playprobie.api.domain.interview.domain.AnswerQuality quality) {
+		AnswerValidity validity,
+		AnswerQuality quality) {
 
 		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
 			.orElseThrow(SessionNotFoundException::new);
@@ -417,5 +422,52 @@ public class InterviewService {
 		log.info(
 			"[VALIDITY_QUALITY] Updated log: sessionId={}, fixedQuestionId={}, turnNum={}, logId={}, validity={}, quality={}",
 			sessionId, fixedQuestionId, answerTurnNum, targetLog.getId(), validity, quality);
+	}
+
+	/**
+	 * AI 세션 시작을 위한 컨텍스트(GameInfo, TesterProfile)를 조회합니다.
+	 */
+	@Transactional
+	public com.playprobie.api.domain.interview.dto.SessionAiContext getSessionAiContext(String sessionId) {
+		SurveySession session = surveySessionRepository.findByUuid(UUID.fromString(sessionId))
+			.orElseThrow(SessionNotFoundException::new);
+
+		Survey survey = session.getSurvey();
+		com.playprobie.api.domain.game.domain.Game game = survey.getGame();
+
+		// 1. Game Info 구성
+		Map<String, Object> gameInfo = new java.util.HashMap<>();
+		gameInfo.put("game_name", game.getName());
+		gameInfo.put("game_genre", game.getGenres().stream().map(Enum::name).toList());
+		gameInfo.put("game_context", game.getContext());
+		gameInfo.put("target_theme", survey.getThemePriorities()); // Survey에서 가져옴
+
+		// extracted_elements 파싱
+		try {
+			if (game.getExtractedElements() != null && !game.getExtractedElements().isBlank()) {
+				Map<String, Object> elements = objectMapper.readValue(game.getExtractedElements(),
+					new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+				gameInfo.put("extracted_elements", elements);
+			}
+		} catch (Exception e) {
+			log.warn("Failed to parse extracted_elements for game {}: {}", game.getId(), e.getMessage());
+		}
+
+		// 2. Tester Profile 구성
+		com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest.TesterProfileDto profileDto = null;
+		if (session.getTesterProfile() != null) {
+			com.playprobie.api.domain.interview.domain.TesterProfile p = session.getTesterProfile();
+			profileDto = com.playprobie.api.infra.ai.dto.request.AiSessionStartRequest.TesterProfileDto.builder()
+				.testerId(p.getTesterId())
+				.ageGroup(p.getAgeGroup())
+				.gender(p.getGender())
+				.preferGenre(p.getPreferGenre())
+				.build();
+		}
+
+		return com.playprobie.api.domain.interview.dto.SessionAiContext.builder()
+			.gameInfo(gameInfo)
+			.testerProfile(profileDto)
+			.build();
 	}
 }

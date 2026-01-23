@@ -43,17 +43,21 @@ public class Game extends BaseTimeEntity {
 	@Column(name = "game_context", columnDefinition = "TEXT")
 	private String context;
 
+	@Column(name = "extracted_elements", columnDefinition = "TEXT")
+	private String extractedElements;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "workspace_id")
 	private Workspace workspace;
 
 	@Builder
-	public Game(Workspace workspace, String name, List<GameGenre> genres, String context) {
+	public Game(Workspace workspace, String name, List<GameGenre> genres, String context, String extractedElements) {
 		this.uuid = java.util.UUID.randomUUID();
 		this.workspace = workspace;
 		this.name = name;
 		this.genresJson = convertGenresToJson(genres);
 		this.context = context;
+		this.extractedElements = extractedElements;
 	}
 
 	public List<GameGenre> getGenres() {
@@ -89,10 +93,11 @@ public class Game extends BaseTimeEntity {
 		return sb.toString();
 	}
 
-	public void update(String name, List<GameGenre> genres, String context) {
+	public void update(String name, List<GameGenre> genres, String context, String extractedElements) {
 		this.name = name;
 		this.genresJson = convertGenresToJson(genres);
 		this.context = context;
+		this.extractedElements = extractedElements;
 	}
 
 	public void updateContext(String context) {

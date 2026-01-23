@@ -1,44 +1,48 @@
 package com.playprobie.api.domain.analytics.application;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playprobie.api.domain.analytics.dao.QuestionResponseAnalysisRepository;
 import com.playprobie.api.domain.analytics.domain.AnalysisStatus;
 import com.playprobie.api.domain.analytics.domain.QuestionResponseAnalysis;
 import com.playprobie.api.domain.analytics.dto.AnalyticsResponse;
 import com.playprobie.api.domain.analytics.dto.QuestionResponseAnalysisWrapper;
+import com.playprobie.api.domain.analytics.dto.analysis.AnswerProfile;
+import com.playprobie.api.domain.analytics.dto.analysis.ClusterInfo;
+import com.playprobie.api.domain.analytics.dto.analysis.QuestionAnalysisOutput;
 import com.playprobie.api.domain.analytics.event.AnalyticsUpdatedEvent;
 import com.playprobie.api.domain.interview.dao.InterviewLogRepository;
+import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
+import com.playprobie.api.domain.interview.domain.SessionStatus;
+import com.playprobie.api.domain.interview.domain.SurveySession;
+import com.playprobie.api.domain.interview.domain.TesterProfile;
 import com.playprobie.api.domain.survey.dao.FixedQuestionRepository;
 import com.playprobie.api.domain.survey.dao.SurveyRepository;
 import com.playprobie.api.domain.survey.domain.FixedQuestion;
 import com.playprobie.api.domain.survey.domain.Survey;
 import com.playprobie.api.global.error.ErrorCode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.playprobie.api.domain.analytics.dto.analysis.AnswerProfile;
-import com.playprobie.api.domain.analytics.dto.analysis.ClusterInfo;
-import com.playprobie.api.domain.analytics.dto.analysis.QuestionAnalysisOutput;
-import com.playprobie.api.domain.interview.dao.SurveySessionRepository;
-import com.playprobie.api.domain.interview.domain.SurveySession;
-import com.playprobie.api.domain.interview.domain.TesterProfile;
 import com.playprobie.api.global.error.exception.BusinessException;
 import com.playprobie.api.infra.ai.AiClient;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.playprobie.api.domain.analytics.dao.FilteredQuestionAnalysisRepository;
+import com.playprobie.api.domain.analytics.domain.FilteredQuestionAnalysis;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -54,6 +58,7 @@ public class AnalyticsService {
 	private final FixedQuestionRepository fixedQuestionRepository;
 	private final SurveyRepository surveyRepository;
 	private final SurveySessionRepository surveySessionRepository;
+	private final FilteredQuestionAnalysisRepository filteredQuestionAnalysisRepository;
 	private final ObjectMapper objectMapper;
 
 	private final ApplicationEventPublisher eventPublisher;
@@ -88,7 +93,6 @@ public class AnalyticsService {
 				.findAllBySurveyId(surveyId);
 			log.info("💾 캐시된 분석 결과: {}개", cachedResults.size());
 			return Flux.fromIterable(cachedResults)
-
 				.map(entity -> QuestionResponseAnalysisWrapper.builder()
 					.fixedQuestionId(entity.getFixedQuestionId())
 					.resultJson(entity.getResultJson())
@@ -96,11 +100,26 @@ public class AnalyticsService {
 		}
 		// STALE인 경우에만 재분석
 		else {
-			log.info(" 재분석 시작: {}개 질문", questions.size());
+			log.info("📢 재분석 시작: {}개 질문", questions.size());
+			// 분석 결과 수집용 리스트
+			List<QuestionResponseAnalysisWrapper> analysisResults = java.util.Collections
+				.synchronizedList(new java.util.ArrayList<>());
+
 			return Flux.fromIterable(questions)
 				.flatMap(question -> analyzeAndSave(surveyUuid, surveyId, question))
+				.doOnNext(analysisResults::add) // 결과 수집
 				.doOnComplete(() -> {
-					log.info("📢 모든 질문 분석 완료, SSE 이벤트 발행: surveyUuid={}", surveyUuid);
+					log.info("📢 모든 질문 분석 완료. 설문 종합 평가 생성 시작: surveyUuid={}", surveyUuid);
+
+					List<String> metaSummaries = extractMetaSummaries(analysisResults);
+					if (!metaSummaries.isEmpty()) {
+						aiClient.generateSurveySummary(metaSummaries)
+							.doOnSuccess(summary -> saveSurveySummary(surveyUuid, summary))
+							.subscribe();
+					} else {
+						log.warn("⚠️ 메타 요약이 없어 설문 종합 평가를 건너뜁니다.");
+					}
+
 					eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
 				});
 		}
@@ -128,7 +147,10 @@ public class AnalyticsService {
 				log.info("📊 분석 진행 상황: {}/{} (surveyUuid={})", completedCount, totalCount, surveyUuid);
 
 				if (completedCount >= totalCount) {
-					log.info("📢 모든 질문 분석 완료, SSE 이벤트 발행: surveyUuid={}", surveyUuid);
+					log.info("📢 모든 질문 분석 완료. 설문 종합 평가 생성 시작: surveyUuid={}", surveyUuid);
+
+					// Survey Summary 생성
+					generateAndSaveSurveySummary(survey.getId(), surveyUuid);
 					eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
 				}
 			})
@@ -140,7 +162,66 @@ public class AnalyticsService {
 	 * - DB에 캐시된 분석 결과만 반환
 	 * - AI 분석은 MockDataLoader에서 사전 수행됨
 	 */
+	public AnalyticsResponse getSurveyAnalysis(UUID surveyUuid, Map<String, String> filters) {
+		// 필터가 없거나 비어있으면 기존 로직 수행
+		if (filters == null || filters.isEmpty() || filters.values().stream().allMatch(v -> v == null || v.isBlank())) {
+			return getSurveyAnalysis(surveyUuid);
+		}
+
+		log.info("🔍 필터링된 분석 결과 조회: surveyUuid={}, filters={}", surveyUuid, filters);
+		String filterSignature = generateFilterSignature(filters);
+
+		Survey survey = surveyRepository.findByUuid(surveyUuid)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+		Long surveyId = survey.getId();
+
+		List<FixedQuestion> questions = fixedQuestionRepository
+			.findBySurveyIdOrderByOrderAsc(surveyId);
+
+		if (questions.isEmpty()) {
+			return buildAnalyticsResponse(List.of(), 0, 0, "", false);
+		}
+
+		// 필터링된 결과 조회 (Cache Look-aside)
+		List<QuestionResponseAnalysisWrapper> analyses = new java.util.ArrayList<>();
+		List<Long> cacheMissQuestionIds = new java.util.ArrayList<>();
+
+		for (FixedQuestion question : questions) {
+			Optional<FilteredQuestionAnalysis> cached = filteredQuestionAnalysisRepository
+				.findByFixedQuestionIdAndFilterSignature(question.getId(), filterSignature);
+
+			if (cached.isPresent()) {
+				// Cache Hit
+				analyses.add(QuestionResponseAnalysisWrapper.builder()
+					.fixedQuestionId(cached.get().getFixedQuestionId())
+					.resultJson(cached.get().getResultJson())
+					.build());
+			} else {
+				// Cache Miss -> 나중에 일괄 처리
+				cacheMissQuestionIds.add(question.getId());
+			}
+		}
+
+		// Cache Miss 질문들에 대해 비동기 분석 트리거 (모든 완료 후 SSE 발행)
+		boolean hasInProgress = !cacheMissQuestionIds.isEmpty();
+		if (hasInProgress) {
+			AtomicInteger remainingCount = new AtomicInteger(cacheMissQuestionIds.size());
+			for (Long questionId : cacheMissQuestionIds) {
+				triggerFilteredAnalysis(surveyUuid.toString(), questionId, filters, filterSignature, remainingCount,
+					surveyUuid);
+			}
+		}
+
+		int totalParticipants = (int)surveySessionRepository.countBySurveyIdAndStatus(surveyId,
+			com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED);
+
+		// 필터링된 결과의 상태 판단:
+		// hasInProgress가 true면 IN_PROGRESS 반환
+		return buildAnalyticsResponse(analyses, questions.size(), totalParticipants, "", hasInProgress);
+	}
+
 	public AnalyticsResponse getSurveyAnalysis(UUID surveyUuid) {
+		// 기존 로직 유지 (Overloading)
 		log.info("🔍 분석 결과 조회 (Sync): surveyUuid={}", surveyUuid);
 
 		Survey survey = surveyRepository.findByUuid(surveyUuid)
@@ -152,7 +233,7 @@ public class AnalyticsService {
 
 		if (questions.isEmpty()) {
 			log.warn("⚠️ surveyId={}에 대한 질문이 없습니다", surveyId);
-			return buildAnalyticsResponse(List.of(), 0, 0);
+			return buildAnalyticsResponse(List.of(), 0, 0, "", false);
 		}
 
 		// DB에서 완료된 분석 결과만 조회
@@ -161,6 +242,12 @@ public class AnalyticsService {
 			.stream()
 			.filter(entity -> entity.getResultJson() != null)
 			.toList();
+
+		// IN_PROGRESS 상태 체크
+		boolean hasInProgress = questionResponseAnalysisRepository
+			.findAllBySurveyId(surveyId)
+			.stream()
+			.anyMatch(QuestionResponseAnalysis::isInProgress);
 
 		List<QuestionResponseAnalysisWrapper> analyses = cachedResults.stream()
 			.map(entity -> QuestionResponseAnalysisWrapper.builder()
@@ -173,39 +260,86 @@ public class AnalyticsService {
 			questions.size(), analyses.size());
 
 		int totalParticipants = (int)surveySessionRepository.countBySurveyIdAndStatus(surveyId,
-			com.playprobie.api.domain.interview.domain.SessionStatus.COMPLETED);
+			SessionStatus.COMPLETED);
 
-		return buildAnalyticsResponse(analyses, questions.size(), totalParticipants);
+		// 설문 종합 평가 포함
+		String surveySummary = survey.getSurveySummary();
+
+		return buildAnalyticsResponse(analyses, questions.size(), totalParticipants, surveySummary, hasInProgress);
 	}
 
 	/**
 	 * 분석 결과와 전체 질문 수를 기반으로 AnalyticsResponse 생성
 	 * 상태 결정 로직:
-	 * - analyses가 비어있으면 NO_DATA
-	 * - 완료된 분석 수 >= 전체 질문 수 → COMPLETED
-	 * - 그 외 → INSUFFICIENT_DATA
+	 * - 분석 결과가 없으면 NO_DATA
+	 * - 유효한 분석(clusters가 있는)이 하나도 없으면 INSUFFICIENT_DATA
+	 * - 분석 진행 중인 질문이 있으면 IN_PROGRESS
+	 * - 유효한 분석이 1개 이상 있으면 COMPLETED
+	 *
+	 * 참고: validity/quality 필터링으로 일부 질문의 답변이 전부 제외될 수 있으므로,
+	 * 유효한 분석 개수가 전체 질문 수보다 적어도 COMPLETED로 처리함
 	 */
 	private AnalyticsResponse buildAnalyticsResponse(
 		List<QuestionResponseAnalysisWrapper> analyses,
 		int totalQuestions,
-		int totalParticipants) {
+		int totalParticipants,
+		String surveySummary,
+		boolean hasInProgress) {
+
+		// 유효한 분석 결과만 필터링 (clusters가 있고 비어있지 않은 것)
+		long validAnalysesCount = analyses.stream()
+			.filter(this::isValidAnalysisResult)
+			.count();
 
 		AnalysisStatus status;
 
 		if (analyses.isEmpty()) {
-			status = AnalysisStatus.NO_DATA;
-		} else if (analyses.size() < totalQuestions) {
-			status = AnalysisStatus.INSUFFICIENT_DATA;
+			status = hasInProgress ? AnalysisStatus.IN_PROGRESS : AnalysisStatus.NO_DATA;
+		} else if (validAnalysesCount == 0) {
+			// 분석 결과는 있지만 모두 유효하지 않음 (데이터 부족)
+			status = hasInProgress ? AnalysisStatus.IN_PROGRESS : AnalysisStatus.INSUFFICIENT_DATA;
+		} else if (hasInProgress) {
+			status = AnalysisStatus.IN_PROGRESS;
 		} else {
+			// 유효한 분석이 1개 이상 있으면 COMPLETED
+			// (필터링/validity로 일부 질문 데이터가 없을 수 있으므로 totalQuestions와 비교하지 않음)
 			status = AnalysisStatus.COMPLETED;
 		}
 
-		return new AnalyticsResponse(analyses, status.name(), totalQuestions, analyses.size(), totalParticipants);
+		return new AnalyticsResponse(analyses, status.name(), totalQuestions, (int)validAnalysesCount,
+			totalParticipants,
+			surveySummary);
 	}
 
 	/**
-	 * 분석 상태 확인: FRESH(캐시 사용), IN_PROGRESS(진행중), STALE(재분석 필요)
+	 * 분석 결과 JSON이 유효한지 검사
+	 * - clusters 필드가 존재하고 비어있지 않아야 유효
+	 * - {"status":"analyzing"} 같은 진행 중 상태는 유효하지 않음
 	 */
+	private boolean isValidAnalysisResult(QuestionResponseAnalysisWrapper wrapper) {
+		String json = wrapper.resultJson();
+		if (json == null || json.isBlank()) {
+			return false;
+		}
+
+		try {
+			com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+
+			// clusters 필드가 있고 배열이며 비어있지 않은지 확인
+			if (node.has("clusters")) {
+				com.fasterxml.jackson.databind.JsonNode clusters = node.get("clusters");
+				return clusters.isArray() && clusters.size() > 0;
+			}
+
+			return false;
+		} catch (JsonProcessingException e) {
+			log.warn("Failed to parse analysis result JSON for validation", e);
+			return false;
+		}
+	}
+
+	// ... (checkAnalysisStatus, AnalysisCheckResult methods remain same)
+
 	private AnalysisCheckResult checkAnalysisStatus(FixedQuestion question) {
 		int currentCount = interviewLogRepository.countByFixedQuestionIdAndAnswerTextIsNotNull(question.getId());
 		Optional<QuestionResponseAnalysis> cached = questionResponseAnalysisRepository.findByFixedQuestionId(
@@ -244,7 +378,7 @@ public class AnalyticsService {
 		// 분석 시작 전에 IN_PROGRESS 상태로 변경 (별도 트랜잭션)
 		markAsInProgressWithTransaction(question, currentCount);
 
-		return aiClient.streamQuestionAnalysis(surveyUuid.toString(), question.getId())
+		return aiClient.streamQuestionAnalysis(surveyUuid.toString(), question.getId(), null)
 			.filter(sse -> "done".equals(sse.event()))
 			.next()
 			.map(sse -> {
@@ -263,6 +397,74 @@ public class AnalyticsService {
 					.resultJson(resultJson)
 					.build();
 			});
+	}
+
+	/**
+	 * 각 질문 분석 결과(JSON)에서 meta_summary 추출
+	 */
+	private List<String> extractMetaSummaries(List<QuestionResponseAnalysisWrapper> results) {
+		return results.stream()
+			.map(QuestionResponseAnalysisWrapper::resultJson)
+			.map(json -> {
+				try {
+					com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+					if (node.has("meta_summary")) {
+						return node.get("meta_summary").asText();
+					}
+				} catch (JsonProcessingException e) {
+					log.error("Failed to parse meta_summary from json", e);
+				}
+				return null;
+			})
+			.filter(java.util.Objects::nonNull)
+			.toList();
+	}
+
+	/**
+	 * 설문 종합 평가 DB 저장 (별도 트랜잭션)
+	 */
+	private void saveSurveySummary(UUID surveyUuid, String summary) {
+		if (summary == null || summary.isBlank()) {
+			return;
+		}
+		transactionTemplate.executeWithoutResult(status -> {
+			Survey survey = surveyRepository.findByUuid(surveyUuid)
+				.orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+			survey.updateSurveySummary(summary);
+			surveyRepository.save(survey);
+			log.info("💾 설문 종합 평가 저장 완료: surveyUuid={}", surveyUuid);
+		});
+	}
+
+	/**
+	 * 모든 질문 분석 결과에서 meta_summary를 추출하여 설문 종합 평가 생성
+	 */
+	private void generateAndSaveSurveySummary(Long surveyId, UUID surveyUuid) {
+		List<QuestionResponseAnalysis> allAnalyses = questionResponseAnalysisRepository.findAllBySurveyId(surveyId);
+
+		List<String> metaSummaries = allAnalyses.stream()
+			.map(QuestionResponseAnalysis::getResultJson)
+			.map(json -> {
+				try {
+					com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+					if (node.has("meta_summary")) {
+						return node.get("meta_summary").asText();
+					}
+				} catch (JsonProcessingException e) {
+					log.warn("Failed to parse meta_summary from json", e);
+				}
+				return null;
+			})
+			.filter(java.util.Objects::nonNull)
+			.toList();
+
+		if (!metaSummaries.isEmpty()) {
+			aiClient.generateSurveySummary(metaSummaries)
+				.doOnSuccess(summary -> saveSurveySummary(surveyUuid, summary))
+				.subscribe();
+		} else {
+			log.warn("⚠️ 메타 요약이 없어 설문 종합 평가를 건너뜁니다.");
+		}
 	}
 
 	/**
@@ -418,5 +620,90 @@ public class AnalyticsService {
 						count)));
 			// 이벤트 발행은 triggerAnalytics()의 doOnComplete()에서 설문 단위로 한 번만 수행
 		});
+	}
+
+	// ========================================================================
+	// Filtered Analysis Helpers
+	// ========================================================================
+
+	private String generateFilterSignature(Map<String, String> filters) {
+		return filters.entrySet().stream()
+			.sorted(Map.Entry.comparingByKey())
+			.map(e -> e.getKey() + "=" + e.getValue())
+			.collect(Collectors.joining("|"));
+	}
+
+	/**
+	 * 비동기로 Filtered Analysis 트리거 (Fire-and-forget)
+	 *
+	 * @param remainingCount 남은 분석 개수 카운터 (모든 완료 후 SSE 발행용)
+	 * @param surveyUuid     SSE 이벤트 발행용 UUID
+	 */
+	private void triggerFilteredAnalysis(String surveyUuidStr, Long fixedQuestionId, Map<String, String> filters,
+		String filterSignature, AtomicInteger remainingCount, UUID surveyUuid) {
+		log.info("🚀 Triggering Async Filtered Analysis: qId={}, filters={}, remaining={}",
+			fixedQuestionId, filters, remainingCount.get());
+
+		aiClient.streamQuestionAnalysis(surveyUuidStr, fixedQuestionId, filters)
+			.filter(sse -> "done".equals(sse.event()))
+			.next()
+			.subscribe(sse -> {
+				String resultJson = sse.data();
+				if (resultJson != null) {
+					try {
+						resultJson = enrichAnalysisResult(resultJson);
+					} catch (Exception e) {
+						log.warn("Failed to enrich filtered result", e);
+					}
+					saveFilteredResult(fixedQuestionId, filterSignature, resultJson, remainingCount, surveyUuid);
+				} else {
+					// 결과가 null이어도 카운터 감소 (실패 처리)
+					decrementAndNotifyIfComplete(remainingCount, surveyUuid);
+				}
+			}, error -> {
+				log.error("❌ Filtered Analysis Failed: qId={}", fixedQuestionId, error);
+				// 에러 발생 시에도 카운터 감소 (다른 질문들의 완료를 막지 않음)
+				decrementAndNotifyIfComplete(remainingCount, surveyUuid);
+			});
+	}
+
+	private void saveFilteredResult(Long fixedQuestionId, String filterSignature, String resultJson,
+		AtomicInteger remainingCount, UUID surveyUuid) {
+		transactionTemplate.executeWithoutResult(status -> {
+			filteredQuestionAnalysisRepository.findByFixedQuestionIdAndFilterSignature(fixedQuestionId, filterSignature)
+				.ifPresentOrElse(
+					existing -> {
+						existing.updateResultJson(resultJson);
+						filteredQuestionAnalysisRepository.save(existing);
+						log.debug("✅ Filtered Analysis Updated: qId={}, sig={}", fixedQuestionId,
+							filterSignature);
+					},
+					() -> {
+						filteredQuestionAnalysisRepository.save(
+							FilteredQuestionAnalysis.builder()
+								.fixedQuestionId(fixedQuestionId)
+								.filterSignature(filterSignature)
+								.resultJson(resultJson)
+								.build());
+						log.debug("✅ Filtered Analysis Created: qId={}, sig={}", fixedQuestionId,
+							filterSignature);
+					});
+		});
+
+		// 카운터 감소 후 모든 분석 완료 시 SSE 알림
+		decrementAndNotifyIfComplete(remainingCount, surveyUuid);
+	}
+
+	/**
+	 * 남은 분석 카운터를 감소시키고, 모든 분석 완료 시 SSE 이벤트 발행
+	 */
+	private void decrementAndNotifyIfComplete(AtomicInteger remainingCount, UUID surveyUuid) {
+		int remaining = remainingCount.decrementAndGet();
+		log.debug("📊 Filtered Analysis Progress: remaining={}, surveyUuid={}", remaining, surveyUuid);
+
+		if (remaining == 0) {
+			log.info("📢 All Filtered Analyses Complete -> Notify SSE: surveyUuid={}", surveyUuid);
+			eventPublisher.publishEvent(new AnalyticsUpdatedEvent(surveyUuid));
+		}
 	}
 }

@@ -45,6 +45,17 @@ public class AwsConfig {
 			.build();
 	}
 
+	/**
+	 * 리플레이 영상 업로드용 S3Presigner (서울 리전)
+	 */
+	@Bean(destroyMethod = "close")
+	public S3Presigner replayS3Presigner(AwsCredentialsProvider credentialsProvider) {
+		return S3Presigner.builder()
+			.region(Region.of(awsProperties.s3().getReplayRegion()))
+			.credentialsProvider(credentialsProvider)
+			.build();
+	}
+
 	@Bean
 	public GameLiftClient gameLiftClient(AwsCredentialsProvider credentialsProvider) {
 		return GameLiftClient.builder()

@@ -26,6 +26,8 @@ aws:
     region: ${AWS_S3_REGION}
     bucket-name: ${AWS_S3_BUCKET_NAME}
     credentials-duration: 3600s
+    replay-bucket-name: ${AWS_S3_REPLAY_BUCKET_NAME}
+    replay-region: ${AWS_S3_REPLAY_REGION}
     role-arn: ${AWS_S3_ROLE_ARN}
   gamelift:
     region: ${AWS_GAMELIFT_REGION}
@@ -40,13 +42,13 @@ ai:
     connect-timeout: 3000ms
     read-timeout: ${AI_CLIENT_READ_TIMEOUT}
   interview:
-    max-tail-questions: 2
+    max-tail-questions: ${MAX_TAIL_QUESTIONS}
   sse:
     timeout: 600000ms
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-expiration: 3600000
+  access-token-expiration: 360000000
 
 springdoc:
   api-docs:

@@ -21,19 +21,19 @@ public class SseEmitterRepository {
 
 		emitter.onCompletion(() -> {
 			log.info("SSE Connection Completed. Removing SessionId: {}", sessionId);
-			this.deleteById(sessionId);
+			this.delete(sessionId, emitter);
 		});
 
 		emitter.onTimeout(() -> {
 			log.warn("SSE Connection Timed Out. Removing SessionId: {}", sessionId);
 			emitter.complete();
-			this.deleteById(sessionId);
+			this.delete(sessionId, emitter);
 		});
 
 		emitter.onError((e) -> {
 			log.error("SSE Connection Error. SessionId: {}", sessionId, e);
 			emitter.complete();
-			this.deleteById(sessionId);
+			this.delete(sessionId, emitter);
 		});
 
 		return emitter;
@@ -45,5 +45,13 @@ public class SseEmitterRepository {
 
 	public void deleteById(String sessionId) {
 		emitters.remove(sessionId);
+	}
+
+	public void delete(String sessionId, SseEmitter emitter) {
+		if (emitters.remove(sessionId, emitter)) {
+			log.info("SSE Emitter safely removed. SessionId: {}", sessionId);
+		} else {
+			log.debug("SSE Emitter removal skipped (already replaced or removed). SessionId: {}", sessionId);
+		}
 	}
 }

@@ -14,5 +14,8 @@ public enum AnalysisStatus {
 	NO_DATA,
 
 	/** 데이터 부족 (AI가 분석 취소, 답변 < 최소 개수) */
-	INSUFFICIENT_DATA
+	INSUFFICIENT_DATA,
+
+	/** 분석 진행 중 (AI가 계산 중) */
+	IN_PROGRESS
 }

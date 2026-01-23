@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import com.playprobie.api.domain.game.domain.Game;
+import com.playprobie.api.global.converter.StringListConverter;
+import com.playprobie.api.global.converter.ThemeDetailsMapConverter;
 import com.playprobie.api.global.domain.BaseTimeEntity;
 
 import jakarta.persistence.Column;
@@ -65,17 +67,21 @@ public class Survey extends BaseTimeEntity {
 	@Column(name = "test_stage")
 	private TestStage testStage;
 
-	@Convert(converter = com.playprobie.api.global.converter.StringListConverter.class)
+	@Convert(converter = StringListConverter.class)
 	@Column(name = "theme_priorities", columnDefinition = "TEXT")
 	private java.util.List<String> themePriorities;
 
-	@Convert(converter = com.playprobie.api.global.converter.ThemeDetailsMapConverter.class)
+	@Convert(converter = ThemeDetailsMapConverter.class)
 	@Column(name = "theme_details", columnDefinition = "TEXT")
 	private java.util.Map<String, java.util.List<String>> themeDetails;
 
 	@Lob
 	@Column(name = "version_note")
 	private String versionNote;
+
+	// ===== 신규 필드 (feat/#49) =====
+	@Column(name = "survey_summary", columnDefinition = "TEXT")
+	private String surveySummary;
 
 	@Builder
 	public Survey(Game game, String name, TestPurpose testPurpose, LocalDateTime startAt, LocalDateTime endAt,
@@ -119,6 +125,10 @@ public class Survey extends BaseTimeEntity {
 		} else {
 			this.status = status;
 		}
+	}
+
+	public void updateSurveySummary(String summary) {
+		this.surveySummary = summary;
 	}
 
 	/**
