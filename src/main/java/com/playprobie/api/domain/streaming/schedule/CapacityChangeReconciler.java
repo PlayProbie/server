@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.playprobie.api.domain.streaming.application.CapacityChangeAsyncService;
+import com.playprobie.api.domain.streaming.application.CapacityChangeStateService;
 import com.playprobie.api.domain.streaming.dao.CapacityChangeRequestRepository;
 import com.playprobie.api.domain.streaming.domain.CapacityChangeRequest;
 import com.playprobie.api.domain.streaming.domain.RequestStatus;
@@ -30,6 +31,7 @@ public class CapacityChangeReconciler {
 
 	private final CapacityChangeRequestRepository requestRepository;
 	private final CapacityChangeAsyncService asyncService;
+	private final CapacityChangeStateService stateService;
 
 	// 1분마다 실행, 최소 락 유지시간 30초, 서버 시작 후 10초 대기 (테이블 생성 보장)
 	// PENDING 상태로 5분 이상 방치된 요청을 재처리합니다
@@ -48,7 +50,19 @@ public class CapacityChangeReconciler {
 		// 2. 재처리 수행
 		for (CapacityChangeRequest req : stuckRequests) {
 			try {
-				log.info("Reconciling request: id={}", req.getId());
+				// 재시도 횟수 초과 체크
+				if (req.hasExceededMaxRetries()) {
+					log.warn("Request exceeded max retry count ({}). Marking as FAILED. requestId={}",
+						CapacityChangeRequest.getMaxRetryCount(), req.getId());
+					stateService.markRequestFailedDueToMaxRetries(req.getId());
+					continue;
+				}
+
+				log.info("Reconciling request: id={}, retryCount={}", req.getId(), req.getRetryCount());
+
+				// 재시도 횟수 증가
+				stateService.incrementRetryCount(req.getId());
+
 				asyncService.applyCapacityChange(
 					req.getResource().getId(),
 					req.getId(),
@@ -56,8 +70,6 @@ public class CapacityChangeReconciler {
 					req.getType());
 			} catch (Exception e) {
 				log.error("Failed to reconcile request id={}", req.getId(), e);
-				// 반복 실패 방지를 위해 별도 카운트나 FAILED 처리 로직이 필요할 수 있으나,
-				// 현재는 AsyncService 내에서 예외 시 FAILED/ERROR 처리하므로 맡김.
 			}
 		}
 	}

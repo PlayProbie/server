@@ -108,38 +108,59 @@ public class GameLiftService {
 	 *
 	 * <p>
 	 * <b>🚨 SAFETY: Cost Optimization</b><br>
-	 * minCapacity와 desiredCapacity는 반드시 0으로 설정됩니다.
-	 * 이 값은 외부 입력과 무관하게 하드코딩되어 있습니다.
+	 * alwaysOnCapacity는 반드시 0으로 설정되어 초기 비용을 방지합니다.
+	 * maximumCapacity는 스케일링 허용을 위해 파라미터로 받되, 최소 1 이상을 보장합니다.
 	 *
 	 * @param groupName        StreamGroup 표시 이름
-	 * @param streamClassValue Steam Class ID (예: "gen4n_win2022")
+	 * @param streamClassValue Stream Class ID (예: "gen4n_win2022")
+	 * @param maximumCapacity  최대 허용 용량 (스케일링 상한, 최소 1 이상)
 	 * @return 생성된 StreamGroup 응답
 	 */
-	public CreateStreamGroupResponse createStreamGroup(String groupName, String streamClassValue) {
-		log.info("Creating StreamGroup: name={}, streamClass={}", groupName, streamClassValue);
+	public CreateStreamGroupResponse createStreamGroup(String groupName, String streamClassValue, int maximumCapacity) {
+		log.info("Creating StreamGroup: name={}, streamClass={}, maximumCapacity={}", groupName, streamClassValue,
+			maximumCapacity);
 
-		// ⚠️ SAFETY: Cost Optimization - Capacity는 항상 0으로 하드코딩
+		// ⚠️ SAFETY: Cost Optimization - alwaysOnCapacity는 항상 0으로 하드코딩
 		// 절대 이 값을 외부 입력으로 변경하지 마세요!
-		// ⚠️ SAFETY: Cost Optimization - Capacity는 항상 0으로 하드코딩 (Class-level CONST used)
-		// 절대 이 값을 외부 입력으로 변경하지 마세요!
-		final int SAFE_ALWAYS_ON_CAPACITY = SAFE_CAPACITY;
-		final int SAFE_MAXIMUM_CAPACITY = SAFE_CAPACITY;
+		final int SAFE_ALWAYS_ON_CAPACITY = SAFE_CAPACITY; // 0 (초기 인스턴스 없음)
+
+		// ⚠️ SAFETY: maximumCapacity는 최소 1 이상이어야 스케일링 가능
+		// 0으로 설정하면 나중에 updateStreamGroupCapacity() 호출 시 실패할 수 있음
+		final int safeMaximumCapacity = Math.max(1, maximumCapacity);
 
 		CreateStreamGroupRequest request = CreateStreamGroupRequest.builder()
 			.description(groupName)
 			.streamClass(StreamClass.fromValue(streamClassValue))
 			.locationConfigurations(LocationConfiguration.builder()
 				.locationName(awsProperties.gamelift().region())
-				// 🚨 SAFETY: Cost Optimization
+				// 🚨 SAFETY: Cost Optimization - alwaysOn은 0
 				.alwaysOnCapacity(SAFE_ALWAYS_ON_CAPACITY)
-				.maximumCapacity(SAFE_MAXIMUM_CAPACITY)
+				// maximumCapacity는 스케일링 상한 (최소 1)
+				.maximumCapacity(safeMaximumCapacity)
 				.build())
 			.build();
 
 		CreateStreamGroupResponse response = gameLiftStreamsClient.createStreamGroup(request);
 
-		log.info("StreamGroup created: arn={}, capacity=0 (SAFE)", response.arn());
+		log.info("StreamGroup created: arn={}, alwaysOnCapacity=0 (SAFE), maximumCapacity={}",
+			response.arn(), safeMaximumCapacity);
 		return response;
+	}
+
+	/**
+	 * StreamGroup을 생성합니다 (기본 maximumCapacity 사용).
+	 *
+	 * <p>
+	 * 하위 호환성을 위해 유지됩니다. 기본 maximumCapacity는 1로 설정됩니다.
+	 *
+	 * @param groupName        StreamGroup 표시 이름
+	 * @param streamClassValue Stream Class ID (예: "gen4n_win2022")
+	 * @return 생성된 StreamGroup 응답
+	 * @see #createStreamGroup(String, String, int)
+	 */
+	public CreateStreamGroupResponse createStreamGroup(String groupName, String streamClassValue) {
+		// 기본 maximumCapacity는 1 (스케일링 가능하도록)
+		return createStreamGroup(groupName, streamClassValue, 1);
 	}
 
 	/**

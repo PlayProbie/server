@@ -84,8 +84,9 @@ public class StreamingHealthMonitor {
 		int allocatedCapacity = extractAllocatedCapacity(awsResponse);
 
 		// desiredCapacity가 0이면 Self-healing 불필요 (READY 상태)
+		// 단, READY 상태에서도 AWS 상태가 ACTIVE인지 확인됨 (ERROR는 별도 handleErrorState에서 처리)
 		if (desiredCapacity == 0) {
-			log.debug("Resource in standby mode (desiredCapacity=0). Skipping health check. resourceId={}",
+			log.debug("Resource in standby mode (desiredCapacity=0). AWS StreamGroup is ACTIVE. resourceId={}",
 				resource.getId());
 			return;
 		}
@@ -117,9 +118,11 @@ public class StreamingHealthMonitor {
 
 	private void handleErrorState(StreamingResource resource) {
 		if (resource.getStatus() != StreamingResourceStatus.ERROR) {
+			StreamingResourceStatus previousStatus = resource.getStatus();
 			resource.markError("AWS StreamGroup reported ERROR status");
 			streamingResourceRepository.save(resource);
-			log.error("Resource verified as ERROR via sync logic. resourceId={}", resource.getId());
+			log.error("Resource detected as ERROR via AWS sync. previousStatus={}, resourceId={}",
+				previousStatus, resource.getId());
 		}
 	}
 
@@ -146,6 +149,10 @@ public class StreamingHealthMonitor {
 	/**
 	 * 용량 설정을 재요청합니다 (DB 기반 쿨다운 적용).
 	 *
+	 * <p>
+	 * <b>비용 안전</b>: currentCapacity를 사용하여 의도한 용량만 복구합니다.
+	 * maxCapacity를 사용하면 테스트 중(capacity=1)에도 전체 용량이 프로비저닝될 수 있습니다.
+	 *
 	 * @param resource 대상 리소스
 	 */
 	@Transactional
@@ -158,13 +165,21 @@ public class StreamingHealthMonitor {
 			return;
 		}
 
-		try {
-			log.info("Triggering self-healing: Re-applying capacity configuration. resourceId={}",
-				resourceId);
+		// 현재 의도된 용량이 0이면 Self-Healing 불필요
+		int targetCapacity = resource.getCurrentCapacity();
+		if (targetCapacity <= 0) {
+			log.debug("Self-healing skipped: currentCapacity is 0. resourceId={}", resourceId);
+			return;
+		}
 
+		try {
+			log.info("Triggering self-healing: Re-applying capacity configuration. resourceId={}, targetCapacity={}",
+				resourceId, targetCapacity);
+
+			// ⚠️ 비용 안전: maxCapacity가 아닌 currentCapacity 사용
 			gameLiftService.updateStreamGroupCapacity(
 				resource.getAwsStreamGroupId(),
-				resource.getMaxCapacity());
+				targetCapacity);
 
 			// 쿨다운 기록 갱신
 			recordSelfHealingAttempt(resourceId);
@@ -205,6 +220,10 @@ public class StreamingHealthMonitor {
 	/**
 	 * Transitional State 여부를 확인합니다.
 	 *
+	 * <p>
+	 * 순수하게 "변경 중인 상태"만 포함합니다.
+	 * READY와 TESTING은 안정(Stable) 상태이므로 제외합니다.
+	 *
 	 * @param status 리소스 상태
 	 * @return Transitional 상태이면 true
 	 */
@@ -212,8 +231,8 @@ public class StreamingHealthMonitor {
 		return status == StreamingResourceStatus.CREATING ||
 			status == StreamingResourceStatus.PENDING ||
 			status == StreamingResourceStatus.PROVISIONING ||
-			status == StreamingResourceStatus.READY ||
-			status == StreamingResourceStatus.TESTING ||
-			status == StreamingResourceStatus.SCALING;
+			status == StreamingResourceStatus.SCALING ||
+			status == StreamingResourceStatus.SCALING_UP ||
+			status == StreamingResourceStatus.SCALING_DOWN;
 	}
 }

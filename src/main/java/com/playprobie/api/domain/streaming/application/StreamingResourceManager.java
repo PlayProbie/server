@@ -213,17 +213,39 @@ public class StreamingResourceManager {
 		selfHealingLogRepository.findByResourceId(resourceId)
 			.ifPresent(selfHealingLogRepository::delete);
 
-		// 3. AWS 리소스 삭제
+		// 3. AWS 리소스 삭제 (Best-effort: 일부 실패해도 계속 진행)
+		StringBuilder awsErrors = new StringBuilder();
+
 		if (resource.getAwsStreamGroupId() != null) {
-			gameLiftService.deleteStreamGroup(resource.getAwsStreamGroupId());
+			try {
+				gameLiftService.deleteStreamGroup(resource.getAwsStreamGroupId());
+			} catch (Exception e) {
+				log.warn("Failed to delete StreamGroup. It may already be deleted. " +
+					"resourceId={}, groupId={}, error={}",
+					resourceId, resource.getAwsStreamGroupId(), e.getMessage());
+				awsErrors.append("StreamGroup: ").append(e.getMessage()).append("; ");
+			}
 		}
 		if (resource.getAwsApplicationId() != null) {
-			gameLiftService.deleteApplication(resource.getAwsApplicationId());
+			try {
+				gameLiftService.deleteApplication(resource.getAwsApplicationId());
+			} catch (Exception e) {
+				log.warn("Failed to delete Application. It may already be deleted. " +
+					"resourceId={}, appId={}, error={}",
+					resourceId, resource.getAwsApplicationId(), e.getMessage());
+				awsErrors.append("Application: ").append(e.getMessage()).append("; ");
+			}
 		}
 
-		// 4. StreamingResource 삭제
+		// 4. StreamingResource 삭제 (AWS 삭제 실패와 무관하게 진행)
 		resource.terminate();
 		streamingResourceRepository.delete(resource);
+
+		// AWS 삭제 실패가 있었다면 경고 로그 (DB는 이미 정리됨)
+		if (!awsErrors.isEmpty()) {
+			log.warn("[ORPHAN_AWS_RESOURCE] AWS resources may remain. Manual cleanup advised. " +
+				"resourceId={}, errors={}", resourceId, awsErrors);
+		}
 
 		log.info("Streaming resource deleted: resourceId={}", resourceId);
 	}

@@ -43,6 +43,7 @@ public class StreamingTestManager {
 	private final SurveyRepository surveyRepository;
 	private final CapacityChangeRequestRepository capacityChangeRequestRepository;
 	private final CapacityChangeAsyncService capacityChangeAsyncService;
+	private final StreamingStateService streamingStateService;
 	private final WorkspaceSecurityManager securityManager;
 
 	/**
@@ -286,10 +287,12 @@ public class StreamingTestManager {
 				try {
 					executeAsyncCapacityChange(resourceId, requestId, targetCapacity, type);
 				} catch (Exception e) {
-					// [CRITICAL] afterCommit 예외는 상위로 전파되지 않음 - 반드시 로깅
+					// [CRITICAL] afterCommit 예외는 상위로 전파되지 않음 - ERROR 상태로 저장
 					log.error("[AFTER_COMMIT_FAILURE] Failed to trigger async capacity change. " +
 						"resourceId={}, requestId={}, type={}, error={}", resourceId, requestId, type, e.getMessage(),
 						e);
+					// 새 트랜잭션에서 ERROR 상태로 업데이트
+					streamingStateService.saveErrorState(resourceId, "Async task submission failed: " + e.getMessage());
 				}
 			}
 		});

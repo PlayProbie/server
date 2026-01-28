@@ -4,8 +4,6 @@ import java.util.Optional;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.playprobie.api.domain.streaming.dao.StreamingResourceRepository;
 import com.playprobie.api.domain.streaming.domain.StreamingResource;
@@ -26,7 +24,12 @@ import software.amazon.awssdk.services.gameliftstreams.model.StreamGroupStatus;
  *
  * <p>
  * 비동기 실행을 위해 메인 서비스에서 분리되었습니다.
- * <b>트랜잭션 최적화</b>: DB 업데이트만 짧은 트랜잭션으로 처리하여 커넥션 고갈을 방지합니다.
+ * <b>트랜잭션 최적화</b>: DB 업데이트는 {@link StreamingStateService}를 통해
+ * 독립된 짧은 트랜잭션으로 처리하여 커넥션 고갈을 방지합니다.
+ *
+ * <p>
+ * <b>Self-Invocation 해결</b>: 상태 저장 메서드를 별도 서비스로 분리하여
+ * {@code @Transactional(REQUIRES_NEW)} 프록시가 정상 동작하도록 합니다.
  */
 @Service
 @RequiredArgsConstructor
@@ -37,6 +40,7 @@ public class StreamingProvisioner {
 	private static final String SUFFIX_GROUP = "-group";
 
 	private final StreamingResourceRepository streamingResourceRepository;
+	private final StreamingStateService streamingStateService;
 	private final GameLiftService gameLiftService;
 	private final AwsProperties awsProperties;
 
@@ -80,17 +84,18 @@ public class StreamingProvisioner {
 			createdAppArn = appResponse.arn();
 
 			// DB 업데이트: PROVISIONING 상태 (삭제된 경우 조기 종료)
-			if (!saveProvisioningState(resourceId, createdAppArn)) {
+			if (!streamingStateService.saveProvisioningState(resourceId, createdAppArn)) {
 				log.warn("Resource deleted during provisioning. Cleaning up. resourceId={}", resourceId);
 				cleanupAwsResourceOnFailure(createdAppArn, null, resourceId);
 				return;
 			}
 
-			// 2. AWS StreamGroup 생성
+			// 2. AWS StreamGroup 생성 (maximumCapacity 전달하여 스케일링 상한 설정)
 			log.info("Creating AWS StreamGroup for resourceId={}", resourceId);
 			CreateStreamGroupResponse groupResponse = gameLiftService.createStreamGroup(
 				resource.getSurvey().getUuid() + SUFFIX_GROUP,
-				resource.getInstanceType());
+				resource.getInstanceType(),
+				resource.getMaxCapacity());
 
 			createdGroupArn = groupResponse.arn();
 
@@ -99,7 +104,7 @@ public class StreamingProvisioner {
 			gameLiftService.associateApplication(groupResponse.arn(), appResponse.arn());
 
 			// DB 업데이트: READY 상태
-			saveCompletedState(resourceId, groupResponse.arn());
+			streamingStateService.saveCompletedState(resourceId, groupResponse.arn());
 
 			log.info("Async provisioning completed: resourceId={}, appArn={}, groupArn={}",
 				resourceId, appResponse.arn(), groupResponse.arn());
@@ -111,7 +116,7 @@ public class StreamingProvisioner {
 			cleanupAwsResourceOnFailure(createdAppArn, createdGroupArn, resourceId);
 
 			// DB 상태 업데이트: ERROR
-			saveErrorState(resourceId, e.getMessage());
+			streamingStateService.saveErrorState(resourceId, e.getMessage());
 		}
 	}
 
@@ -145,62 +150,6 @@ public class StreamingProvisioner {
 					"resourceId={}, appArn={}, error={}", resourceId, appArn, e.getMessage());
 			}
 		}
-	}
-
-	// ========== DB State Updates (Short Transactions) ==========
-
-	/**
-	 * Application 생성 완료 상태를 저장합니다 (PROVISIONING).
-	 *
-	 * @return 성공 시 true, 리소스가 삭제된 경우 false
-	 */
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public boolean saveProvisioningState(Long resourceId, String appArn) {
-		Optional<StreamingResource> resourceOpt = streamingResourceRepository.findById(resourceId);
-		if (resourceOpt.isEmpty()) {
-			log.warn("Resource deleted during provisioning state save. resourceId={}", resourceId);
-			return false;
-		}
-
-		StreamingResource resource = resourceOpt.get();
-		resource.assignApplication(appArn);
-		streamingResourceRepository.save(resource);
-		log.debug("Saved provisioning state: resourceId={}, appArn={}", resourceId, appArn);
-		return true;
-	}
-
-	/**
-	 * 프로비저닝 완료 상태를 저장합니다 (READY).
-	 */
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void saveCompletedState(Long resourceId, String groupArn) {
-		Optional<StreamingResource> resourceOpt = streamingResourceRepository.findById(resourceId);
-		if (resourceOpt.isEmpty()) {
-			log.warn("Resource deleted during completed state save. resourceId={}", resourceId);
-			return;
-		}
-
-		StreamingResource resource = resourceOpt.get();
-		resource.assignStreamGroup(groupArn);
-		streamingResourceRepository.save(resource);
-		log.debug("Saved completed state: resourceId={}, groupArn={}", resourceId, groupArn);
-	}
-
-	/**
-	 * 에러 상태를 저장합니다 (ERROR).
-	 */
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void saveErrorState(Long resourceId, String errorMessage) {
-		Optional<StreamingResource> resourceOpt = streamingResourceRepository.findById(resourceId);
-		if (resourceOpt.isEmpty()) {
-			log.warn("Resource deleted during error state save. resourceId={}", resourceId);
-			return;
-		}
-
-		StreamingResource resource = resourceOpt.get();
-		resource.markError(errorMessage);
-		streamingResourceRepository.save(resource);
-		log.debug("Saved error state: resourceId={}, error={}", resourceId, errorMessage);
 	}
 
 	// ========== Polling ==========

@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -65,6 +66,18 @@ public class StreamingResource extends BaseTimeEntity {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 30)
 	private StreamingResourceStatus status = StreamingResourceStatus.CREATING;
+
+	@Version
+	@Column(name = "version")
+	private Long version;
+
+	// 롤백을 위한 이전 상태 저장 (DB 영속화로 서버 재시작 시에도 유지)
+	@Enumerated(EnumType.STRING)
+	@Column(name = "previous_status", length = 30)
+	private StreamingResourceStatus previousStatus;
+
+	@Column(name = "previous_capacity")
+	private Integer previousCapacity;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "survey_id", nullable = false, unique = true)
@@ -119,14 +132,23 @@ public class StreamingResource extends BaseTimeEntity {
 	// [New Methods for Two-Phase Transaction]
 
 	public void markScalingUp(int targetCapacity) {
-		if (!this.status.canScale() && this.status != StreamingResourceStatus.SCALING_UP) {
+		// 화이트리스트 방식: 스케일링 가능한 상태(READY, TESTING, ACTIVE)에서만 허용
+		if (!this.status.canScale()) {
 			throw new IllegalStateException("스케일링을 시작할 수 없는 상태입니다: " + this.status);
 		}
+		// 롤백을 위해 이전 상태 저장
+		this.previousStatus = this.status;
+		this.previousCapacity = this.currentCapacity;
+
 		this.status = StreamingResourceStatus.SCALING_UP;
 		this.currentCapacity = targetCapacity;
 	}
 
 	public void markScalingDown() {
+		// 롤백을 위해 이전 상태 저장
+		this.previousStatus = this.status;
+		this.previousCapacity = this.currentCapacity;
+
 		this.status = StreamingResourceStatus.SCALING_DOWN;
 		this.currentCapacity = 0;
 	}
@@ -142,9 +164,18 @@ public class StreamingResource extends BaseTimeEntity {
 	}
 
 	public void rollbackScaling() {
-		// 이전 상태로 복원 (기본적으로 READY로 복원, 복잡한 경우 History 필요)
-		this.status = StreamingResourceStatus.READY;
-		this.currentCapacity = 0;
+		// 이전 상태로 복원 (ACTIVE 상태에서 스케일업 실패 시 서비스 중단 방지)
+		if (this.previousStatus != null) {
+			this.status = this.previousStatus;
+			this.currentCapacity = this.previousCapacity != null ? this.previousCapacity : 0;
+		} else {
+			// 이전 상태가 없으면 기본값으로 READY 복원 (서버 재시작 등)
+			this.status = StreamingResourceStatus.READY;
+			this.currentCapacity = 0;
+		}
+		// 이전 상태 초기화
+		this.previousStatus = null;
+		this.previousCapacity = null;
 	}
 
 	/**
